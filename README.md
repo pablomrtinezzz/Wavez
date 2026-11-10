@@ -1,36 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌊 Wavez — Gran Canaria Surf Radar & Webcams
 
-## Getting Started
+**Wavez** es una plataforma web desarrollada para monitorizar en tiempo real y comparar las condiciones de surf en los mejores spots de Gran Canaria, combinando modelos oceanográficos de libre acceso, mediciones de energía en kilojulios ($kJ$) de Surf-Forecast, webcams oficiales embebidas y un sistema de reportes comunitarios con verificación anti-trampas (EXIF y geolocalización GPS).
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🚀 Características Principales
+
+1. **Radar Inteligente de Spots (20 picos en 4 zonas de Gran Canaria):**
+   * **Las Palmas:** La Cícer, El Confital, El Lloret, La Barra, Los Muellitos.
+   * **Costa Norte:** El Frontón, El Agujero, San Felipe (Vagabundo), El Altillo, Quintanilla.
+   * **Telde / Este:** Playa del Hombre, Ojos de Garza, La Garita, Playa de Silva, Melenara.
+   * **Sur / Sureste:** Maspalomas (Punta/Faro), Arguineguín, Mosca Point, Playa del Inglés, Bahía Feliz.
+
+2. **Fusión de Datos Meteorológicos a Coste 0 (€0/mes):**
+   * **Open-Meteo Marine API:** Altura de mar de fondo (swell), periodo, dirección en grados y viento a 10m sin límite estricto ni claves de pago.
+   * **Scraper de Energía (kJ) de Surf-Forecast:** Extracción ligera y con caché en memoria (1h TTL) del dato clave de potencia marina y rating de estrellas, con fallback matemático automático.
+   * **Algoritmo de Idoneidad (0 a 100):** Calcula la calidad en tiempo real (*Épico / Muy Bueno / Surfeable / Difícil / Plato*) contrastando las condiciones actuales con los requerimientos óptimos de cada rompiente.
+
+3. **Integración Legal y Segura de Webcams:**
+   * Soporte responsive para webcams como **In2theBeach** (Playa del Hombre ID: 2, La Cícer, etc.), renderizadas en contenedor 16:9 con sandboxing seguro y enlace de atribución obligatorio.
+
+4. **Fotos Comunitarias con Sistema Anti-Trampas:**
+   * **Disparo directo con cámara móvil:** Uso de `capture="environment"` para certificar fotos recién tomadas sin posibilidad de subir fotos antiguas del carrete.
+   * **Extracción de metadatos EXIF (`exifr`):** Análisis client-side de `DateTimeOriginal` (rechaza fotos de más de 3 horas o fechas futuras) y coordenadas GPS (validación por fórmula de Haversine dentro del radio del spot).
+   * **Compresión en el navegador:** Reducción automática de imágenes a WebP/JPEG antes de subir para no saturar almacenamiento ni consumir datos móviles.
+
+5. **Modo Privado Inicial:**
+   * Pantalla de acceso por clave privada (Cookie segura HttpOnly) para que puedas utilizarlo individualmente antes de abrirlo a más usuarios.
+
+---
+
+## 🏛️ Arquitectura Hexagonal (Ports & Adapters)
+
+El proyecto sigue una separación estricta de responsabilidades:
+
+```
+src/
+├── domain/                      # Lógica pura de negocio y contratos (Zero deps)
+│   ├── models/                  # Spot, MarineConditions, SurfForecastEnergy, SpotReport, SpotScore
+│   ├── ports/                   # Interfaces (SpotRepository, MarineWeatherService, EnergyScraperService...)
+│   └── services/                # SpotScoreCalculator, ExifSecurityValidator
+├── infrastructure/              # Adaptadores que implementan los puertos
+│   ├── repositories/            # StaticSpotRepository (Configuración de los 20 spots de GC)
+│   └── adapters/                # OpenMeteoMarineAdapter, SurfForecastScraperAdapter, InMemorySpotReportRepository
+├── application/                 # Casos de uso y orquestación
+│   ├── dtos/                    # SpotSummaryDTO, SpotDetailDTO
+│   ├── usecases/                # GetSpotsWithForecastUseCase, GetSpotDetailUseCase, SubmitSpotReportUseCase
+│   └── container.ts             # Inyección de dependencias (Composition Root)
+└── presentation/                # Interfaz de usuario (Next.js 16 App Router)
+    ├── components/              # Navbar, ZoneSelector, SpotCard, WebcamViewer, SpotDetailModal, CameraUploadModal
+    └── app/                     # Rutas de página y API Endpoints (/api/spots, /api/reports, /api/auth)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Tecnologías Empleadas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* **Framework:** Next.js 16 (App Router + React 19)
+* **Lenguaje:** TypeScript 5 (tipado estricto)
+* **Estilos:** Tailwind CSS 4
+* **Scraping seguro:** Cheerio (con rate-limiting y caché)
+* **Procesamiento de imágenes y EXIF:** `exifr` + Canvas API HTML5
+* **Iconografía:** Lucide React
+* **Testing:** Node.js native test runner con TypeScript (`npm test`)
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 📦 Instalación y Ejecución Local
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Clonar repositorio e instalar dependencias:**
+   ```bash
+   git clone <repo-url>
+   cd wavez
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Ejecutar tests unitarios y de adaptadores:**
+   ```bash
+   npm test
+   ```
 
-## Deploy on Vercel
+3. **Iniciar el servidor de desarrollo:**
+   ```bash
+   npm run dev
+   ```
+   Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. **Acceso Privado:**
+   * Clave por defecto en desarrollo: `grancanariasurf`
+   * Puedes cambiarla definiendo la variable de entorno `APP_PASSKEY=tu_clave_secreta` en `.env.local`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🌐 Despliegue a Coste 0
+
+1. **Frontend y Backend Serverless:** Conectar el repositorio a [Vercel](https://vercel.com) o [Cloudflare Pages] (Free Tier).
+2. **Base de Datos y Almacenamiento Permanente (Futuro):**
+   * Configurar un proyecto gratuito en [Supabase](https://supabase.com) (PostgreSQL 500MB + Storage 1GB).
+   * Los puertos `SpotReportRepository` y `SpotRepository` ya están preparados para intercambiar la implementación en memoria por Supabase con solo cambiar el adaptador en `src/application/container.ts`.
