@@ -1,13 +1,20 @@
 {
-  "name": "Wavez Gran Canaria",
+  "name": "Wavez · Gran Canaria Surf Radar",
   "short_name": "Wavez",
-  "description": "Radar y previsiones de surf para Gran Canaria",
+  "description": "Telemetría y radar de olas en vivo de 20 spots de Gran Canaria",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#060D17",
+  "theme_color": "#060D17",
   "orientation": "portrait",
+  "categories": ["sports", "weather"],
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
     {
       "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
