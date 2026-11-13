@@ -24,10 +24,11 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       preferredTide: 'mid',
     },
     webcam: {
-      provider: 'generic-iframe',
-      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=3',
-      attributionTitle: 'Webcam La Cícer - Las Canteras',
-      attributionUrl: 'https://in2thebeach.es',
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=81',
+      attributionTitle: 'Webcam PLAYA DE LA CICER (El Cruce)',
+      attributionUrl: 'https://in2thebeach.es/webcam/81/playa-de-la-cicer-el-cruce/',
+      aspectRatio: '16/9',
     },
     surfForecastSlug: 'La-Cicer',
   },
@@ -89,6 +90,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 18,
       preferredTide: 'low',
     },
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=23',
+      attributionTitle: 'Webcam PLAYA DE LAS CANTERAS - LA BARRA',
+      attributionUrl: 'https://in2thebeach.es/webcam/23/playa-de-las-canteras-la-barra/',
+      aspectRatio: '16/9',
+    },
   },
   {
     id: 'los-muellitos',
@@ -107,6 +115,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       favorableWindDegrees: { min: 160, max: 220 },
       maxFavorableWindKmh: 25,
       preferredTide: 'mid',
+    },
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=57',
+      attributionTitle: 'Webcam PLAYA DE LA CICER (AUDITORIO)',
+      attributionUrl: 'https://in2thebeach.es/webcam/57/playa-de-la-cicer-auditorio/',
+      aspectRatio: '16/9',
     },
   },
 
@@ -172,6 +187,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       preferredTide: 'low',
     },
     surfForecastSlug: 'San-Felipe',
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=142',
+      attributionTitle: 'Webcam Playa de San Felipe (Vagabundo)',
+      attributionUrl: 'https://in2thebeach.es/webcam/142/playa-de-arena-de-san-felipe-vagabundo/',
+      aspectRatio: '16/9',
+    },
   },
   {
     id: 'el-altillo',
@@ -280,6 +302,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 20,
       preferredTide: 'high',
     },
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=51',
+      attributionTitle: 'Webcam PLAYA DE LA GARITA',
+      attributionUrl: 'https://in2thebeach.es/webcam/51/playa-de-la-garita/',
+      aspectRatio: '16/9',
+    },
   },
   {
     id: 'playa-de-silva',
@@ -342,6 +371,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       preferredTide: 'mid',
     },
     surfForecastSlug: 'Maspalomas',
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=123',
+      attributionTitle: 'Webcam Dunas de Maspalomas y Playa del Inglés',
+      attributionUrl: 'https://in2thebeach.es/webcam/123/dunas-de-maspalomas-y-playa-del-ingles/',
+      aspectRatio: '16/9',
+    },
   },
   {
     id: 'arguineguin',
@@ -360,6 +396,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       favorableWindDegrees: { min: 10, max: 70 },
       maxFavorableWindKmh: 22,
       preferredTide: 'low',
+    },
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=135',
+      attributionTitle: 'Webcam Playa Las Marañuelas (Arguineguín)',
+      attributionUrl: 'https://in2thebeach.es/webcam/135/playa-las-maranuelas-arguineguin/',
+      aspectRatio: '16/9',
     },
   },
   {
@@ -381,6 +424,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       preferredTide: 'high',
     },
     surfForecastSlug: 'Mosca-Point',
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=14',
+      attributionTitle: 'Webcam Bahía de Pozo Izquierdo',
+      attributionUrl: 'https://in2thebeach.es/webcam/14/bahia-de-pozo-izquierdo/',
+      aspectRatio: '16/9',
+    },
   },
   {
     id: 'playa-del-ingles',
@@ -401,6 +451,13 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       preferredTide: 'mid',
     },
     surfForecastSlug: 'Playa-del-Ingles',
+    webcam: {
+      provider: 'in2thebeach',
+      iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=3',
+      attributionTitle: 'Webcam Playa del Inglés (Izquierda)',
+      attributionUrl: 'https://in2thebeach.es/webcam/3/playa-del-ingles-izquierda/',
+      aspectRatio: '16/9',
+    },
   },
   {
     id: 'bahia-feliz',
