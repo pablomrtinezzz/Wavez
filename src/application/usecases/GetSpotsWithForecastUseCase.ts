@@ -14,7 +14,7 @@ export class GetSpotsWithForecastUseCase {
     private reportRepo: SpotReportRepository
   ) {}
 
-  public async execute(zone?: ZoneId): Promise<SpotSummaryDTO[]> {
+  public async execute(zone?: ZoneId, targetIso?: string): Promise<SpotSummaryDTO[]> {
     const spots = zone
       ? await this.spotRepo.getSpotsByZone(zone)
       : await this.spotRepo.getAllSpots();
@@ -23,7 +23,9 @@ export class GetSpotsWithForecastUseCase {
     const summaries = await Promise.all(
       spots.map(async (spot) => {
         const [conditions, reports] = await Promise.all([
-          this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
+          targetIso
+            ? this.marineService.getConditionsForTimestamp(spot.id, spot.location.lat, spot.location.lng, targetIso)
+            : this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
           this.reportRepo.getRecentReports(spot.id, 1),
         ]);
 
@@ -55,7 +57,6 @@ export class GetSpotsWithForecastUseCase {
       })
     );
 
-    // Return list
     return summaries;
   }
 }
