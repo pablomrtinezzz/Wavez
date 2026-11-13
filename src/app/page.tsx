@@ -7,6 +7,10 @@ import { SpotCard } from '@/presentation/components/SpotCard';
 import { SpotDetailModal } from '@/presentation/components/SpotDetailModal';
 import { CameraUploadModal } from '@/presentation/components/CameraUploadModal';
 import { PrivateGateModal } from '@/presentation/components/PrivateGateModal';
+import { IslandRadarMap } from '@/presentation/components/IslandRadarMap';
+import { WebcamWallView } from '@/presentation/components/WebcamWallView';
+import { CompactTelemetryTable } from '@/presentation/components/CompactTelemetryTable';
+import { ObsidianCallout } from '@/presentation/components/ObsidianCallout';
 import { ScoreRadialGauge } from '@/presentation/components/telemetry/ScoreRadialGauge';
 import { DirectionCompass } from '@/presentation/components/telemetry/DirectionCompass';
 import { TelemetrySkeleton } from '@/presentation/components/telemetry/TelemetrySkeleton';
@@ -19,13 +23,23 @@ import {
   ChevronRight,
   Zap,
   Award,
+  Search,
+  LayoutGrid,
+  MapPin,
+  TableProperties,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+type ViewMode = 'bento' | 'radar' | 'webcams' | 'table';
+type SortOption = 'score' | 'energy' | 'height' | 'name';
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [summaries, setSummaries] = useState<SpotSummaryDTO[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('top');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('bento');
+  const [sortBy, setSortBy] = useState<SortOption>('score');
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [reportingSpot, setReportingSpot] = useState<Spot | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,21 +132,54 @@ export default function HomePage() {
     return counts;
   }, [summaries]);
 
-  // Filter spots based on selection
+  // Filter and sort spots
   const filteredSpots = useMemo(() => {
+    let result = [...summaries];
+
+    // Filter by zone / top
     if (selectedFilter === 'top') {
-      return [...summaries]
-        .sort((a, b) => b.score.overallScore - a.score.overallScore)
-        .slice(0, 8);
+      result = result.filter((s) => s.score.overallScore >= 60);
+      if (result.length < 5) {
+        result = [...summaries].slice(0, 6);
+      }
+    } else {
+      result = result.filter((s) => s.spot.zone === selectedFilter);
     }
-    return summaries.filter((s) => s.spot.zone === selectedFilter);
-  }, [summaries, selectedFilter]);
+
+    // Filter by search query
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (s) =>
+          s.spot.name.toLowerCase().includes(q) ||
+          s.spot.location.municipality.toLowerCase().includes(q) ||
+          s.spot.breakType.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      if (sortBy === 'score') return b.score.overallScore - a.score.overallScore;
+      if (sortBy === 'energy') return b.energy.energyKj - a.energy.energyKj;
+      if (sortBy === 'height')
+        return b.conditions.primarySwell.heightM - a.conditions.primarySwell.heightM;
+      if (sortBy === 'name') return a.spot.name.localeCompare(b.spot.name);
+      return 0;
+    });
+
+    return result;
+  }, [summaries, selectedFilter, searchQuery, sortBy]);
 
   // Top spot recommendation (#1 overall)
   const topSpot = useMemo(() => {
     if (summaries.length === 0) return null;
     return summaries[0]; // Already sorted by overallScore descending from API
   }, [summaries]);
+
+  const spotsWithWebcamsCount = useMemo(
+    () => summaries.filter((s) => Boolean(s.spot.webcam)).length,
+    [summaries]
+  );
 
   if (isAuthenticated === false) {
     return <PrivateGateModal onAuthenticated={() => setIsAuthenticated(true)} />;
@@ -154,9 +201,8 @@ export default function HomePage() {
         {/* Spotlight Hero: #1 Ranked Spot in Gran Canaria */}
         {topSpot && !isLoading && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
             className="relative overflow-hidden rounded-3xl glass-panel-elevated p-6 sm:p-8 shadow-2xl border border-cyan-500/30 group"
           >
             {/* Ambient Spotlight Blur */}
@@ -174,7 +220,11 @@ export default function HomePage() {
                     {topSpot.spot.name}
                   </h1>
                   {topSpot.spot.webcam && (
-                    <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-lg bg-red-950/80 border border-red-700/60 text-red-400 text-xs font-bold">
+                    <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-red-950/80 border border-red-700/60 text-red-400 text-xs font-bold">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                      </span>
                       <Video className="w-3.5 h-3.5" />
                       <span>CAM LIVE</span>
                     </span>
@@ -244,6 +294,97 @@ export default function HomePage() {
           </motion.div>
         )}
 
+        {/* Obsidian-Style Daily Briefing Callout */}
+        {topSpot && !isLoading && (
+          <ObsidianCallout type="surf" title="Resumen Diario del Océano · Gran Canaria">
+            Tren de oleaje entrando con <strong>{topSpot.conditions.primarySwell.heightM.toFixed(1)} m</strong> y{' '}
+            <strong>{topSpot.conditions.primarySwell.periodSec.toFixed(0)} segundos de periodo</strong> desde el cuadrante{' '}
+            <strong>{topSpot.conditions.primarySwell.compassDir}</strong>. Vientos favorables en la vertiente capitalina y este.
+            Actualmente hay <strong>{spotsWithWebcamsCount} webcams oficiales en vivo</strong> transmitiendo en tiempo real para verificar el estado de los picos.
+          </ObsidianCallout>
+        )}
+
+        {/* Control Bar: View Switcher, Search & Sort */}
+        <div className="glass-panel rounded-2xl p-3 sm:p-4 border border-white/10 flex flex-col md:flex-row items-center justify-between gap-3">
+          {/* View Mode Switcher (Bento / Radar / Webcams / Table) */}
+          <div className="flex items-center space-x-1 bg-slate-950/80 p-1 rounded-xl border border-white/5 w-full md:w-auto overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setViewMode('bento')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                viewMode === 'bento'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Bento Cards</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('radar')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                viewMode === 'radar'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span>Mapa Radar</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('webcams')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                viewMode === 'webcams'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <Video className="w-3.5 h-3.5" />
+              <span>Muro Webcams ({spotsWithWebcamsCount})</span>
+            </button>
+
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+                viewMode === 'table'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              <TableProperties className="w-3.5 h-3.5" />
+              <span>Matriz Tabla</span>
+            </button>
+          </div>
+
+          {/* Search Input & Sort Selector */}
+          <div className="flex items-center space-x-2 w-full md:w-auto">
+            <div className="relative flex-1 md:w-56">
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                placeholder="Buscar spot o municipio..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-950/80 border border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
+              />
+            </div>
+
+            <div className="relative shrink-0">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="bg-slate-950/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500 transition cursor-pointer"
+              >
+                <option value="score">Ordenar: Score</option>
+                <option value="energy">Ordenar: kJ Surf-Forecast</option>
+                <option value="height">Ordenar: Altura de Ola</option>
+                <option value="name">Ordenar: Nombre A-Z</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* Zone Selector Interactive Pills */}
         <div className="sticky top-16 z-30 bg-slate-950/90 backdrop-blur-md pt-2 pb-2">
           <ZoneSelector
@@ -263,27 +404,66 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Animated Spots Grid */}
+        {/* Views Container */}
         {!isLoading && (
-          <motion.div
-            layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredSpots.map((summary, idx) => (
-                <SpotCard
-                  key={summary.spot.id}
-                  summary={summary}
-                  rankIndex={selectedFilter === 'top' ? idx : undefined}
-                  onSelectSpot={(id) => setSelectedSpotId(id)}
-                  onOpenReportModal={(id) => {
-                    const s = summaries.find((item) => item.spot.id === id);
-                    if (s) setReportingSpot(s.spot);
-                  }}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <>
+            {/* View 1: Bento Cards */}
+            {viewMode === 'bento' && (
+              <motion.div
+                layout
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+              >
+                <AnimatePresence mode="popLayout">
+                  {filteredSpots.map((summary, idx) => (
+                    <SpotCard
+                      key={summary.spot.id}
+                      summary={summary}
+                      rankIndex={selectedFilter === 'top' && searchQuery === '' ? idx : undefined}
+                      onSelectSpot={(id) => setSelectedSpotId(id)}
+                      onOpenReportModal={(id) => {
+                        const s = summaries.find((item) => item.spot.id === id);
+                        if (s) setReportingSpot(s.spot);
+                      }}
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+            )}
+
+            {/* View 2: Interactive Island Radar Map */}
+            {viewMode === 'radar' && (
+              <IslandRadarMap
+                summaries={summaries}
+                onSelectSpot={(id) => setSelectedSpotId(id)}
+              />
+            )}
+
+            {/* View 3: Live Webcams Surveillance Wall */}
+            {viewMode === 'webcams' && (
+              <WebcamWallView
+                summaries={summaries}
+                onSelectSpot={(id) => setSelectedSpotId(id)}
+              />
+            )}
+
+            {/* View 4: Compact Telemetry Table */}
+            {viewMode === 'table' && (
+              <CompactTelemetryTable
+                summaries={filteredSpots}
+                onSelectSpot={(id) => setSelectedSpotId(id)}
+                onOpenReportModal={(id) => {
+                  const s = summaries.find((item) => item.spot.id === id);
+                  if (s) setReportingSpot(s.spot);
+                }}
+              />
+            )}
+
+            {filteredSpots.length === 0 && (
+              <div className="py-16 text-center text-slate-500 text-xs">
+                No se encontraron spots que coincidan con &quot;{searchQuery}&quot; en la zona seleccionada.
+              </div>
+            )}
+          </>
         )}
       </main>
 
