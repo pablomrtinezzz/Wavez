@@ -79,12 +79,12 @@ export default function HomePage() {
       });
   }, []);
 
-  // Fetch spots whenever authentication or timelineState changes
+  // Fetch spots whenever authentication or timelineState changes with smooth debounce
   useEffect(() => {
     if (!isAuthenticated) return;
     let isCancelled = false;
 
-    const fetchSpots = async () => {
+    const timer = setTimeout(async () => {
       setIsRefreshing(true);
       setError(null);
 
@@ -110,12 +110,11 @@ export default function HomePage() {
           setIsRefreshing(false);
         }
       }
-    };
-
-    fetchSpots();
+    }, timelineState.isLive ? 0 : 80);
 
     return () => {
       isCancelled = true;
+      clearTimeout(timer);
     };
   }, [isAuthenticated, timelineState]);
 
@@ -471,8 +470,15 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Shimmer Loading State */}
-        {isLoading && <TelemetrySkeleton />}
+        {/* Shimmer Loading State on Initial Cold Load Only */}
+        {isLoading && summaries.length === 0 && <TelemetrySkeleton />}
+
+        {/* Subtle Sync Bar during timeline updates */}
+        {isRefreshing && summaries.length > 0 && (
+          <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-cyan-500 via-teal-300 to-cyan-500 animate-pulse w-full" />
+          </div>
+        )}
 
         {/* Error State */}
         {error && (
@@ -481,8 +487,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Views Container */}
-        {!isLoading && (
+        {/* Views Container (retained smoothly during timeline scrub) */}
+        {summaries.length > 0 && (
           <>
             {/* View 1: Bento Cards */}
             {viewMode === 'bento' && (

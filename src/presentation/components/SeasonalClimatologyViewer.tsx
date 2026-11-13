@@ -23,6 +23,11 @@ export const SeasonalClimatologyViewer: React.FC<SeasonalClimatologyViewerProps>
   const [data, setData] = useState<SpotClimatology | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentMonth, setCurrentMonth] = useState<number>(11);
+
+  useEffect(() => {
+    setCurrentMonth(new Date().getMonth() + 1);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,12 +74,6 @@ export const SeasonalClimatologyViewer: React.FC<SeasonalClimatologyViewerProps>
       </div>
     );
   }
-
-  const [currentMonth, setCurrentMonth] = useState<number>(11);
-
-  useEffect(() => {
-    setCurrentMonth(new Date().getMonth() + 1);
-  }, []);
 
   return (
     <div className="space-y-4">
