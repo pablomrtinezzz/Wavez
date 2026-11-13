@@ -1,6 +1,7 @@
 import { SpotRepository } from '@/domain/ports/SpotRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
+import { ConditionQuality } from '@/domain/models/SpotScore';
 
 export interface HourlyEvolutionPoint {
   hour: number;
@@ -18,7 +19,7 @@ export interface HourlyEvolutionPoint {
   score: {
     overallScore: number;
     scoreOutOfTen: number;
-    badge: 'epic' | 'good' | 'fair' | 'poor';
+    quality: ConditionQuality;
     recommendation: string;
     pros: string[];
     cons: string[];
@@ -90,8 +91,8 @@ export class GetSpotHourlyEvolutionUseCase {
         energyKj,
         score: {
           overallScore: calculatedScore.overallScore,
-          scoreOutOfTen: calculatedScore.scoreOutOfTen,
-          badge: calculatedScore.badge,
+          scoreOutOfTen: Number((calculatedScore.overallScore / 10).toFixed(1)),
+          quality: calculatedScore.quality,
           recommendation: calculatedScore.recommendation,
           pros: calculatedScore.pros,
           cons: calculatedScore.cons,

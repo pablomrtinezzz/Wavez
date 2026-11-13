@@ -86,6 +86,9 @@ export function getScoreColorTokens(score: number) {
   };
 }
 
+export const getScoreColor = getScoreColorTokens;
+
+
 /**
  * Returns wind character classification and badge styling
  */

@@ -11,6 +11,7 @@ import { IslandRadarMap } from '@/presentation/components/IslandRadarMap';
 import { WebcamWallView } from '@/presentation/components/WebcamWallView';
 import { CompactTelemetryTable } from '@/presentation/components/CompactTelemetryTable';
 import { ObsidianCallout } from '@/presentation/components/ObsidianCallout';
+import { TimelineScrubber, TimelineState } from '@/presentation/components/TimelineScrubber';
 import { ScoreRadialGauge } from '@/presentation/components/telemetry/ScoreRadialGauge';
 import { DirectionCompass } from '@/presentation/components/telemetry/DirectionCompass';
 import { TelemetrySkeleton } from '@/presentation/components/telemetry/TelemetrySkeleton';
@@ -27,6 +28,8 @@ import {
   LayoutGrid,
   MapPin,
   TableProperties,
+  Clock,
+  RotateCcw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -47,6 +50,23 @@ export default function HomePage() {
   const [lastUpdated, setLastUpdated] = useState<string | undefined>();
   const [error, setError] = useState<string | null>(null);
 
+  // Timeline State: 15-day range (-7 days past, today, +7 days forecast) + 24-hour scrubber
+  const [timelineState, setTimelineState] = useState<TimelineState>({
+    dateStr: '2026-11-13',
+    hour: 12,
+    isLive: true,
+  });
+
+  // Client hydration sync with real browser date/hour
+  useEffect(() => {
+    const now = new Date();
+    setTimelineState({
+      dateStr: now.toISOString().split('T')[0],
+      hour: now.getHours(),
+      isLive: true,
+    });
+  }, []);
+
   // Check auth status
   useEffect(() => {
     fetch('/api/auth/verify')
@@ -59,37 +79,21 @@ export default function HomePage() {
       });
   }, []);
 
-  // Manual refresh handler
-  const loadSpots = useCallback(async (isSilent = false) => {
-    if (isSilent) setIsRefreshing(true);
-    else setIsLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/spots');
-      const data = await res.json();
-      if (data.success) {
-        setSummaries(data.data);
-        setLastUpdated(data.updatedAt);
-      } else {
-        setError(data.error || 'Error cargando datos');
-      }
-    } catch (err) {
-      setError((err as Error).message || 'Error de conexión');
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
-
-  // Fetch spots once authenticated
+  // Fetch spots whenever authentication or timelineState changes
   useEffect(() => {
     if (!isAuthenticated) return;
     let isCancelled = false;
 
-    const fetchInitialSpots = async () => {
+    const fetchSpots = async () => {
+      setIsRefreshing(true);
+      setError(null);
+
       try {
-        const res = await fetch('/api/spots');
+        const url = timelineState.isLive
+          ? '/api/spots'
+          : `/api/spots?date=${timelineState.dateStr}&hour=${timelineState.hour}`;
+
+        const res = await fetch(url);
         const data = await res.json();
         if (isCancelled) return;
         if (data.success) {
@@ -101,16 +105,19 @@ export default function HomePage() {
       } catch (err) {
         if (!isCancelled) setError((err as Error).message || 'Error de conexión');
       } finally {
-        if (!isCancelled) setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+        }
       }
     };
 
-    fetchInitialSpots();
+    fetchSpots();
 
     return () => {
       isCancelled = true;
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, timelineState]);
 
   // Counts per tab
   const spotCounts = useMemo(() => {
@@ -170,34 +177,99 @@ export default function HomePage() {
     return result;
   }, [summaries, selectedFilter, searchQuery, sortBy]);
 
-  // Top spot recommendation (#1 overall)
+  // Top spot in Gran Canaria for current timeline
   const topSpot = useMemo(() => {
     if (summaries.length === 0) return null;
-    return summaries[0]; // Already sorted by overallScore descending from API
+    return [...summaries].sort((a, b) => b.score.overallScore - a.score.overallScore)[0];
   }, [summaries]);
 
-  const spotsWithWebcamsCount = useMemo(
-    () => summaries.filter((s) => Boolean(s.spot.webcam)).length,
-    [summaries]
-  );
+  // Spots with active webcams count
+  const spotsWithWebcamsCount = useMemo(() => {
+    return summaries.filter((s) => Boolean(s.spot.webcam)).length;
+  }, [summaries]);
+
+  // Reset timeline to live
+  const handleResetToLive = () => {
+    const now = new Date();
+    setTimelineState({
+      dateStr: now.toISOString().split('T')[0],
+      hour: now.getHours(),
+      isLive: true,
+    });
+  };
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#060D17] flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-10 h-10 border-3 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-mono text-cyan-400">INICIALIZANDO TELEMETRÍA WAVEZ...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (isAuthenticated === false) {
-    return <PrivateGateModal onAuthenticated={() => setIsAuthenticated(true)} />;
+    return (
+      <PrivateGateModal
+        onAuthenticated={() => setIsAuthenticated(true)}
+      />
+    );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-cyan-500 selection:text-white">
-      {/* Top Telemetry Floating Navbar */}
+    <div className="min-h-screen bg-[#060D17] flex flex-col selection:bg-cyan-500 selection:text-black">
+      {/* Navbar with Telemetry Header */}
       <Navbar
-        onRefresh={() => loadSpots(true)}
+        onRefresh={() => {
+          handleResetToLive();
+        }}
         isRefreshing={isRefreshing}
         lastUpdated={lastUpdated}
         onOpenQuickReport={() => {
-          if (topSpot) setReportingSpot(topSpot.spot);
+          if (summaries.length > 0) {
+            setReportingSpot(summaries[0].spot);
+          }
         }}
       />
 
+      {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Timeline Scrubber: Multi-day (-7 to +7 days) & 24h Hourly simulation */}
+        <TimelineScrubber
+          timelineState={timelineState}
+          onChange={setTimelineState}
+          isLoading={isRefreshing}
+        />
+
+        {/* Non-live simulation indicator banner */}
+        {!timelineState.isLive && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-200"
+          >
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                Visualizando telemetría calculada para el{' '}
+                <strong className="text-white font-mono">{timelineState.dateStr}</strong> a las{' '}
+                <strong className="text-white font-mono">
+                  {String(timelineState.hour).padStart(2, '0')}:00
+                </strong>
+                . El ranking y puntuaciones reflejan las condiciones estimadas para este instante.
+              </span>
+            </div>
+            <button
+              onClick={handleResetToLive}
+              className="ml-3 shrink-0 flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition text-[11px]"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Volver a Directo</span>
+            </button>
+          </motion.div>
+        )}
+
         {/* Spotlight Hero: #1 Ranked Spot in Gran Canaria */}
         {topSpot && !isLoading && (
           <motion.div
@@ -212,7 +284,9 @@ export default function HomePage() {
               <div className="space-y-3 max-w-2xl">
                 <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 text-xs font-black tracking-widest uppercase">
                   <Award className="w-3.5 h-3.5 text-amber-400" />
-                  <span>#1 BAÑO DEL DÍA EN GRAN CANARIA</span>
+                  <span>
+                    {timelineState.isLive ? '#1 BAÑO DEL DÍA EN GRAN CANARIA' : '#1 EN ESTE HORARIO'}
+                  </span>
                 </div>
 
                 <div className="flex items-center space-x-3">
@@ -286,7 +360,7 @@ export default function HomePage() {
                   onClick={() => setSelectedSpotId(topSpot.spot.id)}
                   className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black text-xs sm:text-sm px-6 py-3.5 rounded-2xl shadow-xl shadow-cyan-500/25 transition duration-200 flex items-center space-x-2"
                 >
-                  <span>Ver Webcam & Telemetría</span>
+                  <span>Ver Evolución & Webcams</span>
                   <ChevronRight className="w-4 h-4 stroke-[3]" />
                 </button>
               </div>
@@ -296,11 +370,14 @@ export default function HomePage() {
 
         {/* Obsidian-Style Daily Briefing Callout */}
         {topSpot && !isLoading && (
-          <ObsidianCallout type="surf" title="Resumen Diario del Océano · Gran Canaria">
-            Tren de oleaje entrando con <strong>{topSpot.conditions.primarySwell.heightM.toFixed(1)} m</strong> y{' '}
+          <ObsidianCallout type="surf" title="Resumen Oceanográfico · Gran Canaria">
+            Tren de oleaje con <strong>{topSpot.conditions.primarySwell.heightM.toFixed(1)} m</strong> y{' '}
             <strong>{topSpot.conditions.primarySwell.periodSec.toFixed(0)} segundos de periodo</strong> desde el cuadrante{' '}
-            <strong>{topSpot.conditions.primarySwell.compassDir}</strong>. Vientos favorables en la vertiente capitalina y este.
-            Actualmente hay <strong>{spotsWithWebcamsCount} webcams oficiales en vivo</strong> transmitiendo en tiempo real para verificar el estado de los picos.
+            <strong>{topSpot.conditions.primarySwell.compassDir}</strong>. Viento medido en{' '}
+            <strong>{Math.round(topSpot.conditions.wind.speedKmh)} km/h {topSpot.conditions.wind.compassDir}</strong>.
+            {spotsWithWebcamsCount > 0 && (
+              <> Disponibles <strong>{spotsWithWebcamsCount} webcams oficiales en vivo</strong> para monitorizar los picos en tiempo real.</>
+            )}
           </ObsidianCallout>
         )}
 
@@ -470,6 +547,7 @@ export default function HomePage() {
       {/* Spot Detail & Webcam Modal */}
       <SpotDetailModal
         spotId={selectedSpotId}
+        initialDate={timelineState.dateStr}
         onClose={() => setSelectedSpotId(null)}
         onOpenReportModal={(id) => {
           const s = summaries.find((item) => item.spot.id === id);
@@ -481,7 +559,9 @@ export default function HomePage() {
       <CameraUploadModal
         spot={reportingSpot}
         onClose={() => setReportingSpot(null)}
-        onReportSubmitted={() => loadSpots(true)}
+        onReportSubmitted={() => {
+          handleResetToLive();
+        }}
       />
     </div>
   );
