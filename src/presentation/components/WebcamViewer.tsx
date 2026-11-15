@@ -3,6 +3,7 @@
 import React, { useRef, useState } from 'react';
 import { WebcamConfig } from '@/domain/models/Spot';
 import { Video, ExternalLink, ShieldAlert, Maximize2, Minimize2 } from 'lucide-react';
+import { isApprovedWebcamUrl } from '@/presentation/lib/utils';
 
 interface WebcamViewerProps {
   webcam?: WebcamConfig;
@@ -30,10 +31,7 @@ export const WebcamViewer: React.FC<WebcamViewerProps> = ({ webcam, spotName }) 
   }
 
   // Security origin validation: Ensure iframeUrl starts with https and approved origin
-  const isApprovedOrigin =
-    webcam.iframeUrl.startsWith('https://in2thebeach.es/') ||
-    webcam.iframeUrl.startsWith('https://www.in2thebeach.es/') ||
-    webcam.iframeUrl.startsWith('https://');
+  const isApprovedOrigin = isApprovedWebcamUrl(webcam.iframeUrl);
 
   if (!isApprovedOrigin) {
     return (
