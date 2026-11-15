@@ -1,3 +1,5 @@
+import { TideState } from './Tide';
+
 export interface SwellComponent {
   heightM: number;
   periodSec: number;
@@ -22,6 +24,8 @@ export interface MarineConditions {
   windWaveHeightM?: number;
   wind: WindCondition;
   seaSurfaceTemperatureC?: number;
+  /** Estimated tide from Open-Meteo sea level (model data, not for navigation). */
+  tide?: TideState;
 }
 
 export function degreesToCompass(degrees: number): string {

@@ -1,7 +1,11 @@
 import { MarineConditions } from '../models/MarineConditions';
 
-export interface HourlyMarineForecast extends MarineConditions {
-  tideHeightM?: number;
+export type HourlyMarineForecast = MarineConditions;
+
+export interface Daylight {
+  /** Local timestamps, e.g. '2026-11-15T07:23' */
+  sunrise: string;
+  sunset: string;
 }
 
 /** Raised when no real marine data is available for a spot (never replaced by made-up values). */
@@ -19,4 +23,5 @@ export interface MarineWeatherService {
   /** Next `hours` hourly entries starting at the current local hour. */
   getHourlyForecast(spotId: string, lat: number, lng: number, hours?: number): Promise<HourlyMarineForecast[]>;
   getHourlyForecastForDate(spotId: string, lat: number, lng: number, dateStr: string): Promise<HourlyMarineForecast[]>;
+  getDaylight(lat: number, lng: number, dateStr: string): Promise<Daylight | null>;
 }

@@ -2,7 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert';
 import { GetSpotHourlyEvolutionUseCase } from './GetSpotHourlyEvolutionUseCase';
 import { StaticSpotRepository } from '@/infrastructure/repositories/StaticSpotRepository';
-import { MarineWeatherService, HourlyMarineForecast } from '@/domain/ports/MarineWeatherService';
+import { MarineWeatherService, HourlyMarineForecast, Daylight } from '@/domain/ports/MarineWeatherService';
 import { MarineConditions } from '@/domain/models/MarineConditions';
 
 class MockMarineWeatherService implements MarineWeatherService {
@@ -28,6 +28,10 @@ class MockMarineWeatherService implements MarineWeatherService {
 
   async getHourlyForecast(): Promise<HourlyMarineForecast[]> {
     return [];
+  }
+
+  async getDaylight(lat: number, lng: number, dateStr: string): Promise<Daylight | null> {
+    return { sunrise: `${dateStr}T07:23`, sunset: `${dateStr}T18:08` };
   }
 
   async getHourlyForecastForDate(
@@ -90,6 +94,8 @@ describe('GetSpotHourlyEvolutionUseCase', () => {
     // Peak conditions span 08:00-10:59 in the mock
     assert.strictEqual(result.bestWindow.startHour, 8);
     assert.strictEqual(result.bestWindow.endHour, 11);
+
+    assert.strictEqual(result.daylight?.sunrise, '2026-11-13T07:23');
 
     // Daily summary
     assert.strictEqual(result.dailySummary.maxWaveHeightM, 2.0);

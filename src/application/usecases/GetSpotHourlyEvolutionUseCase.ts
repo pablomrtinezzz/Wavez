@@ -1,5 +1,6 @@
 import { SpotRepository } from '@/domain/ports/SpotRepository';
-import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
+import { MarineWeatherService, Daylight } from '@/domain/ports/MarineWeatherService';
+import { TideState } from '@/domain/models/Tide';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
 import { ConditionQuality } from '@/domain/models/SpotScore';
 import { estimateWaveEnergyKj } from '@/domain/models/SurfForecastEnergy';
@@ -24,6 +25,8 @@ export interface HourlyEvolutionPoint {
   windDirectionDeg: number;
   windCompassDir: string;
   energyKj: number;
+  tide?: TideState;
+  waterTempC?: number;
   score: {
     overallScore: number;
     scoreOutOfTen: number;
@@ -38,6 +41,7 @@ export interface SpotHourlyEvolutionDTO {
   spotId: string;
   spotName: string;
   date: string;
+  daylight?: Daylight;
   hourlyPoints: HourlyEvolutionPoint[];
   bestWindow?: {
     startHour: number;
@@ -64,12 +68,10 @@ export class GetSpotHourlyEvolutionUseCase {
     const spot = await this.spotRepo.getSpotById(spotId);
     if (!spot) return null;
 
-    const hourly = await this.marineService.getHourlyForecastForDate(
-      spot.id,
-      spot.location.lat,
-      spot.location.lng,
-      dateStr
-    );
+    const [hourly, daylight] = await Promise.all([
+      this.marineService.getHourlyForecastForDate(spot.id, spot.location.lat, spot.location.lng, dateStr),
+      this.marineService.getDaylight(spot.location.lat, spot.location.lng, dateStr),
+    ]);
 
     if (!hourly || hourly.length === 0) {
       return null;
@@ -97,6 +99,8 @@ export class GetSpotHourlyEvolutionUseCase {
         windDirectionDeg: entry.wind.directionDeg,
         windCompassDir: entry.wind.compassDir,
         energyKj,
+        tide: entry.tide,
+        waterTempC: entry.seaSurfaceTemperatureC,
         score: {
           overallScore: calculatedScore.overallScore,
           scoreOutOfTen: Number((calculatedScore.overallScore / 10).toFixed(1)),
@@ -108,7 +112,12 @@ export class GetSpotHourlyEvolutionUseCase {
       };
     });
 
-    const bestWindow = this.findBestWindow(hourlyPoints, DEFAULT_FIRST_LIGHT_HOUR, DEFAULT_LAST_LIGHT_HOUR);
+    const firstLightHour = daylight ? localHourOf(daylight.sunrise) : DEFAULT_FIRST_LIGHT_HOUR;
+    // The last usable hour is the one that ends before (or close to) sunset
+    const lastLightHour = daylight
+      ? localHourOf(daylight.sunset) - (Number(daylight.sunset.slice(14, 16)) < 30 ? 1 : 0)
+      : DEFAULT_LAST_LIGHT_HOUR;
+    const bestWindow = this.findBestWindow(hourlyPoints, firstLightHour, lastLightHour);
 
     // Daily summary
     const heights = hourlyPoints.map((p) => p.waveHeightM);
@@ -132,6 +141,7 @@ export class GetSpotHourlyEvolutionUseCase {
       spotId: spot.id,
       spotName: spot.name,
       date: dateStr,
+      daylight: daylight ?? undefined,
       hourlyPoints,
       bestWindow,
       dailySummary: {

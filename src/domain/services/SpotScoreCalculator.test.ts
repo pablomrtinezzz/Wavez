@@ -109,4 +109,28 @@ describe('SpotScoreCalculator', () => {
     assert.equal(result.quality, 'fair');
     assert.ok(result.overallScore < 68, `Expected score < 68, got ${result.overallScore}`);
   });
+  test('applies a tide modifier only when the tide does not suit the spot', () => {
+    const base: MarineConditions = {
+      spotId: 'playa-del-hombre',
+      timestamp: '2026-11-10T12:00:00Z',
+      totalWaveHeightM: 1.6,
+      primarySwell: { heightM: 1.6, periodSec: 12, directionDeg: 45, compassDir: 'NE' },
+      wind: { speedKmh: 12, gustsKmh: 16, directionDeg: 270, compassDir: 'W' },
+    };
+
+    const noTide = SpotScoreCalculator.calculate(mockPlayaDelHombre, base);
+    const goodTide = SpotScoreCalculator.calculate(mockPlayaDelHombre, {
+      ...base,
+      tide: { heightM: 0, phase: 'mid', trend: 'rising' },
+    });
+    const lowTide = SpotScoreCalculator.calculate(mockPlayaDelHombre, {
+      ...base,
+      tide: { heightM: -0.6, phase: 'low', trend: 'falling' },
+    });
+
+    assert.equal(goodTide.overallScore, noTide.overallScore);
+    assert.ok(goodTide.pros.some((p) => p.startsWith('Marea media')));
+    assert.equal(lowTide.tideAdjustment, -3);
+    assert.equal(lowTide.overallScore, noTide.overallScore - 3);
+  });
 });

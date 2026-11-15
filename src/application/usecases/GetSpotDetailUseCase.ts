@@ -5,6 +5,7 @@ import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
 import { SpotDetailDTO } from '../dtos/SpotSummaryDTO';
 import { estimatedEnergy } from './GetSpotsWithForecastUseCase';
+import { canaryNow } from '@/domain/models/LocalTime';
 
 export class GetSpotDetailUseCase {
   constructor(
@@ -18,10 +19,11 @@ export class GetSpotDetailUseCase {
     const spot = await this.spotRepo.getSpotById(spotId);
     if (!spot) return null;
 
-    const [conditions, hourly, reports] = await Promise.all([
+    const [conditions, hourly, reports, daylight] = await Promise.all([
       this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
       this.marineService.getHourlyForecast(spot.id, spot.location.lat, spot.location.lng, 48),
       this.reportRepo.getRecentReports(spot.id, 10),
+      this.marineService.getDaylight(spot.location.lat, spot.location.lng, canaryNow().dateStr),
     ]);
 
     const energy = spot.surfForecastSlug
@@ -44,6 +46,7 @@ export class GetSpotDetailUseCase {
       hourlyForecast: hourly,
       reports,
       webcam: spot.webcam,
+      daylight: daylight ?? undefined,
     };
   }
 }

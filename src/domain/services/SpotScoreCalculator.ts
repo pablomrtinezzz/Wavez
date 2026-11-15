@@ -1,12 +1,15 @@
 import { Spot } from '../models/Spot';
 import { MarineConditions, isDirectionInRange } from '../models/MarineConditions';
 import { SpotScore, ConditionQuality } from '../models/SpotScore';
+import { TIDE_PHASE_LABEL, TIDE_TREND_LABEL } from '../models/Tide';
 
 const FLAT_THRESHOLD_M = 0.5;
 /** Highest score a flat sea can reach ("flat" quality band). */
 const FLAT_SCORE_CAP = 25;
 /** Highest score when swell is below the spot's minimum ("fair" at best). */
 const UNDERSIZED_SCORE_CAP = 58;
+/** Penalty when the tide phase is the opposite of what the spot needs. */
+const TIDE_MISMATCH_PENALTY = 6;
 
 export class SpotScoreCalculator {
   /**
@@ -108,7 +111,24 @@ export class SpotScoreCalculator {
       cons.push(`Periodo muy corto / Mar de viento (${period.toFixed(0)}s)`);
     }
 
-    let overallScore = Math.min(100, Math.max(0, swellScore + windScore + periodScore));
+    // 4. Tide (modifier). Only applied when the spot has a preference and data exists.
+    let tideAdjustment = 0;
+    const tide = conditions.tide;
+    if (tide && ideal.preferredTide !== 'all' && !isFlat) {
+      const label = `Marea ${TIDE_PHASE_LABEL[tide.phase]} ${TIDE_TREND_LABEL[tide.trend]}`;
+      if (tide.phase === ideal.preferredTide) {
+        pros.push(`${label} (la que pide el spot)`);
+      } else if (tide.phase !== 'mid' && ideal.preferredTide !== 'mid') {
+        // Low vs high: the spot is working on the wrong tide
+        tideAdjustment = -TIDE_MISMATCH_PENALTY;
+        cons.push(`${label}; funciona mejor con marea ${TIDE_PHASE_LABEL[ideal.preferredTide]}`);
+      } else {
+        tideAdjustment = -Math.round(TIDE_MISMATCH_PENALTY / 2);
+        cons.push(`${label}; mejor con marea ${TIDE_PHASE_LABEL[ideal.preferredTide]}`);
+      }
+    }
+
+    let overallScore = Math.min(100, Math.max(0, swellScore + windScore + periodScore + tideAdjustment));
     if (isFlat) overallScore = Math.min(overallScore, FLAT_SCORE_CAP);
     else if (isUndersized) overallScore = Math.min(overallScore, UNDERSIZED_SCORE_CAP);
 
@@ -145,6 +165,7 @@ export class SpotScoreCalculator {
       swellScore,
       windScore,
       periodScore,
+      tideAdjustment,
       pros,
       cons,
       recommendation,

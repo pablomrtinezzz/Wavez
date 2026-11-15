@@ -3,6 +3,7 @@ import { MarineConditions } from '@/domain/models/MarineConditions';
 import { SurfForecastEnergy } from '@/domain/models/SurfForecastEnergy';
 import { SpotScore } from '@/domain/models/SpotScore';
 import { SpotReport } from '@/domain/models/SpotReport';
+import { Daylight } from '@/domain/ports/MarineWeatherService';
 
 export interface SpotSummaryDTO {
   spot: Spot;
@@ -17,4 +18,5 @@ export interface SpotDetailDTO extends SpotSummaryDTO {
   hourlyForecast: MarineConditions[];
   reports: SpotReport[];
   webcam?: WebcamConfig;
+  daylight?: Daylight;
 }
