@@ -1,110 +1,108 @@
-# 🌊 Wavez — Gran Canaria Surf Radar & Webcams
+<p align="center">
+  <img src="public/brand/wavez-lockup-light.png" alt="Wavez" width="420">
+</p>
 
-**Wavez** es una plataforma web desarrollada para monitorizar en tiempo real y comparar las condiciones de surf en los mejores spots de Gran Canaria, combinando modelos oceanográficos de libre acceso, un índice de energía de ola, webcams oficiales embebidas y un sistema de fotos comunitarias verificadas (cámara en vivo y ubicación en el spot).
+<p align="center">
+  <strong>El parte de olas de Gran Canaria.</strong><br>
+  20 spots · oleaje, viento, marea y webcams en directo, hora a hora · gratis y abierto
+</p>
 
----
+<p align="center">
+  <a href="https://wavez-pi.vercel.app"><strong>🌊 Abrir Wavez</strong></a> ·
+  <a href="https://wavez-pi.vercel.app/wavez-metodologia.pdf">📄 Metodología (PDF)</a> ·
+  <a href="#decisiones-técnicas">⚙️ Decisiones técnicas</a>
+</p>
 
-## 🚀 Características Principales
+<p align="center">
+  <img src="docs/screenshots/hero.jpg" alt="Portada de Wavez con el mejor spot del momento" width="100%">
+</p>
 
-1. **Parte de olas editorial (20 spots en 4 zonas):** una sola página tranquila con el mejor spot del momento, sus cifras clave y secciones de *Spots*, *La isla* (mapa) y *Webcams*. Cada spot tiene un informe completo en un panel lateral enlazable (`/?spot=la-cicer`).
-   * **Las Palmas:** La Cícer, El Confital, El Lloret, La Barra, Los Muellitos.
-   * **Costa Norte:** El Frontón, El Agujero, San Felipe (Vagabundo), El Altillo, Quintanilla.
-   * **Telde / Este:** Playa del Hombre, Ojos de Garza, La Garita, Playa de Silva, Melenara.
-   * **Sur / Sureste:** Maspalomas (Punta/Faro), Arguineguín, Mosca Point, Playa del Inglés, Bahía Feliz.
+## Qué es
 
-2. **Datos reales a coste 0 (Open-Meteo, CC BY 4.0):**
-   * Oleaje (altura, periodo, dirección), viento y rachas, **marea estimada** (`sea_level_height_msl`), **temperatura del agua** y **orto/ocaso**.
-   * Línea temporal horaria de 15 días (−7 histórico / hoy / +6 previsión) en **hora canaria**.
-   * **Refresco con GitHub Actions:** cada 15 min el workflow `Refresh marine data` descarga los 20 spots en 2 peticiones y publica `marine-snapshot.json` en la rama `data`. La web lee ese fichero; si falta o tiene más de 3 h, consulta Open-Meteo en directo (caché de 10 min). Se puede lanzar a mano desde la pestaña *Actions* (*Run workflow*).
-   * Si Open-Meteo no devuelve datos, el spot se marca como *sin datos*: nunca se inventan valores.
-   * Índice de energía en "kJ" calculado como `40·H²·T` (proporcional a la potencia de ola en aguas profundas).
+Wavez responde a una pregunta: **¿dónde y cuándo merece la pena surfear hoy en Gran Canaria?**
 
-3. **Nota de 0 a 10 por spot:** combina oleaje y dirección (40), viento terral/onshore (35) y periodo (25), con ajuste por **marea preferida** del spot. Un mar plano (< 0,5 m) o por debajo del mínimo del spot nunca puntúa como bueno.
+Para cada uno de los 20 spots de la isla combina modelos oceánicos y meteorológicos abiertos con la ficha del spot (qué tamaño aguanta, qué swell le entra, qué viento es terral, qué marea prefiere) y lo resume en una **nota de 0 a 10** que explica sus pros y contras. Se puede mirar cualquier hora de los últimos 7 días y de los próximos 6, ver la mejor ventana del día, la temporada de cada pico y sus webcams en directo.
 
-4. **El día hora a hora:** gráfica de altura de ola con crosshair y lectura, noche sombreada, **mejor ventana** calculada como tramo continuo de horas de luz, tiras de calidad y viento, navegación por teclado y vista en tabla.
+| | |
+|---|---|
+| <img src="docs/screenshots/list.jpg" alt="Ranking de spots"> | <img src="docs/screenshots/drawer-chart.jpg" alt="Evolución hora a hora de un spot"> |
+| **Ranking** de los 20 spots con la nota del momento elegido. | **El día hora a hora**: altura, calidad, viento, marea y mejor ventana. |
+| <img src="docs/screenshots/map.jpg" alt="Mapa de la isla con zoom"> | <p align="center"><img src="docs/screenshots/mobile-hero.jpg" alt="Wavez en móvil" width="46%"> <img src="docs/screenshots/mobile-drawer.jpg" alt="Informe de spot en móvil" width="46%"></p> |
+| **Mapa** con la costa real (OpenStreetMap), zoom y pantalla completa. | Diseñado primero para el **móvil**, que es donde se consulta en la playa. |
 
-5. **Temporada:** consistencia mensual (% de días surfeables), ventana de swell y viento ideales, marea, ambiente, notas locales y precauciones.
+## Funcionalidades
 
-6. **Webcams oficiales de In2theBeach** (10 cámaras) cargadas bajo demanda y restringidas a los dominios aprobados.
+- **Nota 0–10 explicada**: oleaje y dirección (40), viento (35), periodo (25) y ajuste por marea. Un mar plato nunca puntúa como bueno.
+- **Línea temporal de 15 días** en hora canaria, con atajos ("mañana temprano", "este sábado") y reproducción hora a hora del día.
+- **Informe por spot** enlazable (`/?spot=la-cicer`): ahora, webcam, por qué esa nota, el día hora a hora, temporada y ficha.
+- **Marea, temperatura del agua y luz real** (orto/ocaso) para calcular la mejor ventana.
+- **10 webcams de In2theBeach**, cargadas bajo demanda y de una en una.
+- **Fotos de la comunidad verificadas**: solo cámara en vivo y con la ubicación del móvil dentro del spot.
+- **SEO**: contenido renderizado en servidor, 20 páginas estáticas `/spots/<spot>`, sitemap, Open Graph y datos estructurados.
 
-7. **Fotos de la comunidad con verificación en el sitio:** la foto solo se puede hacer en el momento con la cámara integrada en la web (sin acceso al carrete) y exige la ubicación del dispositivo, que debe estar a menos de 2,5 km del spot. Cliente y servidor aplican la misma regla; las imágenes se comprimen en el dispositivo y el envío está limitado por IP.
+## Decisiones técnicas
 
-8. **Abierta al público:** sin registro ni clave.
+Lo más interesante del proyecto no es la interfaz, sino los problemas de datos que hubo que resolver. El [informe de metodología](https://wavez-pi.vercel.app/wavez-metodologia.pdf) los explica en detalle con las fórmulas; aquí va el resumen:
 
-9. **Marca:** logo en `public/brand/` (símbolo SVG, versiones horizontales clara y oscura e iconos PNG para PWA y redes).
+- **Leer el mar en el lado correcto de la isla.** Open-Meteo devuelve la celda oceánica válida más cercana, y las celdas costeras están enmascaradas. Para Las Canteras eso era una celda ~15 km al **este** de Las Palmas, en la otra cara de La Isleta. Cada spot puede declarar un *punto marino* en mar abierto frente a su ventana de swell; el viento se sigue leyendo en la playa.
+- **Nunca inventar datos.** Los valores nulos del modelo se descartaban con valores por defecto (1 m, 10 s…). Ahora esas horas se omiten y el spot se marca "sin datos".
+- **Hora canaria en todas partes.** Open-Meteo da horas locales sin zona horaria; parsearlas con `new Date()` las desplazaba según el servidor o el navegador. Todo se compara como cadenas locales.
+- **Topes en la nota.** Sumar puntos de forma independiente hacía que 0,3 m con calma y periodo largo saliera "Muy bueno". El mar plato y el oleaje por debajo del mínimo del spot tienen tope.
+- **Una descarga para todos.** Una GitHub Action descarga los 20 spots cada 15 min en **2 peticiones** (Open-Meteo admite varias coordenadas) y publica un JSON en la rama `data`. Si falta o tiene más de 3 h, la web consulta Open-Meteo en directo.
+- **Energía calculada, no scrapeada.** Índice `40·H²·T`, proporcional a la potencia de ola en aguas profundas `P = ρg²H²T/64π`.
+- **Gráficas legibles**: un único eje por gráfica, paleta de calidad validada para daltonismo y siempre acompañada de texto, navegación por teclado y vista en tabla.
 
----
+## Arquitectura
 
-## 📄 Metodología
+Arquitectura hexagonal (puertos y adaptadores): la lógica de surf no sabe nada de Next.js ni de Open-Meteo.
 
-El informe [`public/wavez-metodologia.pdf`](public/wavez-metodologia.pdf) explica sin código de dónde salen los datos, las fórmulas (potencia de ola, índice de energía, fase de marea, haversine), cómo se calcula la nota y por qué. Su fuente es `docs/metodologia/metodologia.html` (las figuras están generadas con datos reales del día indicado en la portada).
-
----
-
-## 🏛️ Arquitectura Hexagonal (Ports & Adapters)
-
-El proyecto sigue una separación estricta de responsabilidades:
+```mermaid
+flowchart LR
+  OM[("Open-Meteo<br/>marine + forecast")] -->|"cada 15 min, 2 peticiones"| GA["GitHub Action"]
+  GA -->|"marine-snapshot.json"| DATA[("rama data")]
+  DATA --> SNAP["SnapshotMarineAdapter"]
+  OM -.->|"fallback"| LIVE["OpenMeteoMarineAdapter"]
+  SNAP --> UC["Casos de uso"]
+  LIVE --> UC
+  UC --> SCORE["SpotScoreCalculator<br/>Tide · LocalTime"]
+  UC --> API["Route handlers /api"]
+  API --> UI["Next.js · React 19"]
+```
 
 ```
 src/
-├── domain/                      # Lógica pura de negocio y contratos (Zero deps)
-│   ├── models/                  # Spot, MarineConditions, Tide, LocalTime, SpotScore, SpotReport...
-│   ├── ports/                   # Interfaces (SpotRepository, MarineWeatherService, ClimatologyRepository...)
-│   └── services/                # SpotScoreCalculator, ExifSecurityValidator
-├── infrastructure/              # Adaptadores que implementan los puertos
-│   ├── repositories/            # StaticSpotRepository, StaticClimatologyRepository
-│   ├── adapters/                # OpenMeteoMarineAdapter, InMemorySpotReportRepository
-│   └── http/                    # Rate limiting de endpoints públicos
-├── application/                 # Casos de uso y orquestación
-│   ├── dtos/                    # SpotSummaryDTO, SpotDetailDTO
-│   ├── usecases/                # GetSpotsWithForecastUseCase, GetSpotDetailUseCase, SubmitSpotReportUseCase
-│   └── container.ts             # Inyección de dependencias (Composition Root)
-├── presentation/                # Interfaz de usuario
-│   ├── components/site/         # Hero, TimeControl, SpotList, IslandMap, WebcamGallery, cabecera/pie
-│   ├── components/spot/         # SpotDrawer (informe), WebcamEmbed, ReportDialog
-│   ├── components/charts/       # DayChart, SeasonChart
-│   └── lib/                     # Formato, etiquetas de calidad, cliente de API
-└── app/                         # Página y endpoints (/api/spots, /api/reports)
+├── domain/          # Modelos, puertos y servicios puros: nota, marea, hora local, validación de fotos
+├── application/     # Casos de uso y composition root (container.ts)
+├── infrastructure/  # Open-Meteo (directo e instantánea), repositorios estáticos, rate limiting
+├── presentation/    # Componentes de la web, gráficas SVG propias, formato
+└── app/             # Rutas de Next.js: página, /spots/[slug], API, sitemap, robots, OG
+scripts/             # Descarga de la instantánea (usado por la GitHub Action)
+docs/metodologia/    # Fuente HTML del informe PDF
 ```
 
----
+**Stack:** Next.js 16 (App Router, Cache Components) · React 19 · TypeScript estricto · Tailwind CSS 4 · tests con el runner nativo de Node · Vercel · GitHub Actions.
 
-## 🛠️ Tecnologías Empleadas
+## Ejecutar en local
 
-* **Framework:** Next.js 16 (App Router + React 19)
-* **Lenguaje:** TypeScript 5 (tipado estricto)
-* **Estilos:** Tailwind CSS 4 (tokens propios), Instrument Serif + Geist
-* **Cámara y ubicación:** `getUserMedia` + Geolocation API + Canvas
-* **Iconografía:** Lucide React
-* **Testing:** Node.js native test runner con TypeScript (`npm test`)
+```bash
+npm install
+npm test          # tests de dominio, casos de uso y adaptadores
+npm run dev       # http://localhost:3000
+```
 
----
+Variables opcionales:
 
-## 📦 Instalación y Ejecución Local
+| Variable | Para qué |
+|---|---|
+| `NEXT_PUBLIC_SITE_URL` | URL canónica para SEO (en Vercel se usa la de producción automáticamente). |
+| `MARINE_SNAPSHOT_URL` | Otra ubicación para la instantánea de datos. |
 
-1. **Clonar repositorio e instalar dependencias:**
-   ```bash
-   git clone <repo-url>
-   cd wavez
-   npm install
-   ```
+La instantánea se puede generar a mano con `npx tsx scripts/refresh-marine-snapshot.ts out/marine-snapshot.json` o lanzando el workflow *Refresh marine data* desde la pestaña *Actions*.
 
-2. **Ejecutar tests unitarios y de adaptadores:**
-   ```bash
-   npm test
-   ```
+## Datos y créditos
 
-3. **Iniciar el servidor de desarrollo:**
-   ```bash
-   npm run dev
-   ```
-   Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+- Oleaje, viento, marea y temperatura: [Open-Meteo](https://open-meteo.com/) (CC BY 4.0).
+- Costa de la isla: © [OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL).
+- Webcams: [In2theBeach](https://in2thebeach.es/), propiedad de sus autores.
 
----
-
-## 🌐 Despliegue a Coste 0
-
-1. **Frontend y Backend Serverless:** Conectar el repositorio a [Vercel](https://vercel.com) o [Cloudflare Pages] (Free Tier).
-2. **Base de Datos y Almacenamiento Permanente (Futuro):**
-   * Configurar un proyecto gratuito en [Supabase](https://supabase.com) (PostgreSQL 500MB + Storage 1GB).
-   * Los puertos `SpotReportRepository` y `SpotRepository` ya están preparados para intercambiar la implementación en memoria por Supabase con solo cambiar el adaptador en `src/application/container.ts`.
+> Wavez es orientativo: muestra datos de modelos, no observaciones. Las condiciones reales pueden cambiar en el spot; compruébalas siempre al llegar.
