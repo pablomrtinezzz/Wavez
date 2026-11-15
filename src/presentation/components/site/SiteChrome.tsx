@@ -4,7 +4,7 @@ import React from 'react';
 import { RotateCw } from 'lucide-react';
 import { cn } from '@/presentation/lib/utils';
 
-/** Brand mark: a breaking wave against the Canary sun. Kept in sync with src/app/icon.svg. */
+/** Brand mark: the sun setting over the Atlantic. Kept in sync with src/app/icon.svg. */
 export function BrandMark({ className }: { className?: string }) {
   const id = React.useId();
   return (
@@ -14,13 +14,11 @@ export function BrandMark({ className }: { className?: string }) {
           <circle cx="32" cy="32" r="31" />
         </clipPath>
       </defs>
-      <circle cx="32" cy="32" r="31" fill="#F2C46D" />
       <g clipPath={`url(#${id})`}>
-        <path
-          d="M-2 66V41C9 41 15 19 33 16.5C46 14.8 54.5 23.5 51.5 31.5C49 37.5 40.5 36.5 40.5 30.5C40.5 28 42.5 26.5 44.5 27.5C35.5 27.5 33 37 38 42C42 46 52 45.5 66 38V66Z"
-          fill="#0E4F6B"
-        />
-        <path d="M-2 52C10 52 18 49 28 49C38 49 46 53 66 50" fill="none" stroke="#F6F4EF" strokeWidth="2.2" strokeLinecap="round" opacity="0.9" />
+        <rect width="64" height="64" fill="#0E4F6B" />
+        <circle cx="32" cy="38" r="16" fill="#F2C46D" />
+        <rect y="38" width="64" height="26" fill="#0E4F6B" />
+        <path d="M8 45h48M14 51h36M22 57h20" stroke="#F2C46D" strokeWidth="1.8" strokeLinecap="round" opacity="0.8" />
       </g>
     </svg>
   );

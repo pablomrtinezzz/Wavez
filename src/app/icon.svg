@@ -1,8 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs><clipPath id="wz-c"><circle cx="32" cy="32" r="31"/></clipPath></defs>
-  <circle cx="32" cy="32" r="31" fill="#F2C46D"/>
   <g clip-path="url(#wz-c)">
-    <path d="M-2 66V41C9 41 15 19 33 16.5C46 14.8 54.5 23.5 51.5 31.5C49 37.5 40.5 36.5 40.5 30.5C40.5 28 42.5 26.5 44.5 27.5C35.5 27.5 33 37 38 42C42 46 52 45.5 66 38V66Z" fill="#0E4F6B"/>
-    <path d="M-2 52C10 52 18 49 28 49C38 49 46 53 66 50" fill="none" stroke="#F6F4EF" stroke-width="2.2" stroke-linecap="round" opacity="0.9"/>
+    <rect width="64" height="64" fill="#0E4F6B"/>
+    <circle cx="32" cy="38" r="16" fill="#F2C46D"/>
+    <rect y="38" width="64" height="26" fill="#0E4F6B"/>
+    <path d="M8 45h48M14 51h36M22 57h20" stroke="#F2C46D" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/>
   </g>
 </svg>
