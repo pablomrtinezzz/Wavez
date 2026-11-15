@@ -62,15 +62,14 @@ export class ExifSecurityValidator {
     }
 
     // 2. EXIF timestamp check
-    let photoTimeMs = now;
+    let hasVerifiedTimestamp = false;
     if (exifData?.dateTimeOriginal) {
       const parsedTime = Date.parse(exifData.dateTimeOriginal);
       if (!isNaN(parsedTime)) {
-        photoTimeMs = parsedTime;
-        const ageHours = (now - photoTimeMs) / (1000 * 60 * 60);
+        const ageHours = (now - parsedTime) / (1000 * 60 * 60);
 
         // Security check: Future timestamp (allow 5 min clock skew)
-        if (photoTimeMs > now + 5 * 60 * 1000) {
+        if (parsedTime > now + 5 * 60 * 1000) {
           return {
             isValid: false,
             isRealtimeVerified: false,
@@ -89,7 +88,8 @@ export class ExifSecurityValidator {
           };
         }
 
-        flags.push(`HORA_VALIDA: Foto tomada hace ${Math.round(ageHours * 60)} min.`);
+        hasVerifiedTimestamp = true;
+        flags.push(`HORA_VALIDA: Foto tomada hace ${Math.max(0, Math.round(ageHours * 60))} min.`);
       } else {
         flags.push('SIN_METADATOS_FECHA: No se pudo verificar la fecha original.');
       }
@@ -118,12 +118,15 @@ export class ExifSecurityValidator {
     }
 
     // 4. Overall verification verdict
-    // Verified if:
+    // A photo shot far away from the spot is never verified, whatever the capture method.
+    // Otherwise it is verified if:
     // A) Directly shot from camera NOW, OR
-    // B) Has valid EXIF <= maxAgeHours AND within maxDistanceMeters (or camera direct without GPS)
+    // B) Gallery photo with a fresh EXIF timestamp AND GPS inside the geofence
+    const isOutOfRange = distanceMeters !== undefined && distanceMeters > maxDistanceMeters;
+    const isInsideGeofence = distanceMeters !== undefined && !isOutOfRange;
     const isRealtimeVerified =
-      captureMethod === 'camera_direct' ||
-      (distanceMeters !== undefined && distanceMeters <= maxDistanceMeters && photoTimeMs <= now);
+      !isOutOfRange &&
+      (captureMethod === 'camera_direct' || (hasVerifiedTimestamp && isInsideGeofence));
 
     return {
       isValid: true,

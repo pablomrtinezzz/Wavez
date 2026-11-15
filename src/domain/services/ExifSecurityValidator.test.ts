@@ -98,4 +98,30 @@ describe('ExifSecurityValidator', () => {
     assert.equal(result.isRealtimeVerified, false);
     assert.ok(result.flags.some((f) => f.includes('FUERA_DE_RANGO')));
   });
+
+  test('does not verify a gallery photo with GPS but no capture date', () => {
+    const result = ExifSecurityValidator.validate({
+      captureMethod: 'gallery_upload',
+      exifData: { latitude: spotCoords.lat, longitude: spotCoords.lng },
+      spotCoordinates: spotCoords,
+      currentTimeIso: referenceTime,
+    });
+
+    assert.equal(result.isValid, true);
+    assert.equal(result.isRealtimeVerified, false);
+  });
+
+  test('does not verify a camera capture whose GPS is outside the geofence', () => {
+    const result = ExifSecurityValidator.validate({
+      captureMethod: 'camera_direct',
+      exifData: { latitude: 27.733, longitude: -15.586 },
+      spotCoordinates: spotCoords,
+      maxDistanceMeters: 2500,
+      currentTimeIso: referenceTime,
+    });
+
+    assert.equal(result.isValid, true);
+    assert.equal(result.isRealtimeVerified, false);
+    assert.ok(result.flags.some((f) => f.includes('FUERA_DE_RANGO')));
+  });
 });
