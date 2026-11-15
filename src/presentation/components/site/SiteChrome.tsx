@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { RotateCw } from 'lucide-react';
 import { cn } from '@/presentation/lib/utils';
 
@@ -26,10 +27,10 @@ export function BrandMark({ className }: { className?: string }) {
 
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <a href="#" className={cn('inline-flex items-center gap-2 text-ink', className)} aria-label="Wavez, inicio">
+    <Link href="/" className={cn('inline-flex items-center gap-2 text-ink', className)} aria-label="Wavez, inicio">
       <BrandMark className="size-7" />
       <span className="display text-2xl">Wavez</span>
-    </a>
+    </Link>
   );
 }
 

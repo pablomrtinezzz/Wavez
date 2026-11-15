@@ -54,11 +54,11 @@ export function Hero({ summaries, selection, today, currentHour, onSelectSpot }:
 
       <p className="pr-20 text-base text-sand/75 sm:pr-32 sm:text-lg">{headline(selection, today, currentHour, isFlat)}</p>
       <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-4 lg:pr-32">
-        <h1 id="hero-title" className="display text-[clamp(2.75rem,8vw,6rem)] text-sand">
+        <h2 id="hero-title" className="display text-[clamp(2.75rem,8vw,6rem)] text-sand">
           <button onClick={() => onSelectSpot(spot.id)} className="text-left transition-opacity hover:opacity-80">
             {spot.name}
           </button>
-        </h1>
+        </h2>
         <ScoreBadge score={score.overallScore} quality={score.quality} size="lg" className="mb-2 shadow-lg shadow-black/20" />
       </div>
       <p className="mt-5 max-w-2xl text-base leading-relaxed text-sand/80 sm:text-lg">

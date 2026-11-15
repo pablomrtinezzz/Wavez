@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/presentation/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,16 +21,38 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Wavez · El parte de olas de Gran Canaria",
-  description:
-    "Condiciones de surf hora a hora en 20 spots de Gran Canaria: oleaje, viento, marea, temperatura del agua, webcams en directo y fotos de la comunidad.",
-  manifest: "/manifest.json",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} · ${SITE_TAGLINE}: previsión de surf y webcams`,
+    template: `%s · ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: [
+    'surf Gran Canaria',
+    'previsión olas Gran Canaria',
+    'parte de olas',
+    'webcam Las Canteras',
+    'La Cícer surf',
+    'El Confital',
+    'surf Canarias',
+    'previsión surf',
+    'mareas Gran Canaria',
+  ],
+  alternates: { canonical: '/' },
+  manifest: '/manifest.json',
   openGraph: {
-    title: "Wavez · El parte de olas de Gran Canaria",
-    description: "Oleaje, viento, marea y webcams en directo de 20 spots de Gran Canaria.",
-    images: ["/brand/wavez-lockup-light.png"],
-    locale: "es_ES",
-    type: "website",
+    title: `${SITE_NAME} · ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+    siteName: SITE_NAME,
+    url: '/',
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${SITE_NAME} · ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
   },
 };
 
