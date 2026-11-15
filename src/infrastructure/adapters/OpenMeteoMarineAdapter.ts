@@ -25,6 +25,8 @@ const EMPTY_TIMELINE: SpotTimeline = { hours: [], daylight: new Map() };
 
 const PAST_DAYS = 7;
 const FORECAST_DAYS = 7;
+/** Largest distance between the requested hour and the hour actually served. */
+const MAX_GAP_MS = 2 * 60 * 60 * 1000;
 
 /**
  * Single source of truth for marine data: one 15-day hourly timeline per spot
@@ -55,6 +57,10 @@ export class OpenMeteoMarineAdapter implements MarineWeatherService {
     // case; otherwise fall back to the closest hour by lexicographic distance.
     const exact = timeline.find((h) => h.timestamp === targetLocalHour);
     const match = exact ?? this.closestTo(timeline, targetLocalHour);
+    // Out of the 15-day window: say so instead of returning a different day
+    if (Math.abs(Date.parse(`${match.timestamp}Z`) - Date.parse(`${targetLocalHour}Z`)) > MAX_GAP_MS) {
+      throw new MarineDataUnavailableError(spotId);
+    }
     return { ...match, spotId };
   }
 
