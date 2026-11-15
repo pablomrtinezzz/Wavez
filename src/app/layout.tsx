@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/presentation/lib/site";
 
@@ -72,7 +73,11 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
     >
-      <body className="min-h-dvh bg-sand text-ink antialiased">{children}</body>
+      <body className="min-h-dvh bg-sand text-ink antialiased">
+        {children}
+        {/* Cookieless page-view analytics, enabled in Vercel → Analytics */}
+        <Analytics />
+      </body>
     </html>
   );
 }
