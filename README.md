@@ -35,6 +35,12 @@
 
 ---
 
+## 📄 Metodología
+
+El informe [`public/wavez-metodologia.pdf`](public/wavez-metodologia.pdf) explica sin código de dónde salen los datos, las fórmulas (potencia de ola, índice de energía, fase de marea, haversine), cómo se calcula la nota y por qué. Su fuente es `docs/metodologia/metodologia.html` (las figuras están generadas con datos reales del día indicado en la portada).
+
+---
+
 ## 🏛️ Arquitectura Hexagonal (Ports & Adapters)
 
 El proyecto sigue una separación estricta de responsabilidades:

@@ -95,6 +95,14 @@ export function SiteFooter() {
         <div>
           <Wordmark />
           <p className="mt-4 max-w-xs leading-relaxed text-ink-3">Un parte de olas independiente y gratuito para Gran Canaria.</p>
+          <a
+            href="/wavez-metodologia.pdf"
+            target="_blank"
+            rel="noopener"
+            className="mt-4 inline-block text-ocean underline decoration-sun underline-offset-4 hover:text-ink"
+          >
+            Cómo calculamos la nota (PDF)
+          </a>
         </div>
         <div>
           <p className="eyebrow">Datos</p>
