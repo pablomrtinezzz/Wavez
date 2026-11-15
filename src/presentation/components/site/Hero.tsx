@@ -111,7 +111,7 @@ export function Hero({ summaries, selection, today, currentHour, onSelectSpot }:
         <Figure
           label="Energía"
           value={`${top.energy.energyKj.toLocaleString('es-ES')} kJ`}
-          detail={top.energy.source === 'scraped' ? 'Surf-Forecast' : 'estimada'}
+          detail="índice H² · T"
         />
       </dl>
 

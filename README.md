@@ -1,6 +1,6 @@
 # 🌊 Wavez — Gran Canaria Surf Radar & Webcams
 
-**Wavez** es una plataforma web desarrollada para monitorizar en tiempo real y comparar las condiciones de surf en los mejores spots de Gran Canaria, combinando modelos oceanográficos de libre acceso, mediciones de energía en kilojulios ($kJ$) de Surf-Forecast, webcams oficiales embebidas y un sistema de fotos comunitarias verificadas (cámara en vivo y ubicación en el spot).
+**Wavez** es una plataforma web desarrollada para monitorizar en tiempo real y comparar las condiciones de surf en los mejores spots de Gran Canaria, combinando modelos oceanográficos de libre acceso, un índice de energía de ola, webcams oficiales embebidas y un sistema de fotos comunitarias verificadas (cámara en vivo y ubicación en el spot).
 
 ---
 
@@ -16,7 +16,7 @@
    * Oleaje (altura, periodo, dirección), viento y rachas, **marea estimada** (`sea_level_height_msl`), **temperatura del agua** y **orto/ocaso**.
    * Línea temporal horaria de 15 días (−7 histórico / +7 previsión) en **hora canaria**, cacheada por spot (10 min) con deduplicación de peticiones.
    * Si Open-Meteo no devuelve datos, el spot se marca como *sin datos*: nunca se inventan valores.
-   * Energía en kJ de Surf-Forecast en directo (con caché de 1 h) o estimada como `40·H²·T` para otras horas.
+   * Índice de energía en "kJ" calculado como `40·H²·T` (proporcional a la potencia de ola en aguas profundas).
 
 3. **Nota de 0 a 10 por spot:** combina oleaje y dirección (40), viento terral/onshore (35) y periodo (25), con ajuste por **marea preferida** del spot. Un mar plano (< 0,5 m) o por debajo del mínimo del spot nunca puntúa como bueno.
 
@@ -42,11 +42,11 @@ El proyecto sigue una separación estricta de responsabilidades:
 src/
 ├── domain/                      # Lógica pura de negocio y contratos (Zero deps)
 │   ├── models/                  # Spot, MarineConditions, Tide, LocalTime, SpotScore, SpotReport...
-│   ├── ports/                   # Interfaces (SpotRepository, MarineWeatherService, EnergyScraperService...)
+│   ├── ports/                   # Interfaces (SpotRepository, MarineWeatherService, ClimatologyRepository...)
 │   └── services/                # SpotScoreCalculator, ExifSecurityValidator
 ├── infrastructure/              # Adaptadores que implementan los puertos
 │   ├── repositories/            # StaticSpotRepository, StaticClimatologyRepository
-│   ├── adapters/                # OpenMeteoMarineAdapter, SurfForecastScraperAdapter, InMemorySpotReportRepository
+│   ├── adapters/                # OpenMeteoMarineAdapter, InMemorySpotReportRepository
 │   └── http/                    # Rate limiting de endpoints públicos
 ├── application/                 # Casos de uso y orquestación
 │   ├── dtos/                    # SpotSummaryDTO, SpotDetailDTO
@@ -67,7 +67,6 @@ src/
 * **Framework:** Next.js 16 (App Router + React 19)
 * **Lenguaje:** TypeScript 5 (tipado estricto)
 * **Estilos:** Tailwind CSS 4 (tokens propios), Instrument Serif + Geist
-* **Scraping seguro:** Cheerio (con rate-limiting y caché)
 * **Cámara y ubicación:** `getUserMedia` + Geolocation API + Canvas
 * **Iconografía:** Lucide React
 * **Testing:** Node.js native test runner con TypeScript (`npm test`)

@@ -1,11 +1,10 @@
 import { SpotRepository } from '@/domain/ports/SpotRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
-import { EnergyScraperService } from '@/domain/ports/EnergyScraperService';
 import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
 import { Spot, ZoneId } from '@/domain/models/Spot';
 import { MarineConditions } from '@/domain/models/MarineConditions';
-import { SurfForecastEnergy, estimateWaveEnergyKj } from '@/domain/models/SurfForecastEnergy';
+import { WaveEnergy, estimateWaveEnergyKj } from '@/domain/models/WaveEnergy';
 import { SpotSummaryDTO } from '../dtos/SpotSummaryDTO';
 
 export interface SpotsForecastResult {
@@ -18,7 +17,6 @@ export class GetSpotsWithForecastUseCase {
   constructor(
     private spotRepo: SpotRepository,
     private marineService: MarineWeatherService,
-    private energyService: EnergyScraperService,
     private reportRepo: SpotReportRepository
   ) {}
 
@@ -40,12 +38,7 @@ export class GetSpotsWithForecastUseCase {
           this.reportRepo.getRecentReports(spot.id, 10),
         ]);
 
-        // Surf-Forecast publishes a single "now" energy value, so it is only
-        // meaningful for live mode. Any other hour uses the physical estimate
-        // for that hour's swell instead of today's scraped figure.
-        const energy = targetLocalHour
-          ? estimatedEnergy(spot, conditions)
-          : await this.resolveLiveEnergy(spot, conditions);
+        const energy = estimatedEnergy(conditions);
 
         return {
           spot,
@@ -68,23 +61,11 @@ export class GetSpotsWithForecastUseCase {
     return { summaries, unavailable };
   }
 
-  private async resolveLiveEnergy(spot: Spot, conditions: MarineConditions): Promise<SurfForecastEnergy> {
-    if (!spot.surfForecastSlug) return estimatedEnergy(spot, conditions);
-    return this.energyService.getSpotEnergy(
-      spot.surfForecastSlug,
-      conditions.primarySwell.heightM,
-      conditions.primarySwell.periodSec
-    );
-  }
 }
 
-export function estimatedEnergy(spot: Spot, conditions: MarineConditions): SurfForecastEnergy {
+export function estimatedEnergy(conditions: MarineConditions): WaveEnergy {
   return {
-    spotSlug: spot.slug,
     timestamp: conditions.timestamp,
     energyKj: estimateWaveEnergyKj(conditions.primarySwell.heightM, conditions.primarySwell.periodSec),
-    source: 'calculated_fallback',
-    waveHeightM: conditions.primarySwell.heightM,
-    periodSec: conditions.primarySwell.periodSec,
   };
 }

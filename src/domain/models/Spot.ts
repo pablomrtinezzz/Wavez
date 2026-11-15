@@ -47,5 +47,4 @@ export interface Spot {
   description: string;
   idealConditions: IdealConditions;
   webcam?: WebcamConfig;
-  surfForecastSlug?: string;
 }

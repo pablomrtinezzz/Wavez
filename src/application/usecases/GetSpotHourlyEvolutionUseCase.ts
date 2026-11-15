@@ -3,7 +3,7 @@ import { MarineWeatherService, Daylight } from '@/domain/ports/MarineWeatherServ
 import { TideState } from '@/domain/models/Tide';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
 import { ConditionQuality } from '@/domain/models/SpotScore';
-import { estimateWaveEnergyKj } from '@/domain/models/SurfForecastEnergy';
+import { estimateWaveEnergyKj } from '@/domain/models/WaveEnergy';
 import { localHourOf } from '@/domain/models/LocalTime';
 
 /** Daylight hours used when no sunrise/sunset data is available. */

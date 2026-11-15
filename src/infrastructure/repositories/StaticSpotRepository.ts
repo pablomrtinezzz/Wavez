@@ -30,7 +30,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       attributionUrl: 'https://in2thebeach.es/webcam/81/playa-de-la-cicer-el-cruce/',
       aspectRatio: '16/9',
     },
-    surfForecastSlug: 'La-Cicer',
   },
   {
     id: 'el-confital',
@@ -50,7 +49,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 18,
       preferredTide: 'mid',
     },
-    surfForecastSlug: 'El-Confital',
   },
   {
     id: 'el-lloret',
@@ -70,7 +68,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 20,
       preferredTide: 'low',
     },
-    surfForecastSlug: 'El-Lloret',
   },
   {
     id: 'la-barra',
@@ -146,7 +143,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 16,
       preferredTide: 'mid',
     },
-    surfForecastSlug: 'El-Fronton',
   },
   {
     id: 'el-agujero',
@@ -166,7 +162,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 20,
       preferredTide: 'mid',
     },
-    surfForecastSlug: 'El-Agujero',
   },
   {
     id: 'san-felipe',
@@ -186,7 +181,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 20,
       preferredTide: 'low',
     },
-    surfForecastSlug: 'San-Felipe',
     webcam: {
       provider: 'in2thebeach',
       iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=142',
@@ -262,7 +256,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       attributionUrl: 'https://in2thebeach.es/webcam/2/playa-del-hombre/',
       aspectRatio: '16/9',
     },
-    surfForecastSlug: 'Playa-del-Hombre',
   },
   {
     id: 'ojos-de-garza',
@@ -282,7 +275,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 22,
       preferredTide: 'mid',
     },
-    surfForecastSlug: 'Ojos-de-Garza',
   },
   {
     id: 'la-garita',
@@ -370,7 +362,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 28,
       preferredTide: 'mid',
     },
-    surfForecastSlug: 'Maspalomas',
     webcam: {
       provider: 'in2thebeach',
       iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=123',
@@ -423,7 +414,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 25,
       preferredTide: 'high',
     },
-    surfForecastSlug: 'Mosca-Point',
     webcam: {
       provider: 'in2thebeach',
       iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=14',
@@ -450,7 +440,6 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
       maxFavorableWindKmh: 24,
       preferredTide: 'mid',
     },
-    surfForecastSlug: 'Playa-del-Ingles',
     webcam: {
       provider: 'in2thebeach',
       iframeUrl: 'https://in2thebeach.es/callbacks/camviewer_ext2.php?id=3',

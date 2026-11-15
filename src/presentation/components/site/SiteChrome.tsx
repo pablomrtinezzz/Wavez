@@ -100,13 +100,7 @@ export function SiteFooter() {
               </a>{' '}
               (CC BY 4.0)
             </li>
-            <li>
-              Energía:{' '}
-              <a className="underline underline-offset-4 hover:text-ink" href="https://www.surf-forecast.com/" target="_blank" rel="noopener noreferrer">
-                Surf-Forecast
-              </a>{' '}
-              o estimación propia
-            </li>
+            <li>Energía: índice propio a partir de altura y periodo (40·H²·T).</li>
             <li>La marea es un modelo global, no apto para navegación.</li>
           </ul>
         </div>

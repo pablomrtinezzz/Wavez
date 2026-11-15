@@ -303,7 +303,7 @@ function NowFigures({ detail }: { detail: SpotDetailDTO }) {
         <Figure
           label="Energía"
           value={`${energy.energyKj.toLocaleString('es-ES')} kJ`}
-          detail={energy.source === 'scraped' ? 'Surf-Forecast' : 'estimada con H² · T'}
+          detail="índice H² · T"
         />
         {daylight && (
           <Figure

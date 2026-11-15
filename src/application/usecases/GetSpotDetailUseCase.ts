@@ -1,6 +1,5 @@
 import { SpotRepository } from '@/domain/ports/SpotRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
-import { EnergyScraperService } from '@/domain/ports/EnergyScraperService';
 import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
 import { SpotDetailDTO } from '../dtos/SpotSummaryDTO';
@@ -11,7 +10,6 @@ export class GetSpotDetailUseCase {
   constructor(
     private spotRepo: SpotRepository,
     private marineService: MarineWeatherService,
-    private energyService: EnergyScraperService,
     private reportRepo: SpotReportRepository
   ) {}
 
@@ -26,14 +24,7 @@ export class GetSpotDetailUseCase {
       this.marineService.getDaylight(spot.location.lat, spot.location.lng, canaryNow().dateStr),
     ]);
 
-    const energy = spot.surfForecastSlug
-      ? await this.energyService.getSpotEnergy(
-          spot.surfForecastSlug,
-          conditions.primarySwell.heightM,
-          conditions.primarySwell.periodSec
-        )
-      : estimatedEnergy(spot, conditions);
-
+    const energy = estimatedEnergy(conditions);
     const score = SpotScoreCalculator.calculate(spot, conditions);
 
     return {
