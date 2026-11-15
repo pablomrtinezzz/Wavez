@@ -1,9 +1,10 @@
 @import "tailwindcss";
 
 /*
- * Wavez design tokens: an editorial, light surface with one ocean accent.
- * Condition quality is an ordinal scale, so it uses a single-hue sequential
- * ramp (grey → deep teal) and is always paired with a text label.
+ * Wavez design tokens: an editorial light surface with the brand's ocean
+ * blue and Canary sun. Condition quality uses a familiar traffic-light-like
+ * scale (validated for colour-vision deficiency) and is always paired with
+ * a text label; "Plato" is deliberately neutral grey.
  */
 @theme {
   --color-sand: #f6f4ef;
@@ -13,17 +14,22 @@
   --color-ink-3: #7d8891;
   --color-line: #e4e0d7;
   --color-line-strong: #d3cec2;
-  --color-accent: #0f5e73;
-  --color-accent-soft: #e3eef0;
+  --color-accent: #0e4f6b;
+  --color-accent-soft: #e2edf2;
+  --color-ocean: #0e4f6b;
+  --color-ocean-deep: #0a3347;
+  --color-sea: #e3eef3;
+  --color-sun: #f2c46d;
+  --color-sun-soft: #fbefd6;
   --color-warn: #9a5b13;
   --color-warn-soft: #f7ecdc;
   --color-danger: #a23b2a;
 
-  --color-q-flat: #cfd6da;
-  --color-q-poor: #a3c2ca;
-  --color-q-fair: #6aa2b1;
-  --color-q-good: #2c7c91;
-  --color-q-firing: #0b4c60;
+  --color-q-flat: #9aa5ae;
+  --color-q-poor: #d64f45;
+  --color-q-fair: #d2921b;
+  --color-q-good: #2e9e6b;
+  --color-q-firing: #1c5fa8;
 
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: var(--font-instrument-serif), ui-serif, Georgia, "Times New Roman", serif;

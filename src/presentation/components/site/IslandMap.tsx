@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { ConditionQuality } from '@/domain/models/SpotScore';
 import { QUALITY, formatScore } from '@/presentation/lib/format';
-import { QualityDot } from '@/presentation/components/ui/primitives';
+import { QualityDot, ScoreBadge } from '@/presentation/components/ui/primitives';
 
 /** Simplified Gran Canaria coastline (lat, lng), clockwise from Las Canteras. */
 const COAST: [number, number][] = [
@@ -53,8 +53,10 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
       <div className="relative">
+        <div className="rounded-3xl bg-sea p-4 sm:p-8">
         <svg viewBox={`-20 -20 ${W + 40} ${H + 40}`} className="h-auto w-full" role="group" aria-label="Mapa de spots de Gran Canaria">
-          <path d={COAST_PATH} fill="var(--color-paper)" stroke="var(--color-line-strong)" strokeWidth="1.5" strokeLinejoin="round" />
+          <path d={COAST_PATH} fill="none" stroke="var(--color-paper)" strokeWidth="14" strokeLinejoin="round" opacity="0.7" />
+          <path d={COAST_PATH} fill="var(--color-sand)" stroke="#c9d9e0" strokeWidth="1.5" strokeLinejoin="round" />
           <text x={project(27.96, -15.6).x} y={project(27.96, -15.6).y} textAnchor="middle" fontSize="13" letterSpacing="3" fill="var(--color-ink-3)">
             GRAN CANARIA
           </text>
@@ -95,6 +97,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
             );
           })}
         </svg>
+        </div>
         <MapLegend />
       </div>
 
@@ -102,9 +105,9 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
         <div className="border-t border-line pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0" aria-live="polite">
           <p className="eyebrow">{focused.spot.location.municipality}</p>
           <h3 className="display mt-2 text-3xl">{focused.spot.name}</h3>
-          <p className="mt-3 flex items-center gap-2 text-sm text-ink-2">
-            <QualityDot quality={focused.score.quality} />
-            {QUALITY[focused.score.quality].label} · {formatScore(focused.score.overallScore)}/10
+          <p className="mt-4 flex items-center gap-3 text-sm text-ink">
+            <ScoreBadge score={focused.score.overallScore} quality={focused.score.quality} />
+            {QUALITY[focused.score.quality].label}
           </p>
           <p className="mt-1 text-sm text-ink-2 tabular-nums">
             {focused.conditions.primarySwell.heightM.toFixed(1)} m · {Math.round(focused.conditions.primarySwell.periodSec)} s{' '}

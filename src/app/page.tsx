@@ -142,9 +142,12 @@ export default function HomePage() {
       <main className="mx-auto max-w-6xl px-5 sm:px-8">
         <section className="pt-10 sm:pt-14" aria-label="Día y hora">
           <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-            <p className="text-sm text-ink-2">
-              {capitalize(formatLongDate(selection.dateStr))} · {formatHour(selection.hour)}
-            </p>
+            <h2 className="text-lg text-ink">
+              ¿Cuándo quieres surfear?{' '}
+              <span className="text-ink-3">
+                {capitalize(formatLongDate(selection.dateStr))} · {formatHour(selection.hour)}
+              </span>
+            </h2>
             <p className="inline-flex items-center gap-2 text-xs text-ink-3">
               {selection.isLive && <span className="size-1.5 rounded-full bg-accent animate-pulse-soft" aria-hidden />}
               {modeLabel}
@@ -235,7 +238,10 @@ function PageSection({
     <section id={id} className="mt-28 sm:mt-36" aria-labelledby={`${id}-title`}>
       <div className="mb-10 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
         <div>
-          <p className="eyebrow tabular-nums">{index}</p>
+          <p className="eyebrow inline-flex items-center gap-2 tabular-nums !text-ocean">
+            <span className="h-px w-6 bg-sun" aria-hidden />
+            {index}
+          </p>
           <h2 id={`${id}-title`} className="display mt-2 text-5xl sm:text-6xl">
             {title}
           </h2>

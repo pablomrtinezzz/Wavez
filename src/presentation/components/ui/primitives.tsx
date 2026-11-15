@@ -18,9 +18,40 @@ export function QualityDot({ quality, className }: { quality: ConditionQuality; 
 /** Quality is never conveyed by colour alone: the dot always travels with its label. */
 export function QualityLabel({ quality, className }: { quality: ConditionQuality; className?: string }) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5 text-ink-2', className)}>
+    <span
+      className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-ink', className)}
+      style={{ background: QUALITY[quality].tint }}
+    >
       <QualityDot quality={quality} />
       {QUALITY[quality].label}
+    </span>
+  );
+}
+
+/** The 0-10 score on a tile coloured by its quality band. */
+export function ScoreBadge({
+  score,
+  quality,
+  size = 'md',
+  className,
+}: {
+  score: number;
+  quality: ConditionQuality;
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+}) {
+  const sizes = {
+    sm: 'h-8 w-10 rounded-md text-sm',
+    md: 'h-11 w-14 rounded-lg text-lg',
+    lg: 'h-20 w-24 rounded-2xl text-4xl',
+  };
+  return (
+    <span
+      className={cn('inline-flex shrink-0 items-center justify-center font-medium tabular-nums tracking-tight', sizes[size], className)}
+      style={{ background: QUALITY[quality].color, color: QUALITY[quality].onColor }}
+      aria-label={`Nota ${(Math.min(100, Math.max(0, score)) / 10).toFixed(1)} sobre 10, ${QUALITY[quality].label}`}
+    >
+      {(Math.min(100, Math.max(0, score)) / 10).toFixed(1)}
     </span>
   );
 }

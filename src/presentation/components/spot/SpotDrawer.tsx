@@ -11,7 +11,7 @@ import { addDays } from '@/domain/models/LocalTime';
 import { DayChart } from '@/presentation/components/charts/DayChart';
 import { SeasonChart } from '@/presentation/components/charts/SeasonChart';
 import { WebcamEmbed } from './WebcamEmbed';
-import { DirectionArrow, Figure, QualityDot, Spinner } from '@/presentation/components/ui/primitives';
+import { DirectionArrow, Figure, ScoreBadge, Spinner } from '@/presentation/components/ui/primitives';
 import {
   BREAK_LABEL,
   QUALITY,
@@ -21,7 +21,6 @@ import {
   formatLocalClock,
   formatLongDate,
   formatRelativeTime,
-  formatScore,
   formatTide,
   capitalize,
   degreesToCompassRange,
@@ -224,7 +223,10 @@ function Section({ title, aside, children }: { title: string; aside?: React.Reac
   return (
     <section className="mt-14">
       <div className="mb-5 flex items-center justify-between gap-4 border-b border-line pb-3">
-        <h3 className="text-lg font-medium text-ink">{title}</h3>
+        <h3 className="flex items-center gap-2.5 text-lg font-medium text-ink">
+          <span className="h-4 w-1 rounded-full bg-sun" aria-hidden />
+          {title}
+        </h3>
         {aside}
       </div>
       {children}
@@ -260,13 +262,11 @@ function NowFigures({ detail }: { detail: SpotDetailDTO }) {
 
   return (
     <>
-      <div className="mb-8 flex items-baseline gap-4">
-        <span className="text-6xl font-medium tracking-tight tabular-nums">{formatScore(score.overallScore)}</span>
-        <span className="flex flex-col text-sm text-ink-2">
-          <span className="inline-flex items-center gap-1.5 text-ink">
-            <QualityDot quality={score.quality} /> {QUALITY[score.quality].label}
-          </span>
-          {score.recommendation}
+      <div className="mb-8 flex items-center gap-5 rounded-2xl p-4" style={{ background: QUALITY[score.quality].tint }}>
+        <ScoreBadge score={score.overallScore} quality={score.quality} size="lg" />
+        <span className="flex flex-col gap-0.5">
+          <span className="text-xl font-medium text-ink">{QUALITY[score.quality].label}</span>
+          <span className="text-sm text-ink-2">{score.recommendation}</span>
         </span>
       </div>
       <dl className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3">

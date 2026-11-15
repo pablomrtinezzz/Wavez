@@ -3,14 +3,22 @@ import { BreakType, SkillLevel, ZoneId } from '@/domain/models/Spot';
 import { TideState, TIDE_PHASE_LABEL, TIDE_TREND_LABEL } from '@/domain/models/Tide';
 import { degreesToCompass } from '@/domain/models/MarineConditions';
 
-/** Quality bands come from the domain score, so UI and ranking never disagree. */
-export const QUALITY: Record<ConditionQuality, { label: string; color: string; rank: number }> = {
-  firing: { label: 'Épico', color: 'var(--color-q-firing)', rank: 4 },
-  good: { label: 'Muy bueno', color: 'var(--color-q-good)', rank: 3 },
-  fair: { label: 'Surfeable', color: 'var(--color-q-fair)', rank: 2 },
-  poor: { label: 'Difícil', color: 'var(--color-q-poor)', rank: 1 },
-  flat: { label: 'Plato', color: 'var(--color-q-flat)', rank: 0 },
+/**
+ * Quality bands come from the domain score, so UI and ranking never disagree.
+ * `min` mirrors the thresholds in SpotScoreCalculator (on the 0-10 scale).
+ */
+export const QUALITY: Record<
+  ConditionQuality,
+  { label: string; color: string; onColor: string; tint: string; rank: number; min: number }
+> = {
+  firing: { label: 'Épico', color: 'var(--color-q-firing)', onColor: '#fff', tint: 'color-mix(in oklab, var(--color-q-firing) 13%, transparent)', rank: 4, min: 8.2 },
+  good: { label: 'Muy bueno', color: 'var(--color-q-good)', onColor: '#fff', tint: 'color-mix(in oklab, var(--color-q-good) 13%, transparent)', rank: 3, min: 6.8 },
+  fair: { label: 'Surfeable', color: 'var(--color-q-fair)', onColor: 'var(--color-ink)', tint: 'color-mix(in oklab, var(--color-q-fair) 16%, transparent)', rank: 2, min: 5 },
+  poor: { label: 'Difícil', color: 'var(--color-q-poor)', onColor: '#fff', tint: 'color-mix(in oklab, var(--color-q-poor) 12%, transparent)', rank: 1, min: 3 },
+  flat: { label: 'Plato', color: 'var(--color-q-flat)', onColor: '#fff', tint: 'color-mix(in oklab, var(--color-q-flat) 18%, transparent)', rank: 0, min: 0 },
 };
+
+export const QUALITY_ORDER: ConditionQuality[] = ['firing', 'good', 'fair', 'poor', 'flat'];
 
 export const ZONES: { id: ZoneId; label: string }[] = [
   { id: 'las-palmas', label: 'Las Palmas' },

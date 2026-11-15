@@ -5,14 +5,14 @@ import { Search, Video, Camera } from 'lucide-react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { ZoneId } from '@/domain/models/Spot';
 import { isDirectionInRange } from '@/domain/models/MarineConditions';
-import { DirectionArrow, QualityDot } from '@/presentation/components/ui/primitives';
+import { DirectionArrow, QualityDot, ScoreBadge } from '@/presentation/components/ui/primitives';
 import {
   BREAK_LABEL,
   QUALITY,
+  QUALITY_ORDER,
   ZONES,
   ZONE_LABEL,
   describeWind,
-  formatScore,
   formatTide,
 } from '@/presentation/lib/format';
 import { cn } from '@/presentation/lib/utils';
@@ -119,9 +119,21 @@ export function SpotList({ summaries, onSelectSpot, isRefreshing }: SpotListProp
         </div>
       </div>
 
+      {/* How to read the score */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line py-3 text-xs text-ink-2">
+        <span className="text-ink-3">Nota de 0 a 10 según tamaño, viento, periodo y marea de cada spot:</span>
+        {QUALITY_ORDER.map((q) => (
+          <span key={q} className="inline-flex items-center gap-1.5">
+            <QualityDot quality={q} />
+            {QUALITY[q].label}
+            <span className="text-ink-3 tabular-nums">{q === 'flat' ? '< 3' : `${QUALITY[q].min.toFixed(1).replace('.0', '')}+`}</span>
+          </span>
+        ))}
+      </div>
+
       {/* Column headings (desktop) */}
-      <div className="hidden grid-cols-[2rem_minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_4.5rem] gap-4 border-b border-line py-2.5 text-xs text-ink-3 lg:grid">
-        <span />
+      <div className="hidden grid-cols-[3.5rem_minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_4.5rem] gap-4 border-b border-line py-2.5 text-xs text-ink-3 lg:grid">
+        <span>Nota</span>
         <span>Spot</span>
         <span>Condiciones</span>
         <span>Oleaje</span>
@@ -168,9 +180,16 @@ function SpotRow({
     <li className="border-b border-line">
       <button
         onClick={() => onSelect(spot.id)}
-        className="group grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-4 text-left transition hover:bg-paper/70 lg:grid-cols-[2rem_minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_4.5rem] lg:py-5"
+        className="group grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-4 text-left transition hover:bg-paper/70 lg:grid-cols-[3.5rem_minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_4.5rem] lg:py-5"
       >
-        <span className="hidden text-sm text-ink-3 tabular-nums lg:block">{rank ? String(rank).padStart(2, '0') : ''}</span>
+        <span className="relative">
+          <ScoreBadge score={score.overallScore} quality={score.quality} size="sm" className="lg:h-10 lg:w-12 lg:text-base" />
+          {rank && (
+            <span className="absolute -left-1.5 -top-1.5 flex size-4 items-center justify-center rounded-full bg-sand text-[9px] text-ink-3 tabular-nums ring-1 ring-line">
+              {rank}
+            </span>
+          )}
+        </span>
 
         <span className="min-w-0">
           <span className="flex items-center gap-2">
@@ -185,16 +204,18 @@ function SpotRow({
           </span>
         </span>
 
-        <span className="flex flex-col items-end gap-0.5 lg:items-start">
-          <span className="inline-flex items-center gap-1.5 text-sm text-ink">
+        <span className="flex lg:items-start">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-ink"
+            style={{ background: QUALITY[score.quality].tint }}
+          >
             <QualityDot quality={score.quality} />
             {QUALITY[score.quality].label}
           </span>
-          <span className="text-xs text-ink-3 tabular-nums">{formatScore(score.overallScore)} / 10</span>
         </span>
 
         {/* On small screens the measurements collapse into one line */}
-        <span className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-2 lg:contents">
+        <span className="col-span-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-2 lg:contents">
           <span className="inline-flex items-center gap-1 tabular-nums">
             <span className="text-ink">{swell.heightM.toFixed(1)} m</span>· {Math.round(swell.periodSec)} s
             <DirectionArrow degrees={swell.directionDeg} className="text-ink-3" />
@@ -206,8 +227,12 @@ function SpotRow({
             {wind.compassDir}
             <span
               className={cn(
-                'ml-1 text-xs',
-                windInfo.tone === 'good' ? 'text-accent' : windInfo.tone === 'bad' ? 'text-danger' : 'text-ink-3'
+                'ml-1 rounded px-1.5 py-0.5 text-[11px]',
+                windInfo.tone === 'good'
+                  ? 'bg-q-good/12 text-[#1f7a52]'
+                  : windInfo.tone === 'bad'
+                  ? 'bg-q-poor/12 text-danger'
+                  : 'bg-line/60 text-ink-2'
               )}
             >
               {windInfo.label}
