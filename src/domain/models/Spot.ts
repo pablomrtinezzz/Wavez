@@ -47,4 +47,10 @@ export interface Spot {
   description: string;
   idealConditions: IdealConditions;
   webcam?: WebcamConfig;
+  /**
+   * Where to read the ocean model, when the nearest model cell to the beach
+   * sits on another side of the island. Must be open sea facing the spot's
+   * swell window. Wind is always read at `location`.
+   */
+  marinePoint?: { lat: number; lng: number };
 }

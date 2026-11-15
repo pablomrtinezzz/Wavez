@@ -83,12 +83,18 @@ export abstract class TimelineMarineService implements MarineWeatherService {
 
 /** Fetches each spot's timeline live from Open-Meteo, cached for 10 minutes. */
 export class OpenMeteoMarineAdapter extends TimelineMarineService {
+  /** Resolves a spot's open-sea model point, if it has one. */
+  constructor(private readonly marinePointOf: (spotId: string) => { lat: number; lng: number } | undefined = () => undefined) {
+    super();
+  }
+
   private timelineCache = new Map<string, CacheEntry<SpotTimeline>>();
   private inFlight = new Map<string, Promise<SpotTimeline>>();
   private readonly CACHE_TTL_MS = 10 * 60 * 1000;
 
-  public async getTimeline(_spotId: string, lat: number, lng: number): Promise<SpotTimeline> {
-    const cacheKey = `${lat.toFixed(3)},${lng.toFixed(3)}`;
+  public async getTimeline(spotId: string, lat: number, lng: number): Promise<SpotTimeline> {
+    const marine = this.marinePointOf(spotId);
+    const cacheKey = `${lat.toFixed(3)},${lng.toFixed(3)}|${marine ? `${marine.lat},${marine.lng}` : ''}`;
     const cached = this.timelineCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) return cached.data;
 
@@ -96,7 +102,7 @@ export class OpenMeteoMarineAdapter extends TimelineMarineService {
     const pending = this.inFlight.get(cacheKey);
     if (pending) return pending;
 
-    const request = fetchOpenMeteo([{ lat, lng }])
+    const request = fetchOpenMeteo([{ lat, lng, marine }])
       .then(([raw]) => {
         const data = parseOpenMeteo(raw);
         if (data.hours.length) {

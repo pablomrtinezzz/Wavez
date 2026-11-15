@@ -1,4 +1,4 @@
-import { StaticSpotRepository } from '@/infrastructure/repositories/StaticSpotRepository';
+import { GRAN_CANARIA_SPOTS, StaticSpotRepository } from '@/infrastructure/repositories/StaticSpotRepository';
 import { OpenMeteoMarineAdapter } from '@/infrastructure/adapters/OpenMeteoMarineAdapter';
 import { SnapshotMarineAdapter } from '@/infrastructure/adapters/SnapshotMarineAdapter';
 import { spotReportRepository } from '@/infrastructure/adapters/InMemorySpotReportRepository';
@@ -16,7 +16,10 @@ const spotRepo = new StaticSpotRepository();
 const MARINE_SNAPSHOT_URL =
   process.env.MARINE_SNAPSHOT_URL ??
   'https://raw.githubusercontent.com/pablomrtinezzz/Wavez/data/marine-snapshot.json';
-const marineService = new SnapshotMarineAdapter(MARINE_SNAPSHOT_URL, new OpenMeteoMarineAdapter());
+const marineService = new SnapshotMarineAdapter(
+  MARINE_SNAPSHOT_URL,
+  new OpenMeteoMarineAdapter((spotId) => GRAN_CANARIA_SPOTS.find((s) => s.id === spotId)?.marinePoint)
+);
 const reportRepo = spotReportRepository;
 const climatologyRepo = new StaticClimatologyRepository();
 

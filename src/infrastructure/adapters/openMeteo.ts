@@ -34,15 +34,20 @@ const WEATHER_VARS = 'wind_speed_10m,wind_direction_10m,wind_gusts_10m';
  * Downloads the 15-day hourly timeline for any number of locations in two
  * requests (Open-Meteo accepts comma-separated coordinates).
  */
-export async function fetchOpenMeteo(
-  locations: { lat: number; lng: number }[],
-  timeoutMs = 9000
-): Promise<OpenMeteoRaw[]> {
-  const lat = locations.map((l) => l.lat).join(',');
-  const lng = locations.map((l) => l.lng).join(',');
+export interface ForecastLocation {
+  /** Spot location, used for wind and daylight. */
+  lat: number;
+  lng: number;
+  /** Optional open-sea point for the ocean model (see Spot.marinePoint). */
+  marine?: { lat: number; lng: number };
+}
+
+export async function fetchOpenMeteo(locations: ForecastLocation[], timeoutMs = 9000): Promise<OpenMeteoRaw[]> {
+  const join = (values: number[]) => values.join(',');
+  const marinePoints = locations.map((l) => l.marine ?? l);
   const range = `past_days=${PAST_DAYS}&forecast_days=${FORECAST_DAYS}&timezone=Atlantic%2FCanary`;
-  const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lng}&hourly=${MARINE_VARS}&${range}`;
-  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=${WEATHER_VARS}&daily=sunrise,sunset&${range}`;
+  const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${join(marinePoints.map((p) => p.lat))}&longitude=${join(marinePoints.map((p) => p.lng))}&hourly=${MARINE_VARS}&${range}`;
+  const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${join(locations.map((l) => l.lat))}&longitude=${join(locations.map((l) => l.lng))}&hourly=${WEATHER_VARS}&daily=sunrise,sunset&${range}`;
 
   const signal = AbortSignal.timeout(timeoutMs);
   const [marineRes, weatherRes] = await Promise.all([fetch(marineUrl, { signal }), fetch(weatherUrl, { signal })]);

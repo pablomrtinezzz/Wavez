@@ -11,6 +11,8 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
     name: 'La Cícer (Las Canteras)',
     zone: 'las-palmas',
     location: { lat: 28.134, lng: -15.448, municipality: 'Las Palmas' },
+    // Nearest model cell faces the other coast; read the open sea in front of the spot
+    marinePoint: { lat: 28.25, lng: -15.46 },
     breakType: 'beach-break',
     skillLevel: 'all-levels',
     description: 'La cuna del surf urbano en Canarias. Picos variados sobre arena (El Bufo, Los Muellitos, Piti).',
@@ -75,6 +77,8 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
     name: 'La Barra (Las Canteras)',
     zone: 'las-palmas',
     location: { lat: 28.143, lng: -15.437, municipality: 'Las Palmas' },
+    // Nearest model cell faces the other coast; read the open sea in front of the spot
+    marinePoint: { lat: 28.25, lng: -15.46 },
     breakType: 'reef-break',
     skillLevel: 'advanced',
     description: 'Arrecife natural que rompe con marejadas potentes de norte y mareas específicas.',
@@ -101,6 +105,8 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
     name: 'Los Muellitos (Auditorio)',
     zone: 'las-palmas',
     location: { lat: 28.131, lng: -15.451, municipality: 'Las Palmas' },
+    // Nearest model cell faces the other coast; read the open sea in front of the spot
+    marinePoint: { lat: 28.25, lng: -15.46 },
     breakType: 'beach-break',
     skillLevel: 'intermediate',
     description: 'Extremo sur de la Cícer pegado al Auditorio Alfredo Kraus. Buen refugio cuando entra viento sur.',
@@ -169,6 +175,8 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
     name: 'San Felipe (El Vagabundo)',
     zone: 'costa-norte',
     location: { lat: 28.152, lng: -15.589, municipality: 'Santa María de Guía' },
+    // Nearest model cell faces the other coast; read the open sea in front of the spot
+    marinePoint: { lat: 28.25, lng: -15.6 },
     breakType: 'beach-break',
     skillLevel: 'intermediate',
     description: 'El spot más regular y agradecido del norte. Fondo de arena y callao, ola maniobrable.',
@@ -195,6 +203,8 @@ export const GRAN_CANARIA_SPOTS: Spot[] = [
     name: 'El Altillo',
     zone: 'costa-norte',
     location: { lat: 28.150, lng: -15.576, municipality: 'Moya' },
+    // Nearest model cell faces the other coast; read the open sea in front of the spot
+    marinePoint: { lat: 28.25, lng: -15.6 },
     breakType: 'reef-break',
     skillLevel: 'advanced',
     description: 'Izquierda y derecha sobre roca volcánica, rápida y con buena sección para maniobras.',

@@ -14,7 +14,7 @@ import { MarineSnapshot, slimRaw } from '@/infrastructure/adapters/marineSnapsho
 async function main() {
   const out = process.argv[2] ?? 'out/marine-snapshot.json';
   const raws = await fetchOpenMeteo(
-    GRAN_CANARIA_SPOTS.map((s) => s.location),
+    GRAN_CANARIA_SPOTS.map((s) => ({ ...s.location, marine: s.marinePoint })),
     30000
   );
 
