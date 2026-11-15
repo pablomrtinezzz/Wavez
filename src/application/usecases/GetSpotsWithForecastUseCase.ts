@@ -35,7 +35,8 @@ export class GetSpotsWithForecastUseCase {
           targetLocalHour
             ? this.marineService.getConditionsForTimestamp(spot.id, spot.location.lat, spot.location.lng, targetLocalHour)
             : this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
-          this.reportRepo.getRecentReports(spot.id, 10),
+          // Community photos are optional: a storage outage must not hide the forecast
+          this.reportRepo.getRecentReports(spot.id, 10).catch(() => []),
         ]);
 
         const energy = estimatedEnergy(conditions);

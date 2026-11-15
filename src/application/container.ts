@@ -24,7 +24,8 @@ const marineService = new SnapshotMarineAdapter(
   new OpenMeteoMarineAdapter((spotId) => GRAN_CANARIA_SPOTS.find((s) => s.id === spotId)?.marinePoint)
 );
 // Community photos: Supabase when configured, process memory otherwise (dev/tests only)
-const SUPABASE_URL = process.env.SUPABASE_URL;
+// Accept the project URL with or without the "/rest/v1/" suffix the dashboard sometimes shows
+const SUPABASE_URL = process.env.SUPABASE_URL?.trim().replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 export const reportsArePersistent = Boolean(SUPABASE_URL && SUPABASE_SECRET_KEY);
 const reportRepo: SpotReportRepository = reportsArePersistent

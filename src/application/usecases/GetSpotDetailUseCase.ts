@@ -20,7 +20,8 @@ export class GetSpotDetailUseCase {
     const [conditions, hourly, reports, daylight] = await Promise.all([
       this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
       this.marineService.getHourlyForecast(spot.id, spot.location.lat, spot.location.lng, 48),
-      this.reportRepo.getRecentReports(spot.id, 10),
+      // Community photos are optional: a storage outage must not hide the forecast
+      this.reportRepo.getRecentReports(spot.id, 10).catch(() => []),
       this.marineService.getDaylight(spot.id, spot.location.lat, spot.location.lng, canaryNow().dateStr),
     ]);
 
