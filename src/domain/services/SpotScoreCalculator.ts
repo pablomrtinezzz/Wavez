@@ -2,7 +2,7 @@ import { Spot } from '../models/Spot';
 import { MarineConditions, isDirectionInRange } from '../models/MarineConditions';
 import { SpotScore, ConditionQuality } from '../models/SpotScore';
 
-const FLAT_THRESHOLD_M = 0.4;
+const FLAT_THRESHOLD_M = 0.5;
 /** Highest score a flat sea can reach ("flat" quality band). */
 const FLAT_SCORE_CAP = 25;
 /** Highest score when swell is below the spot's minimum ("fair" at best). */
