@@ -95,7 +95,8 @@ export class SpotScoreCalculator {
 
     // 3. Period Score (max 25 pts)
     let periodScore = 0;
-    const period = swell.peakPeriodSec || swell.periodSec;
+    // Scored on whole seconds, the same value shown to the user (model data is not finer than that)
+    const period = Math.round(swell.peakPeriodSec || swell.periodSec);
 
     if (period >= 14) {
       periodScore = 25;
