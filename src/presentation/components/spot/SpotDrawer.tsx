@@ -105,7 +105,7 @@ function SpotDrawerPanel({ spotId, initialDate, today, currentHour, onClose, onR
 
       <div className="relative flex h-full w-full max-w-3xl flex-col overflow-y-auto bg-sand shadow-2xl animate-slide-in">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-sand/90 px-5 py-3 backdrop-blur sm:px-10">
-          <span className="eyebrow">{d ? `${ZONE_LABEL[d.spot.zone]} · ${d.spot.location.municipality}` : 'Cargando'}</span>
+          <span className="eyebrow">{d ? [...new Set([ZONE_LABEL[d.spot.zone], d.spot.location.municipality])].join(' · ') : 'Cargando'}</span>
           <button
             ref={closeRef}
             onClick={onClose}

@@ -42,7 +42,7 @@ export class GetSpotDetailUseCase {
       energy,
       score,
       recentReportCount: reports.length,
-      latestReport: reports[0],
+      latestReportAt: reports[0]?.capturedAt,
       hourlyForecast: hourly,
       reports,
       webcam: spot.webcam,

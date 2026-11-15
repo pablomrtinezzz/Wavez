@@ -37,7 +37,7 @@ export class GetSpotsWithForecastUseCase {
           targetLocalHour
             ? this.marineService.getConditionsForTimestamp(spot.id, spot.location.lat, spot.location.lng, targetLocalHour)
             : this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
-          this.reportRepo.getRecentReports(spot.id, 1),
+          this.reportRepo.getRecentReports(spot.id, 10),
         ]);
 
         // Surf-Forecast publishes a single "now" energy value, so it is only
@@ -53,7 +53,7 @@ export class GetSpotsWithForecastUseCase {
           energy,
           score: SpotScoreCalculator.calculate(spot, conditions),
           recentReportCount: reports.length,
-          latestReport: reports[0],
+          latestReportAt: reports[0]?.capturedAt,
         };
       })
     );

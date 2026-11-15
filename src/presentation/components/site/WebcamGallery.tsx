@@ -17,7 +17,7 @@ export function WebcamGallery({ summaries, onSelectSpot }: WebcamGalleryProps) {
   return (
     <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
       {withCam.map((s) => (
-        <article key={s.spot.id}>
+        <article key={s.spot.id} className="min-w-0">
           <WebcamEmbed webcam={s.spot.webcam!} spotName={s.spot.name} />
           <div className="mt-3 flex items-start justify-between gap-3">
             <div className="min-w-0">

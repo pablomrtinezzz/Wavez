@@ -1,4 +1,4 @@
-import { Spot, ZoneId, BreakType, SkillLevel, WebcamConfig } from '@/domain/models/Spot';
+import { Spot, WebcamConfig } from '@/domain/models/Spot';
 import { MarineConditions } from '@/domain/models/MarineConditions';
 import { SurfForecastEnergy } from '@/domain/models/SurfForecastEnergy';
 import { SpotScore } from '@/domain/models/SpotScore';
@@ -11,7 +11,8 @@ export interface SpotSummaryDTO {
   energy: SurfForecastEnergy;
   score: SpotScore;
   recentReportCount: number;
-  latestReport?: SpotReport;
+  /** Capture time of the latest community photo (the photo itself is only sent in the detail). */
+  latestReportAt?: string;
 }
 
 export interface SpotDetailDTO extends SpotSummaryDTO {

@@ -13,7 +13,7 @@ interface DayChartProps {
 }
 
 const HEIGHT = 200;
-const PAD = { top: 24, right: 12, bottom: 24, left: 46 };
+const PAD = { top: 24, right: 12, bottom: 24, left: 58 };
 
 function niceStep(max: number): number {
   if (max <= 1) return 0.25;
@@ -123,9 +123,9 @@ export function DayChart({ data, referenceHour }: DayChartProps) {
             role="img"
             aria-label={`Altura de ola por hora el ${data.date}. Usa las flechas para recorrer las horas.`}
           >
-            {/* Night */}
-            <rect x={PAD.left} y={PAD.top} width={Math.max(0, xHour(sunriseH) - PAD.left)} height={innerH} fill="var(--color-sand)" />
-            <rect x={xHour(sunsetH)} y={PAD.top} width={Math.max(0, PAD.left + innerW - xHour(sunsetH))} height={innerH} fill="var(--color-sand)" />
+            {/* Night (before sunrise / after sunset) */}
+            <rect x={PAD.left} y={PAD.top} width={Math.max(0, xHour(sunriseH) - PAD.left)} height={innerH} fill="var(--color-line)" fillOpacity="0.45" />
+            <rect x={xHour(sunsetH)} y={PAD.top} width={Math.max(0, PAD.left + innerW - xHour(sunsetH))} height={innerH} fill="var(--color-line)" fillOpacity="0.45" />
 
             {/* Best window */}
             {data.bestWindow && (
@@ -133,7 +133,7 @@ export function DayChart({ data, referenceHour }: DayChartProps) {
                 <rect
                   x={xHour(data.bestWindow.startHour)}
                   y={PAD.top}
-                  width={Math.max(2, xHour(data.bestWindow.endHour - 1) - xHour(data.bestWindow.startHour))}
+                  width={Math.max(2, xHour(data.bestWindow.endHour) - xHour(data.bestWindow.startHour))}
                   height={innerH}
                   fill="var(--color-accent-soft)"
                 />
