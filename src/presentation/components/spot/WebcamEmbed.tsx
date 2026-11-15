@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useId } from 'react';
 import { Play, ExternalLink } from 'lucide-react';
 import { WebcamConfig } from '@/domain/models/Spot';
 import { isApprovedWebcamUrl, cn } from '@/presentation/lib/utils';
+import { getActiveWebcam, setActiveWebcam, useActiveWebcam } from '@/presentation/lib/activeWebcam';
 
 interface WebcamEmbedProps {
   webcam: WebcamConfig;
@@ -14,12 +15,22 @@ interface WebcamEmbedProps {
 }
 
 /**
- * In2theBeach player loaded on demand: each embed is a full video player, so
- * a gallery of ten only starts streaming the ones the user actually opens.
+ * In2theBeach player loaded on demand. Each embed is a full video stream, so
+ * only one plays at a time: opening another one stops the previous player.
  */
 export function WebcamEmbed({ webcam, spotName, autoLoad = false, className }: WebcamEmbedProps) {
-  const [loaded, setLoaded] = useState(autoLoad);
+  const playerId = useId();
+  const active = useActiveWebcam();
+  const loaded = active === playerId;
   const url = webcam.iframeUrl;
+
+  useEffect(() => {
+    if (autoLoad) setActiveWebcam(playerId);
+    // Release the stream when this player disappears (e.g. the drawer closes)
+    return () => {
+      if (getActiveWebcam() === playerId) setActiveWebcam(null);
+    };
+  }, [autoLoad, playerId]);
 
   if (!url || !isApprovedWebcamUrl(url)) {
     return (
@@ -33,18 +44,26 @@ export function WebcamEmbed({ webcam, spotName, autoLoad = false, className }: W
     <figure className={className}>
       <div className="relative aspect-video overflow-hidden rounded-lg bg-ink">
         {loaded ? (
-          <iframe
-            src={url}
-            title={`Webcam en directo de ${spotName}`}
-            className="absolute inset-0 size-full border-0"
-            allow="autoplay; encrypted-media; fullscreen"
-            allowFullScreen
-            sandbox="allow-scripts allow-same-origin allow-popups"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          <>
+            <iframe
+              src={url}
+              title={`Webcam en directo de ${spotName}`}
+              className="absolute inset-0 size-full border-0"
+              allow="autoplay; encrypted-media; fullscreen"
+              allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-popups"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+            <button
+              onClick={() => setActiveWebcam(null)}
+              className="absolute right-2 top-2 rounded-full bg-ink/70 px-2.5 py-1 text-xs text-sand backdrop-blur transition hover:bg-ink"
+            >
+              Detener
+            </button>
+          </>
         ) : (
           <button
-            onClick={() => setLoaded(true)}
+            onClick={() => setActiveWebcam(playerId)}
             className="group absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[radial-gradient(circle_at_30%_20%,#1d3442,#0e1a24)] text-sand"
             aria-label={`Ver webcam en directo de ${spotName}`}
           >
