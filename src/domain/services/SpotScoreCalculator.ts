@@ -2,6 +2,12 @@ import { Spot } from '../models/Spot';
 import { MarineConditions, isDirectionInRange } from '../models/MarineConditions';
 import { SpotScore, ConditionQuality } from '../models/SpotScore';
 
+const FLAT_THRESHOLD_M = 0.4;
+/** Highest score a flat sea can reach ("flat" quality band). */
+const FLAT_SCORE_CAP = 25;
+/** Highest score when swell is below the spot's minimum ("fair" at best). */
+const UNDERSIZED_SCORE_CAP = 58;
+
 export class SpotScoreCalculator {
   /**
    * Calculates a 0-100 score and qualitative breakdown for a spot under given marine conditions.
@@ -15,11 +21,15 @@ export class SpotScoreCalculator {
     const ideal = spot.idealConditions;
 
     // 1. Swell Height & Direction Score (max 40 pts)
+    // Without enough swell, glassy wind or long period cannot make the spot good:
+    // the overall score is capped so a flat sea never ranks as surfable.
+    const isFlat = swell.heightM < FLAT_THRESHOLD_M;
+    const isUndersized = !isFlat && swell.heightM < ideal.minSwellHeightM;
     let swellScore = 0;
-    if (swell.heightM < 0.4) {
-      cons.push('Mar casi plato (< 0.4m)');
+    if (isFlat) {
+      cons.push(`Mar casi plato (< ${FLAT_THRESHOLD_M}m)`);
       swellScore = 5;
-    } else if (swell.heightM < ideal.minSwellHeightM) {
+    } else if (isUndersized) {
       cons.push(`Swell algo escaso (${swell.heightM.toFixed(1)}m, mínimo ideal ${ideal.minSwellHeightM}m)`);
       swellScore = 15;
     } else if (swell.heightM > ideal.maxSwellHeightM) {
@@ -38,7 +48,9 @@ export class SpotScoreCalculator {
       ideal.optimalSwellDegrees.max
     );
 
-    if (isSwellOptimal) {
+    if (isFlat) {
+      // Direction is irrelevant when there is no swell to speak of
+    } else if (isSwellOptimal) {
       swellScore += 15;
       pros.push(`Dirección de swell alineada (${swell.compassDir})`);
     } else {
@@ -96,7 +108,9 @@ export class SpotScoreCalculator {
       cons.push(`Periodo muy corto / Mar de viento (${period.toFixed(0)}s)`);
     }
 
-    const overallScore = Math.min(100, Math.max(0, swellScore + windScore + periodScore));
+    let overallScore = Math.min(100, Math.max(0, swellScore + windScore + periodScore));
+    if (isFlat) overallScore = Math.min(overallScore, FLAT_SCORE_CAP);
+    else if (isUndersized) overallScore = Math.min(overallScore, UNDERSIZED_SCORE_CAP);
 
     let quality: ConditionQuality = 'poor';
     if (overallScore >= 82) quality = 'firing';

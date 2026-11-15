@@ -79,4 +79,34 @@ describe('SpotScoreCalculator', () => {
     assert.ok(['poor', 'flat'].includes(result.quality));
     assert.ok(result.cons.some((c) => c.includes('Onshore deshecho')));
   });
+  test('never rates a flat sea as surfable, even with glassy wind and long period', () => {
+    const flatButGlassy: MarineConditions = {
+      spotId: 'playa-del-hombre',
+      timestamp: '2026-11-10T12:00:00Z',
+      totalWaveHeightM: 0.3,
+      primarySwell: { heightM: 0.3, periodSec: 15, directionDeg: 45, compassDir: 'NE' },
+      wind: { speedKmh: 4, gustsKmh: 6, directionDeg: 270, compassDir: 'W' },
+    };
+
+    const result = SpotScoreCalculator.calculate(mockPlayaDelHombre, flatButGlassy);
+
+    assert.equal(result.quality, 'flat');
+    assert.ok(result.overallScore < 30, `Expected score < 30, got ${result.overallScore}`);
+    assert.ok(!result.pros.some((p) => p.includes('Dirección de swell')));
+  });
+
+  test('caps undersized swell at "fair" even when everything else is perfect', () => {
+    const smallButClean: MarineConditions = {
+      spotId: 'playa-del-hombre',
+      timestamp: '2026-11-10T12:00:00Z',
+      totalWaveHeightM: 0.7,
+      primarySwell: { heightM: 0.7, periodSec: 14, directionDeg: 45, compassDir: 'NE' },
+      wind: { speedKmh: 5, gustsKmh: 8, directionDeg: 270, compassDir: 'W' },
+    };
+
+    const result = SpotScoreCalculator.calculate(mockPlayaDelHombre, smallButClean);
+
+    assert.equal(result.quality, 'fair');
+    assert.ok(result.overallScore < 68, `Expected score < 68, got ${result.overallScore}`);
+  });
 });
