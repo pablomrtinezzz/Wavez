@@ -23,5 +23,5 @@ export interface MarineWeatherService {
   /** Next `hours` hourly entries starting at the current local hour. */
   getHourlyForecast(spotId: string, lat: number, lng: number, hours?: number): Promise<HourlyMarineForecast[]>;
   getHourlyForecastForDate(spotId: string, lat: number, lng: number, dateStr: string): Promise<HourlyMarineForecast[]>;
-  getDaylight(lat: number, lng: number, dateStr: string): Promise<Daylight | null>;
+  getDaylight(spotId: string, lat: number, lng: number, dateStr: string): Promise<Daylight | null>;
 }

@@ -21,7 +21,7 @@ export class GetSpotDetailUseCase {
       this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
       this.marineService.getHourlyForecast(spot.id, spot.location.lat, spot.location.lng, 48),
       this.reportRepo.getRecentReports(spot.id, 10),
-      this.marineService.getDaylight(spot.location.lat, spot.location.lng, canaryNow().dateStr),
+      this.marineService.getDaylight(spot.id, spot.location.lat, spot.location.lng, canaryNow().dateStr),
     ]);
 
     const energy = estimatedEnergy(conditions);

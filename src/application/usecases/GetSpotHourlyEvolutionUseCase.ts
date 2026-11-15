@@ -70,7 +70,7 @@ export class GetSpotHourlyEvolutionUseCase {
 
     const [hourly, daylight] = await Promise.all([
       this.marineService.getHourlyForecastForDate(spot.id, spot.location.lat, spot.location.lng, dateStr),
-      this.marineService.getDaylight(spot.location.lat, spot.location.lng, dateStr),
+      this.marineService.getDaylight(spot.id, spot.location.lat, spot.location.lng, dateStr),
     ]);
 
     if (!hourly || hourly.length === 0) {

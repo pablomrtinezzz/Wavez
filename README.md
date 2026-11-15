@@ -14,7 +14,8 @@
 
 2. **Datos reales a coste 0 (Open-Meteo, CC BY 4.0):**
    * Oleaje (altura, periodo, dirección), viento y rachas, **marea estimada** (`sea_level_height_msl`), **temperatura del agua** y **orto/ocaso**.
-   * Línea temporal horaria de 15 días (−7 histórico / +7 previsión) en **hora canaria**, cacheada por spot (10 min) con deduplicación de peticiones.
+   * Línea temporal horaria de 15 días (−7 histórico / hoy / +6 previsión) en **hora canaria**.
+   * **Refresco con GitHub Actions:** cada 15 min el workflow `Refresh marine data` descarga los 20 spots en 2 peticiones y publica `marine-snapshot.json` en la rama `data`. La web lee ese fichero; si falta o tiene más de 3 h, consulta Open-Meteo en directo (caché de 10 min). Se puede lanzar a mano desde la pestaña *Actions* (*Run workflow*).
    * Si Open-Meteo no devuelve datos, el spot se marca como *sin datos*: nunca se inventan valores.
    * Índice de energía en "kJ" calculado como `40·H²·T` (proporcional a la potencia de ola en aguas profundas).
 
