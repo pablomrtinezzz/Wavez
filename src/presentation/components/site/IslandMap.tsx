@@ -1,42 +1,66 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Minus, Plus, Maximize } from 'lucide-react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { ConditionQuality } from '@/domain/models/SpotScore';
-import { QUALITY, formatScore } from '@/presentation/lib/format';
+import { ZoneId } from '@/domain/models/Spot';
+import { QUALITY, ZONES, formatScore } from '@/presentation/lib/format';
 import { QualityDot, ScoreBadge } from '@/presentation/components/ui/primitives';
+import { cn } from '@/presentation/lib/utils';
+import { GRAN_CANARIA_COAST } from './granCanariaCoast';
 
-/** Simplified Gran Canaria coastline (lat, lng), clockwise from Las Canteras. */
-const COAST: [number, number][] = [
-  [28.128, -15.452], [28.142, -15.441], [28.158, -15.441], [28.176, -15.43], [28.181, -15.414],
-  [28.172, -15.398], [28.155, -15.405], [28.135, -15.414], [28.11, -15.416], [28.08, -15.411],
-  [28.05, -15.395], [28.025, -15.383], [28.0, -15.371], [27.97, -15.368], [27.935, -15.37],
-  [27.9, -15.378], [27.865, -15.388], [27.835, -15.405], [27.812, -15.43], [27.795, -15.47],
-  [27.782, -15.51], [27.762, -15.55], [27.738, -15.578], [27.737, -15.605], [27.746, -15.64],
-  [27.755, -15.675], [27.77, -15.705], [27.79, -15.735], [27.815, -15.765], [27.85, -15.79],
-  [27.9, -15.81], [27.95, -15.83], [27.995, -15.825], [28.04, -15.8], [28.075, -15.755],
-  [28.1, -15.715], [28.135, -15.705], [28.162, -15.7], [28.178, -15.672], [28.17, -15.64],
-  [28.16, -15.61], [28.153, -15.58], [28.149, -15.545], [28.143, -15.51], [28.136, -15.48],
-];
-
-const BOUNDS = { minLat: 27.71, maxLat: 28.2, minLng: -15.85, maxLng: -15.35 };
+const BOUNDS = { minLat: 27.71, maxLat: 28.2, minLng: -15.85, maxLng: -15.33 };
 const LNG_SCALE = Math.cos((28 * Math.PI) / 180); // keep the island's real proportions
 const SCALE = 1000;
 const W = (BOUNDS.maxLng - BOUNDS.minLng) * LNG_SCALE * SCALE;
 const H = (BOUNDS.maxLat - BOUNDS.minLat) * SCALE;
+const PAD = 20;
+const FULL: View = { x: -PAD, y: -PAD, w: W + PAD * 2, h: H + PAD * 2 };
+/** Closest zoom: about 3 km across. */
+const MIN_W = 30;
+
+interface View {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 function project(lat: number, lng: number) {
-  return {
-    x: (lng - BOUNDS.minLng) * LNG_SCALE * SCALE,
-    y: (BOUNDS.maxLat - lat) * SCALE,
-  };
+  return { x: (lng - BOUNDS.minLng) * LNG_SCALE * SCALE, y: (BOUNDS.maxLat - lat) * SCALE };
 }
 
 const COAST_PATH =
-  COAST.map(([lat, lng], i) => {
+  GRAN_CANARIA_COAST.map(([lat, lng], i) => {
     const { x, y } = project(lat, lng);
     return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
   }).join(' ') + ' Z';
+
+/** Keeps the map's aspect ratio and stays inside the island bounds. */
+function clampView(v: View): View {
+  const aspect = FULL.h / FULL.w;
+  const w = Math.min(FULL.w, Math.max(MIN_W, v.w));
+  const h = w * aspect;
+  const cx = v.x + v.w / 2;
+  const cy = v.y + v.h / 2;
+  const x = Math.min(FULL.x + FULL.w - w, Math.max(FULL.x, cx - w / 2));
+  const y = Math.min(FULL.y + FULL.h - h, Math.max(FULL.y, cy - h / 2));
+  return { x, y, w, h };
+}
+
+function fitPoints(points: { x: number; y: number }[]): View {
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  const margin = 25;
+  const minX = Math.min(...xs) - margin;
+  const maxX = Math.max(...xs) + margin;
+  const minY = Math.min(...ys) - margin;
+  const maxY = Math.max(...ys) + margin;
+  const aspect = FULL.h / FULL.w;
+  const w = Math.max(maxX - minX, (maxY - minY) / aspect, MIN_W * 2);
+  return clampView({ x: (minX + maxX) / 2 - w / 2, y: (minY + maxY) / 2 - (w * aspect) / 2, w, h: w * aspect });
+}
 
 interface IslandMapProps {
   summaries: SpotSummaryDTO[];
@@ -45,58 +69,256 @@ interface IslandMapProps {
 
 export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
   const [focusId, setFocusId] = useState<string | null>(null);
-  const focused = summaries.find((s) => s.spot.id === focusId) ?? summaries[0];
+  const [view, setView] = useState<View>(FULL);
+  const [activeZone, setActiveZone] = useState<ZoneId | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const animation = useRef<number | null>(null);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const dragged = useRef(false);
 
+  const focused = summaries.find((s) => s.spot.id === focusId) ?? summaries[0];
   // Draw better spots last so they sit on top where markers overlap
-  const ordered = [...summaries].sort((a, b) => a.score.overallScore - b.score.overallScore);
+  const ordered = useMemo(() => [...summaries].sort((a, b) => a.score.overallScore - b.score.overallScore), [summaries]);
+  const positions = useMemo(
+    () => new Map(summaries.map((s) => [s.spot.id, project(s.spot.location.lat, s.spot.location.lng)])),
+    [summaries]
+  );
+
+  /** Map units per screen pixel, so markers keep a constant on-screen size. */
+  const [pxWidth, setPxWidth] = useState(600);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setPxWidth(e.contentRect.width || 600));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const unit = view.w / pxWidth;
+  const zoomedIn = view.w < FULL.w * 0.45;
+
+  const viewRef = useRef(view);
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+
+  const animateTo = useCallback((target: View) => {
+    if (animation.current) cancelAnimationFrame(animation.current);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return setView(target);
+    const from = viewRef.current;
+    const start = performance.now();
+    const step = (now: number) => {
+      const t = Math.min(1, (now - start) / 380);
+      const e = 1 - Math.pow(1 - t, 3);
+      setView({
+        x: from.x + (target.x - from.x) * e,
+        y: from.y + (target.y - from.y) * e,
+        w: from.w + (target.w - from.w) * e,
+        h: from.h + (target.h - from.h) * e,
+      });
+      if (t < 1) animation.current = requestAnimationFrame(step);
+    };
+    animation.current = requestAnimationFrame(step);
+  }, []);
+
+  const zoomBy = useCallback(
+    (factor: number, origin?: { x: number; y: number }) => {
+      setView((v) => {
+        const ox = origin?.x ?? v.x + v.w / 2;
+        const oy = origin?.y ?? v.y + v.h / 2;
+        const w = v.w * factor;
+        const h = v.h * factor;
+        return clampView({ x: ox - ((ox - v.x) / v.w) * w, y: oy - ((oy - v.y) / v.h) * h, w, h });
+      });
+    },
+    []
+  );
+
+  const toMapPoint = (clientX: number, clientY: number) => {
+    const rect = svgRef.current!.getBoundingClientRect();
+    return { x: view.x + ((clientX - rect.left) / rect.width) * view.w, y: view.y + ((clientY - rect.top) / rect.height) * view.h };
+  };
+
+  // Ctrl/⌘ + wheel and trackpad pinch zoom around the cursor
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      // Plain wheel scrolls the page; Ctrl/⌘ + wheel (and trackpad pinch) zooms
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      setView((v) => {
+        const origin = { x: v.x + ((e.clientX - rect.left) / rect.width) * v.w, y: v.y + ((e.clientY - rect.top) / rect.height) * v.h };
+        const factor = Math.exp(e.deltaY * 0.0015);
+        const w = v.w * factor;
+        const h = v.h * factor;
+        return clampView({ x: origin.x - ((origin.x - v.x) / v.w) * w, y: origin.y - ((origin.y - v.y) / v.h) * h, w, h });
+      });
+      setActiveZone(null);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  // Drag to pan, two fingers to pinch
+  const onPointerDown = (e: React.PointerEvent) => {
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    dragged.current = false;
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const prev = pointers.current.get(e.pointerId);
+    if (!prev) return;
+    const rect = svgRef.current!.getBoundingClientRect();
+    if (pointers.current.size === 1) {
+      const dx = e.clientX - prev.x;
+      const dy = e.clientY - prev.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3 && !dragged.current) {
+        dragged.current = true;
+        (e.currentTarget as Element).setPointerCapture(e.pointerId);
+      }
+      if (dragged.current) {
+        setView((v) => clampView({ ...v, x: v.x - (dx / rect.width) * v.w, y: v.y - (dy / rect.height) * v.h }));
+        setActiveZone(null);
+      }
+    } else if (pointers.current.size === 2) {
+      const [a, b] = [...pointers.current.entries()].map(([id, p]) => (id === e.pointerId ? { x: e.clientX, y: e.clientY } : p));
+      const [pa, pb] = [...pointers.current.values()];
+      const before = Math.hypot(pa.x - pb.x, pa.y - pb.y);
+      const after = Math.hypot(a.x - b.x, a.y - b.y);
+      if (before > 0 && after > 0) {
+        dragged.current = true;
+        zoomBy(before / after, toMapPoint((a.x + b.x) / 2, (a.y + b.y) / 2));
+        setActiveZone(null);
+      }
+    }
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  };
+  const onPointerUp = (e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId);
+  };
+
+  const showZone = (zone: ZoneId | null) => {
+    setActiveZone(zone);
+    if (!zone) return animateTo(FULL);
+    const pts = summaries.filter((s) => s.spot.zone === zone).map((s) => positions.get(s.spot.id)!);
+    if (pts.length) animateTo(fitPoints(pts));
+  };
+
+  const selectSpot = (id: string) => {
+    if (dragged.current) return;
+    onSelectSpot(id);
+  };
 
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
-      <div className="relative">
-        <div className="rounded-3xl bg-sea p-4 sm:p-8">
-        <svg viewBox={`-20 -20 ${W + 40} ${H + 40}`} className="h-auto w-full" role="group" aria-label="Mapa de spots de Gran Canaria">
-          <path d={COAST_PATH} fill="none" stroke="var(--color-paper)" strokeWidth="14" strokeLinejoin="round" opacity="0.7" />
-          <path d={COAST_PATH} fill="var(--color-sand)" stroke="#c9d9e0" strokeWidth="1.5" strokeLinejoin="round" />
-          <text x={project(27.96, -15.6).x} y={project(27.96, -15.6).y} textAnchor="middle" fontSize="13" letterSpacing="3" fill="var(--color-ink-3)">
-            GRAN CANARIA
-          </text>
+      <div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {[{ id: null, label: 'Toda la isla' } as const, ...ZONES].map((z) => (
+            <button
+              key={z.label}
+              onClick={() => showZone(z.id)}
+              aria-pressed={activeZone === z.id}
+              className={cn(
+                'rounded-full px-3 py-1.5 text-sm transition',
+                activeZone === z.id ? 'bg-ocean text-sand' : 'bg-paper/70 text-ink-2 hover:bg-sea hover:text-ink'
+              )}
+            >
+              {z.label}
+            </button>
+          ))}
+        </div>
 
-          {ordered.map((s) => {
-            const { x, y } = project(s.spot.location.lat, s.spot.location.lng);
-            const isFocused = s.spot.id === focused?.spot.id;
-            return (
-              <g
-                key={s.spot.id}
-                role="button"
-                tabIndex={0}
-                aria-label={`${s.spot.name}: ${QUALITY[s.score.quality].label}, ${formatScore(s.score.overallScore)} sobre 10`}
-                className="cursor-pointer outline-none"
-                onPointerEnter={() => setFocusId(s.spot.id)}
-                onFocus={() => setFocusId(s.spot.id)}
-                onClick={() => onSelectSpot(s.spot.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelectSpot(s.spot.id);
-                  }
-                }}
+        <div className="relative overflow-hidden rounded-3xl bg-sea">
+          <svg
+            ref={svgRef}
+            viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
+            className="block h-auto w-full touch-none select-none"
+            style={{ aspectRatio: `${FULL.w} / ${FULL.h}`, cursor: zoomedIn ? 'grab' : 'default' }}
+            role="group"
+            aria-label="Mapa de spots de Gran Canaria. Usa los botones de zona o de zoom para acercarte."
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
+            <path d={COAST_PATH} fill="none" stroke="var(--color-paper)" strokeWidth={12 * unit} strokeLinejoin="round" opacity="0.7" />
+            <path d={COAST_PATH} fill="var(--color-sand)" stroke="#c3d4dc" strokeWidth={1.2 * unit} strokeLinejoin="round" />
+            {!zoomedIn && (
+              <text
+                x={project(27.96, -15.6).x}
+                y={project(27.96, -15.6).y}
+                textAnchor="middle"
+                fontSize={12 * unit}
+                letterSpacing={3 * unit}
+                fill="var(--color-ink-3)"
               >
-                {/* Generous hit area */}
-                <circle cx={x} cy={y} r="16" fill="transparent" />
-                <circle
-                  cx={x}
-                  cy={y}
-                  r={isFocused ? 9 : 6.5}
-                  fill={QUALITY[s.score.quality].color}
-                  stroke="var(--color-paper)"
-                  strokeWidth="2.5"
-                  className="transition-[r] duration-150"
-                />
-                {isFocused && <circle cx={x} cy={y} r="14" fill="none" stroke="var(--color-ink)" strokeWidth="1" />}
-              </g>
-            );
-          })}
-        </svg>
+                GRAN CANARIA
+              </text>
+            )}
+
+            {ordered.map((s) => {
+              const { x, y } = positions.get(s.spot.id)!;
+              const isFocused = s.spot.id === focused?.spot.id;
+              return (
+                <g
+                  key={s.spot.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${s.spot.name}: ${QUALITY[s.score.quality].label}, ${formatScore(s.score.overallScore)} sobre 10`}
+                  className="cursor-pointer outline-none"
+                  onPointerEnter={() => setFocusId(s.spot.id)}
+                  onFocus={() => setFocusId(s.spot.id)}
+                  onClick={() => selectSpot(s.spot.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectSpot(s.spot.id);
+                    }
+                  }}
+                >
+                  {/* Generous hit area */}
+                  <circle cx={x} cy={y} r={14 * unit} fill="transparent" />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={(isFocused ? 8 : 6) * unit}
+                    fill={QUALITY[s.score.quality].color}
+                    stroke="var(--color-paper)"
+                    strokeWidth={2.5 * unit}
+                  />
+                  {isFocused && <circle cx={x} cy={y} r={13 * unit} fill="none" stroke="var(--color-ink)" strokeWidth={1 * unit} />}
+                  {zoomedIn && (
+                    <text
+                      x={x + 12 * unit}
+                      y={y + 4 * unit}
+                      fontSize={12 * unit}
+                      fill="var(--color-ink)"
+                      stroke="var(--color-sand)"
+                      strokeWidth={3 * unit}
+                      paintOrder="stroke"
+                    >
+                      {s.spot.name.split(' (')[0]}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+
+          <div className="absolute bottom-3 right-3 flex flex-col overflow-hidden rounded-xl bg-paper shadow-sm ring-1 ring-line">
+            <MapButton label="Acercar" onClick={() => zoomBy(0.6)}>
+              <Plus className="size-4" />
+            </MapButton>
+            <MapButton label="Alejar" onClick={() => zoomBy(1 / 0.6)}>
+              <Minus className="size-4" />
+            </MapButton>
+            <MapButton label="Ver toda la isla" onClick={() => showZone(null)}>
+              <Maximize className="size-3.5" />
+            </MapButton>
+          </div>
+          <p className="pointer-events-none absolute bottom-3 left-4 text-[10px] text-ink-3">
+            <span className="hidden sm:inline">Ctrl/⌘ + rueda o pellizca para hacer zoom · </span>© OpenStreetMap
+          </p>
         </div>
         <MapLegend />
       </div>
@@ -109,7 +331,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
             <ScoreBadge score={focused.score.overallScore} quality={focused.score.quality} />
             {QUALITY[focused.score.quality].label}
           </p>
-          <p className="mt-1 text-sm text-ink-2 tabular-nums">
+          <p className="mt-3 text-sm text-ink-2 tabular-nums">
             {focused.conditions.primarySwell.heightM.toFixed(1)} m · {Math.round(focused.conditions.primarySwell.periodSec)} s{' '}
             {focused.conditions.primarySwell.compassDir} · viento {Math.round(focused.conditions.wind.speedKmh)} km/h{' '}
             {focused.conditions.wind.compassDir}
@@ -123,6 +345,19 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
         </div>
       )}
     </div>
+  );
+}
+
+function MapButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      className="flex size-9 items-center justify-center border-b border-line text-ink-2 transition last:border-b-0 hover:bg-sea hover:text-ink"
+    >
+      {children}
+    </button>
   );
 }
 

@@ -102,6 +102,7 @@ export function SiteFooter() {
             </li>
             <li>Energía: índice propio a partir de altura y periodo (40·H²·T).</li>
             <li>La marea es un modelo global, no apto para navegación.</li>
+            <li>Costa de la isla: © OpenStreetMap (ODbL).</li>
           </ul>
         </div>
         <div>
