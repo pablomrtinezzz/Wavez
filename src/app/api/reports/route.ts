@@ -5,9 +5,14 @@ import { SubmitReportCommand } from '@/application/usecases/SubmitSpotReportUseC
 
 export async function POST(request: NextRequest) {
   try {
+    const contentLength = Number(request.headers.get('content-length') ?? 0);
+    if (contentLength > 2_000_000) {
+      return NextResponse.json({ success: false, error: 'La foto es demasiado pesada' }, { status: 413 });
+    }
+
     const body = (await request.json()) as SubmitReportCommand;
 
-    if (!body.spotId || !body.photoUrl) {
+    if (!body || typeof body.spotId !== 'string' || !body.photoUrl) {
       return NextResponse.json(
         { success: false, error: 'Faltan campos obligatorios (spotId, photoUrl)' },
         { status: 400 }

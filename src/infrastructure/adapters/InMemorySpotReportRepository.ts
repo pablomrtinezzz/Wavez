@@ -1,34 +1,12 @@
 import { SpotReport } from '@/domain/models/SpotReport';
 import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 
+/** Bound memory usage: photos are stored inline as data URLs. */
+const MAX_REPORTS_PER_SPOT = 12;
+const REPORT_TTL_HOURS = 48;
+
 export class InMemorySpotReportRepository implements SpotReportRepository {
   private reports: SpotReport[] = [];
-
-  constructor() {
-    // Seed with a verified recent report for Playa del Hombre for initial demo
-    const oneHourAgo = new Date(Date.now() - 65 * 60 * 1000).toISOString();
-    this.reports.push({
-      id: 'seed-pdh-1',
-      spotId: 'playa-del-hombre',
-      photoUrl: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800&auto=format&fit=crop&q=80',
-      capturedAt: oneHourAgo,
-      uploadedAt: oneHourAgo,
-      userNote: 'Pico del medio rompiendo con fuerza. Marea media bajando, viento flojo terral.',
-      isRealtimeVerified: true,
-      captureMethod: 'camera_direct',
-      verificationFlags: [
-        'CAPTURA_EN_VIVO: Disparo directo desde cámara verificado.',
-        'HORA_VALIDA: Foto tomada hace 65 min.',
-        'GPS_VERIFICADO: Foto tomada a 120m de la playa.',
-      ],
-      conditionSnapshot: {
-        waveHeightM: 1.4,
-        periodSec: 11,
-        windSpeedKmh: 14,
-        windCompass: 'W',
-      },
-    });
-  }
 
   public async getRecentReports(spotId: string, limit: number = 10): Promise<SpotReport[]> {
     return this.reports
@@ -38,7 +16,13 @@ export class InMemorySpotReportRepository implements SpotReportRepository {
   }
 
   public async saveReport(report: SpotReport): Promise<void> {
+    await this.deleteExpiredReports(REPORT_TTL_HOURS);
     this.reports.unshift(report);
+    const forSpot = this.reports.filter((r) => r.spotId === report.spotId);
+    if (forSpot.length > MAX_REPORTS_PER_SPOT) {
+      const evicted = new Set(forSpot.slice(MAX_REPORTS_PER_SPOT).map((r) => r.id));
+      this.reports = this.reports.filter((r) => !evicted.has(r.id));
+    }
   }
 
   public async deleteExpiredReports(maxAgeHours: number = 48): Promise<number> {
