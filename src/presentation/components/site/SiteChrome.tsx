@@ -45,10 +45,9 @@ interface SiteHeaderProps {
   updatedAt?: string;
   isRefreshing: boolean;
   onRefresh: () => void;
-  onLogout: () => void;
 }
 
-export function SiteHeader({ updatedAt, isRefreshing, onRefresh, onLogout }: SiteHeaderProps) {
+export function SiteHeader({ updatedAt, isRefreshing, onRefresh }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-sand/85 backdrop-blur-md" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-5 sm:px-8">
@@ -73,9 +72,6 @@ export function SiteHeader({ updatedAt, isRefreshing, onRefresh, onLogout }: Sit
             title="Actualizar"
           >
             <RotateCw className={cn('size-4', isRefreshing && 'animate-spin')} />
-          </button>
-          <button onClick={onLogout} className="hover:text-ink">
-            Salir
           </button>
         </div>
       </div>

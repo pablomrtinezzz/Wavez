@@ -28,7 +28,7 @@
 
 7. **Fotos de la comunidad con verificación:** EXIF (hora) y GPS (distancia al spot) comprobados con el mismo validador de dominio en cliente y servidor; compresión en el dispositivo; solo se aceptan imágenes JPEG/PNG/WebP de tamaño acotado.
 
-8. **Acceso privado:** sesión firmada con HMAC (cookie HttpOnly, 30 días) y `proxy.ts` que exige sesión válida en toda la API.
+8. **Abierta al público:** sin registro ni clave. El envío de fotos está limitado por IP para evitar abusos.
 
 ---
 
@@ -45,18 +45,17 @@ src/
 ├── infrastructure/              # Adaptadores que implementan los puertos
 │   ├── repositories/            # StaticSpotRepository, StaticClimatologyRepository
 │   ├── adapters/                # OpenMeteoMarineAdapter, SurfForecastScraperAdapter, InMemorySpotReportRepository
-│   └── auth/                    # Sesión firmada (HMAC) para el acceso privado
+│   └── http/                    # Rate limiting de endpoints públicos
 ├── application/                 # Casos de uso y orquestación
 │   ├── dtos/                    # SpotSummaryDTO, SpotDetailDTO
 │   ├── usecases/                # GetSpotsWithForecastUseCase, GetSpotDetailUseCase, SubmitSpotReportUseCase
 │   └── container.ts             # Inyección de dependencias (Composition Root)
 ├── presentation/                # Interfaz de usuario
-│   ├── components/site/         # Hero, TimeControl, SpotList, IslandMap, WebcamGallery, AccessGate, cabecera/pie
+│   ├── components/site/         # Hero, TimeControl, SpotList, IslandMap, WebcamGallery, cabecera/pie
 │   ├── components/spot/         # SpotDrawer (informe), WebcamEmbed, ReportDialog
 │   ├── components/charts/       # DayChart, SeasonChart
 │   └── lib/                     # Formato, etiquetas de calidad, cliente de API
-├── app/                         # Página y endpoints (/api/spots, /api/reports, /api/auth)
-└── proxy.ts                     # Exige sesión válida en /api/*
+└── app/                         # Página y endpoints (/api/spots, /api/reports)
 ```
 
 ---
@@ -92,11 +91,6 @@ src/
    npm run dev
    ```
    Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
-
-4. **Acceso Privado:**
-   * Clave por defecto **solo en desarrollo**: `grancanariasurf`.
-   * En producción es obligatorio definir `APP_PASSKEY`; sin ella el login responde 503.
-   * Opcional: `SESSION_SECRET` para firmar las sesiones con una clave distinta de la de acceso (cambiarla cierra todas las sesiones).
 
 ---
 

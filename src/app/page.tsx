@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { Spot } from '@/domain/models/Spot';
 import { canaryNow, LocalMoment } from '@/domain/models/LocalTime';
-import { AccessGate } from '@/presentation/components/site/AccessGate';
 import { SiteFooter, SiteHeader } from '@/presentation/components/site/SiteChrome';
 import { TimeControl, TimeSelection } from '@/presentation/components/site/TimeControl';
 import { Hero } from '@/presentation/components/site/Hero';
@@ -14,7 +13,6 @@ import { WebcamGallery } from '@/presentation/components/site/WebcamGallery';
 import { SpotDrawer } from '@/presentation/components/spot/SpotDrawer';
 import { ReportDialog } from '@/presentation/components/spot/ReportDialog';
 import { Spinner } from '@/presentation/components/ui/primitives';
-import { UNAUTHORIZED_EVENT } from '@/presentation/lib/api';
 import { capitalize, formatHour, formatLongDate } from '@/presentation/lib/format';
 
 /** Live data is re-fetched this often while the tab stays open. */
@@ -33,7 +31,6 @@ function readSpotFromUrl(): string | null {
 }
 
 export default function HomePage() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   // The clock is read on the client only: prerendering must not freeze "now"
   const [now, setNow] = useState<LocalMoment | null>(null);
   const [selection, setSelection] = useState<TimeSelection | null>(null);
@@ -47,28 +44,20 @@ export default function HomePage() {
   const [reportingSpot, setReportingSpot] = useState<Spot | null>(null);
   const [reportsVersion, setReportsVersion] = useState(0);
 
-  // Session check, and back to the gate whenever the API says the session expired
-  useEffect(() => {
-    fetch('/api/auth/verify')
-      .then((res) => res.json())
-      .then((data) => setIsAuthenticated(Boolean(data.authenticated)))
-      .catch(() => setIsAuthenticated(false))
-      .finally(() => {
-        const current = canaryNow();
-        setNow(current);
-        setSelection({ ...current, isLive: true });
-      });
-    const onUnauthorized = () => setIsAuthenticated(false);
-    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
-    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
-  }, []);
-
-  // Deep links: ?spot=<id> opens the report and the back button closes it
+  // Read the clock and the deep link (?spot=<id>) once mounted; Back closes the report
   useEffect(() => {
     const sync = () => setSelectedSpotId(readSpotFromUrl());
-    sync();
+    const init = requestAnimationFrame(() => {
+      const current = canaryNow();
+      setNow(current);
+      setSelection({ ...current, isLive: true });
+      sync();
+    });
     window.addEventListener('popstate', sync);
-    return () => window.removeEventListener('popstate', sync);
+    return () => {
+      cancelAnimationFrame(init);
+      window.removeEventListener('popstate', sync);
+    };
   }, []);
 
   const openSpot = useCallback((spotId: string) => {
@@ -103,7 +92,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated || !selection) return;
+    if (!selection) return;
     const controller = new AbortController();
     const url = selection.isLive ? '/api/spots' : `/api/spots?date=${selection.dateStr}&hour=${selection.hour}`;
 
@@ -112,10 +101,6 @@ export default function HomePage() {
       setIsRefreshing(true);
       try {
         const res = await fetch(url, { signal: controller.signal });
-        if (res.status === 401) {
-          setIsAuthenticated(false);
-          return;
-        }
         const json = (await res.json()) as SpotsResponse;
         if (!json.success) throw new Error(json.error || 'No se pudieron cargar los spots');
         setSummaries(json.data);
@@ -133,24 +118,14 @@ export default function HomePage() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [isAuthenticated, selection, reloadToken]);
+  }, [selection, reloadToken]);
 
-  const logout = async () => {
-    await fetch('/api/auth/verify', { method: 'DELETE' }).catch(() => null);
-    setIsAuthenticated(false);
-    setSummaries([]);
-  };
-
-  if (isAuthenticated === null || !now || !selection) {
+  if (!now || !selection) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
         <Spinner />
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return <AccessGate onAuthenticated={() => setIsAuthenticated(true)} />;
   }
 
   const modeLabel = selection.isLive
@@ -162,7 +137,7 @@ export default function HomePage() {
 
   return (
     <>
-      <SiteHeader updatedAt={updatedAt} isRefreshing={isRefreshing} onRefresh={goLive} onLogout={logout} />
+      <SiteHeader updatedAt={updatedAt} isRefreshing={isRefreshing} onRefresh={goLive} />
 
       <main className="mx-auto max-w-6xl px-5 sm:px-8">
         <section className="pt-10 sm:pt-14" aria-label="Día y hora">
