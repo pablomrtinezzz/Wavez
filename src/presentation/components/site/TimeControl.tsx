@@ -122,8 +122,18 @@ export function TimeControl({ today, currentHour, value, onChange }: TimeControl
         <span>Previsión (6 días) →</span>
       </p>
 
-      <div className="flex items-center gap-4">
-        <span className="w-12 text-sm font-medium text-ink tabular-nums">{formatHour(value.hour)}</span>
+      <div className="rounded-2xl bg-paper/70 p-4 ring-1 ring-line sm:p-5">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-sm text-ink-2">
+            Hora: <span className="text-base font-medium text-ink tabular-nums">{formatHour(value.hour)}</span>
+          </span>
+          {isPlaying && (
+            <span className="inline-flex items-center gap-1.5 text-xs text-ocean" aria-live="polite">
+              <span className="size-1.5 rounded-full bg-ocean animate-pulse-soft" aria-hidden />
+              Reproduciendo el día…
+            </span>
+          )}
+        </div>
         <input
           type="range"
           min={0}
@@ -133,18 +143,32 @@ export function TimeControl({ today, currentHour, value, onChange }: TimeControl
             setIsPlaying(false);
             select(value.dateStr, Number(e.target.value));
           }}
-          className="range flex-1"
+          className="range mt-4 w-full"
           aria-label="Hora del día"
           aria-valuetext={formatHour(value.hour)}
         />
-        <button
-          onClick={() => setIsPlaying((p) => !p)}
-          className="flex size-8 shrink-0 items-center justify-center rounded-full border border-line-strong text-ink-2 transition hover:border-ink hover:text-ink"
-          aria-label={isPlaying ? 'Pausar recorrido horario' : 'Recorrer el día hora a hora'}
-          title={isPlaying ? 'Pausar' : 'Recorrer el día'}
-        >
-          {isPlaying ? <Pause className="size-3.5 fill-current" /> : <Play className="ml-0.5 size-3.5 fill-current" />}
-        </button>
+        <div className="mt-1.5 flex justify-between text-[10px] text-ink-3 tabular-nums" aria-hidden>
+          {['00', '06', '12', '18', '23'].map((h) => (
+            <span key={h}>{h}h</span>
+          ))}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:items-center">
+          <button
+            onClick={() => setIsPlaying((p) => !p)}
+            aria-pressed={isPlaying}
+            className={cn(
+              'inline-flex shrink-0 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition',
+              isPlaying ? 'bg-ocean text-sand hover:bg-ocean-deep' : 'border border-ocean text-ocean hover:bg-ocean hover:text-sand'
+            )}
+          >
+            {isPlaying ? <Pause className="size-3.5 fill-current" /> : <Play className="size-3.5 fill-current" />}
+            {isPlaying ? 'Pausar' : 'Reproducir el día'}
+          </button>
+          <p className="text-xs leading-relaxed text-ink-3">
+            Avanza sola hora a hora (00 → 23 h) para ver cómo cambian el oleaje, el viento y el ranking de spots a lo largo del día.
+          </p>
+        </div>
       </div>
     </div>
   );

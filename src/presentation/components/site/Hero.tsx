@@ -4,7 +4,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { isDirectionInRange } from '@/domain/models/MarineConditions';
-import { DirectionArrow, Figure, ScoreBadge } from '@/presentation/components/ui/primitives';
+import { DataDisclaimer, DirectionArrow, Figure, ScoreBadge } from '@/presentation/components/ui/primitives';
 import { QUALITY, describeWind, formatHour, formatLongDate, formatTide } from '@/presentation/lib/format';
 import { TimeSelection } from './TimeControl';
 
@@ -138,6 +138,8 @@ export function Hero({ summaries, selection, today, currentHour, onSelectSpot }:
           </p>
         )}
       </div>
+
+      <DataDisclaimer tone="dark" className="mt-8 max-w-2xl" />
     </section>
   );
 }

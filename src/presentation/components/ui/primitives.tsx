@@ -125,6 +125,22 @@ export function useElementWidth<T extends HTMLElement>(): [React.RefObject<T | n
   return [ref, width];
 }
 
+/** Reminder that everything shown is model data, not an on-site observation. */
+export function DataDisclaimer({ className, tone = 'light' }: { className?: string; tone?: 'light' | 'dark' }) {
+  return (
+    <p className={cn('flex items-start gap-2 text-xs leading-relaxed', tone === 'dark' ? 'text-sand/65' : 'text-ink-3', className)}>
+      <svg viewBox="0 0 16 16" className="mt-0.5 size-3.5 shrink-0" aria-hidden>
+        <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M8 7v4M8 4.6v.1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+      <span>
+        Información orientativa basada en modelos meteorológicos, no en observación directa. Las condiciones reales pueden cambiar en
+        el spot: compruébalas siempre al llegar y no entres al agua si no lo ves claro.
+      </span>
+    </p>
+  );
+}
+
 export function Spinner({ className }: { className?: string }) {
   return (
     <span

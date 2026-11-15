@@ -82,13 +82,20 @@ export function SiteHeader({ updatedAt, isRefreshing, onRefresh }: SiteHeaderPro
 export function SiteFooter() {
   return (
     <footer className="mt-32 border-t border-line">
+      <div className="mx-auto max-w-6xl px-5 pt-12 sm:px-8">
+        <div className="rounded-2xl bg-sun-soft px-5 py-4 text-sm leading-relaxed text-ink-2 sm:px-6">
+          <p className="font-medium text-ink">Todo lo que ves aquí son datos, no una garantía</p>
+          <p className="mt-1">
+            Las notas, alturas y ventanas se calculan a partir de modelos oceánicos y meteorológicos globales y pueden diferir de lo que
+            encuentres en la playa: bancos de arena, corrientes, mareas locales o un cambio de viento no siempre aparecen en el modelo.
+            Usa Wavez para orientarte y decide siempre en el sitio, según tu nivel y con prudencia.
+          </p>
+        </div>
+      </div>
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 text-sm text-ink-2 sm:px-8 md:grid-cols-[1.2fr_1fr_1fr]">
         <div>
           <Wordmark />
-          <p className="mt-4 max-w-xs leading-relaxed text-ink-3">
-            Un parte de olas independiente para Gran Canaria. La nota es orientativa: el mar manda, consulta siempre las condiciones en la
-            playa.
-          </p>
+          <p className="mt-4 max-w-xs leading-relaxed text-ink-3">Un parte de olas independiente y gratuito para Gran Canaria.</p>
         </div>
         <div>
           <p className="eyebrow">Datos</p>

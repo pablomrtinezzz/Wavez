@@ -11,7 +11,7 @@ import { addDays } from '@/domain/models/LocalTime';
 import { DayChart } from '@/presentation/components/charts/DayChart';
 import { SeasonChart } from '@/presentation/components/charts/SeasonChart';
 import { WebcamEmbed } from './WebcamEmbed';
-import { DirectionArrow, Figure, ScoreBadge, Spinner } from '@/presentation/components/ui/primitives';
+import { DataDisclaimer, DirectionArrow, Figure, ScoreBadge, Spinner } from '@/presentation/components/ui/primitives';
 import {
   BREAK_LABEL,
   QUALITY,
@@ -269,6 +269,7 @@ function NowFigures({ detail }: { detail: SpotDetailDTO }) {
           <span className="text-sm text-ink-2">{score.recommendation}</span>
         </span>
       </div>
+      <DataDisclaimer className="-mt-4 mb-8" />
       <dl className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3">
         <Figure
           label="Oleaje"
