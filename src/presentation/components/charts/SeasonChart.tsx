@@ -55,7 +55,7 @@ export function SeasonChart({ months, currentMonth }: SeasonChartProps) {
               return (
                 <g key={m.month} onPointerEnter={() => setHover(m.month)} onPointerDown={() => setHover(m.month)}>
                   <rect x={cx - band / 2} y={PAD.top} width={band} height={innerH + PAD.bottom} fill="transparent" />
-                  <path d={d} fill={isCurrent ? 'var(--color-accent)' : 'var(--color-q-poor)'} opacity={hover && !isActive && !isCurrent ? 0.6 : 1} />
+                  <path d={d} fill={isCurrent ? 'var(--color-ocean)' : '#a9c6d3'} opacity={hover && !isActive && !isCurrent ? 0.6 : 1} />
                   {isCurrent && (
                     <text x={cx} y={top - 6} fontSize="10.5" textAnchor="middle" fill="var(--color-ink)" className="tabular-nums">
                       {m.consistencyPct}%
