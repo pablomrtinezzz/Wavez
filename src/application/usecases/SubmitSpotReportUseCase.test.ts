@@ -1,6 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { SubmitSpotReportUseCase } from './SubmitSpotReportUseCase';
+import { ReportRateLimitError, SubmitSpotReportUseCase } from './SubmitSpotReportUseCase';
+import { REPORT_RETENTION } from '@/domain/ports/SpotReportRepository';
 import { StaticSpotRepository } from '@/infrastructure/repositories/StaticSpotRepository';
 import { InMemorySpotReportRepository } from '@/infrastructure/adapters/InMemorySpotReportRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
@@ -60,5 +61,33 @@ describe('SubmitSpotReportUseCase', () => {
       }),
       /km de La Cícer/
     );
+  });
+
+  test('does not store the uploader location, only the distance', async () => {
+    const report = await useCase.execute(
+      { spotId: 'la-cicer', photoUrl: TINY_JPEG, captureMethod: 'camera_direct', deviceLocation: ON_THE_BEACH },
+      'privacy-test'
+    );
+    assert.ok(report.distanceToSpotMeters !== undefined);
+    assert.equal(JSON.stringify(report).includes('28.1345'), false);
+  });
+
+  test('rate-limits each uploader to 5 photos per 10 minutes', async () => {
+    const fresh = new SubmitSpotReportUseCase(new StaticSpotRepository(), unavailableMarine, new InMemorySpotReportRepository());
+    const send = () =>
+      fresh.execute({ spotId: 'el-confital', photoUrl: TINY_JPEG, captureMethod: 'camera_direct', deviceLocation: { lat: 28.156, lng: -15.438, accuracyM: 10 } }, 'same-person');
+    for (let i = 0; i < 5; i++) await send();
+    await assert.rejects(send(), ReportRateLimitError);
+    // Another uploader is unaffected
+    await fresh.execute({ spotId: 'el-confital', photoUrl: TINY_JPEG, captureMethod: 'camera_direct', deviceLocation: { lat: 28.156, lng: -15.438, accuracyM: 10 } }, 'someone-else');
+  });
+
+  test('keeps at most the configured number of photos per spot', async () => {
+    const repo = new InMemorySpotReportRepository();
+    const fresh = new SubmitSpotReportUseCase(new StaticSpotRepository(), unavailableMarine, repo);
+    for (let i = 0; i < REPORT_RETENTION.maxPerSpot + 3; i++) {
+      await fresh.execute({ spotId: 'la-cicer', photoUrl: TINY_JPEG, captureMethod: 'camera_direct', deviceLocation: ON_THE_BEACH }, `user-${i}`);
+    }
+    assert.equal((await repo.getRecentReports('la-cicer', 100)).length, REPORT_RETENTION.maxPerSpot);
   });
 });

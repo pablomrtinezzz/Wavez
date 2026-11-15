@@ -96,6 +96,15 @@ Variables opcionales:
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | URL canónica para SEO (en Vercel se usa la de producción automáticamente). |
 | `MARINE_SNAPSHOT_URL` | Otra ubicación para la instantánea de datos. |
+| `SUPABASE_URL` / `SUPABASE_SECRET_KEY` | Almacén de las fotos de la comunidad. Sin ellas, las fotos se guardan solo en memoria (útil en local). |
+
+### Fotos de la comunidad (Supabase)
+
+1. Ejecuta [`supabase/migrations/20261115000000_spot_reports.sql`](supabase/migrations/20261115000000_spot_reports.sql) en el *SQL Editor* de tu proyecto.
+2. Copia `.env.example` a `.env.local` y rellena la URL y la clave secreta (*Project Settings → API Keys*).
+3. Pon las mismas variables en Vercel y vuelve a desplegar.
+
+Las fotos van a un bucket público `spot-photos`; los datos, a la tabla `spot_reports` (RLS activado, sin políticas públicas: solo el servidor accede). Se guardan 48 h, como máximo 12 por spot, y cada persona puede subir 5 cada 10 minutos (contado en la base de datos con un hash de la IP). No se guarda la ubicación de quien sube la foto, solo su distancia al spot.
 
 La instantánea se puede generar a mano con `npx tsx scripts/refresh-marine-snapshot.ts out/marine-snapshot.json` o lanzando el workflow *Refresh marine data* desde la pestaña *Actions*.
 

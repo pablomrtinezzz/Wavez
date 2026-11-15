@@ -1,6 +1,6 @@
 import { SpotRepository } from '@/domain/ports/SpotRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
-import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
+import { PhotoContentType, SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { ExifSecurityValidator } from '@/domain/services/ExifSecurityValidator';
 import { DeviceLocation, ExifData, SpotReport } from '@/domain/models/SpotReport';
 
@@ -12,6 +12,18 @@ export interface SubmitReportCommand {
   deviceLocation?: DeviceLocation;
   userNote?: string;
 }
+
+/** Thrown when one uploader exceeds the allowed number of photos. */
+export class ReportRateLimitError extends Error {
+  constructor() {
+    super('Has subido varias fotos seguidas. Espera unos minutos.');
+    this.name = 'ReportRateLimitError';
+  }
+}
+
+/** At most this many photos per uploader in the window below. */
+const MAX_UPLOADS_PER_WINDOW = 5;
+const UPLOAD_WINDOW_MS = 10 * 60 * 1000;
 
 /** Photos must be taken on the beach: within this distance of the spot. */
 const MAX_DISTANCE_METERS = 2500;
@@ -31,6 +43,7 @@ function sanitizeLocation(loc: unknown): DeviceLocation | undefined {
 /** ~1.5 MB of base64, far above a 1280px JPEG at 80% (~150-300 KB). */
 const MAX_PHOTO_DATA_URL_LENGTH = 1_500_000;
 const PHOTO_DATA_URL_PATTERN = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/;
+const PHOTO_DATA_URL_PATTERN_WITH_DATA = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/]+=*)$/;
 const MAX_NOTE_LENGTH = 300;
 
 function sanitizeExif(exif: unknown): ExifData | undefined {
@@ -55,7 +68,11 @@ export class SubmitSpotReportUseCase {
     private reportRepo: SpotReportRepository
   ) {}
 
-  public async execute(command: SubmitReportCommand): Promise<SpotReport> {
+  /**
+   * @param clientKey Opaque, hashed identifier of the uploader (never the raw IP),
+   *   used to rate-limit uploads across all server instances.
+   */
+  public async execute(command: SubmitReportCommand, clientKey: string = 'anonymous'): Promise<SpotReport> {
     const spot = await this.spotRepo.getSpotById(command.spotId);
     if (!spot) {
       throw new Error(`Spot no encontrado con id: ${command.spotId}`);
@@ -77,6 +94,11 @@ export class SubmitSpotReportUseCase {
       throw new Error('Necesitamos tu ubicación para comprobar que estás en el spot');
     }
     const exifData = sanitizeExif(command.exifData);
+
+    const since = new Date(Date.now() - UPLOAD_WINDOW_MS).toISOString();
+    if ((await this.reportRepo.countRecentUploads(clientKey, since)) >= MAX_UPLOADS_PER_WINDOW) {
+      throw new ReportRateLimitError();
+    }
 
     // Run security and freshness validation
     const validation = ExifSecurityValidator.validate({
@@ -114,23 +136,25 @@ export class SubmitSpotReportUseCase {
       // Snapshot is optional enhancement
     }
 
-    const report: SpotReport = {
-      id: `rep_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      spotId: spot.id,
-      photoUrl: command.photoUrl,
-      capturedAt: exifData?.dateTimeOriginal || new Date().toISOString(),
-      uploadedAt: new Date().toISOString(),
-      userNote: typeof command.userNote === 'string' ? command.userNote.trim().slice(0, MAX_NOTE_LENGTH) || undefined : undefined,
-      isRealtimeVerified: validation.isRealtimeVerified,
-      captureMethod: command.captureMethod,
-      exifData,
-      deviceLocation,
-      distanceToSpotMeters: validation.distanceToSpotMeters,
-      verificationFlags: validation.flags,
-      conditionSnapshot: snapshot,
-    };
+    // Photos are taken live, so the server's clock is the capture time
+    const now = new Date().toISOString();
+    const [, mime, base64] = command.photoUrl.match(PHOTO_DATA_URL_PATTERN_WITH_DATA)!;
 
-    await this.reportRepo.saveReport(report);
-    return report;
+    return this.reportRepo.saveReport(
+      {
+        id: crypto.randomUUID(),
+        spotId: spot.id,
+        capturedAt: now,
+        uploadedAt: now,
+        userNote: typeof command.userNote === 'string' ? command.userNote.trim().slice(0, MAX_NOTE_LENGTH) || undefined : undefined,
+        isRealtimeVerified: validation.isRealtimeVerified,
+        captureMethod: command.captureMethod,
+        distanceToSpotMeters: validation.distanceToSpotMeters,
+        verificationFlags: validation.flags,
+        conditionSnapshot: snapshot,
+      },
+      { bytes: Buffer.from(base64, 'base64'), contentType: `image/${mime}` as PhotoContentType },
+      clientKey
+    );
   }
 }

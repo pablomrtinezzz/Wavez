@@ -1,7 +1,10 @@
 import { GRAN_CANARIA_SPOTS, StaticSpotRepository } from '@/infrastructure/repositories/StaticSpotRepository';
 import { OpenMeteoMarineAdapter } from '@/infrastructure/adapters/OpenMeteoMarineAdapter';
 import { SnapshotMarineAdapter } from '@/infrastructure/adapters/SnapshotMarineAdapter';
-import { spotReportRepository } from '@/infrastructure/adapters/InMemorySpotReportRepository';
+import { createClient } from '@supabase/supabase-js';
+import { InMemorySpotReportRepository } from '@/infrastructure/adapters/InMemorySpotReportRepository';
+import { SupabaseSpotReportRepository } from '@/infrastructure/adapters/SupabaseSpotReportRepository';
+import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { StaticClimatologyRepository } from '@/infrastructure/repositories/StaticClimatologyRepository';
 import { GetSpotsWithForecastUseCase } from './usecases/GetSpotsWithForecastUseCase';
 import { GetSpotDetailUseCase } from './usecases/GetSpotDetailUseCase';
@@ -20,7 +23,18 @@ const marineService = new SnapshotMarineAdapter(
   MARINE_SNAPSHOT_URL,
   new OpenMeteoMarineAdapter((spotId) => GRAN_CANARIA_SPOTS.find((s) => s.id === spotId)?.marinePoint)
 );
-const reportRepo = spotReportRepository;
+// Community photos: Supabase when configured, process memory otherwise (dev/tests only)
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+export const reportsArePersistent = Boolean(SUPABASE_URL && SUPABASE_SECRET_KEY);
+const reportRepo: SpotReportRepository = reportsArePersistent
+  ? new SupabaseSpotReportRepository(
+      createClient(SUPABASE_URL!, SUPABASE_SECRET_KEY!, { auth: { persistSession: false, autoRefreshToken: false } })
+    )
+  : new InMemorySpotReportRepository();
+if (!reportsArePersistent && process.env.NODE_ENV === 'production') {
+  console.warn('[container] Supabase is not configured: community photos are kept in memory only.');
+}
 const climatologyRepo = new StaticClimatologyRepository();
 
 // Use case instances

@@ -24,8 +24,7 @@ export interface SpotReport {
   userNote?: string;
   isRealtimeVerified: boolean;
   captureMethod: 'camera_direct' | 'gallery_upload';
-  exifData?: ExifData;
-  deviceLocation?: DeviceLocation;
+  /** Only the distance is stored; the uploader's exact position never is. */
   distanceToSpotMeters?: number;
   verificationFlags: string[];
   // Weather condition snapshot when the photo was reported

@@ -45,3 +45,6 @@ next-env.d.ts
 
 # local marketing assets (LinkedIn)
 /linkedin-kit/
+
+# allow the documented env template
+!.env.example

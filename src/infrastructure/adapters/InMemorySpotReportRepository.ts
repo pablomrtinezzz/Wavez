@@ -1,43 +1,57 @@
 import { SpotReport } from '@/domain/models/SpotReport';
-import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
+import {
+  NewSpotReport,
+  PhotoUpload,
+  REPORT_RETENTION,
+  SpotReportRepository,
+} from '@/domain/ports/SpotReportRepository';
 
-/** Bound memory usage: photos are stored inline as data URLs. */
-const MAX_REPORTS_PER_SPOT = 12;
-const REPORT_TTL_HOURS = 48;
+interface StoredReport {
+  report: SpotReport;
+  clientKey: string;
+}
 
+/**
+ * Process-local storage, used for tests and local development without
+ * Supabase. On serverless hosting it is NOT persistent: each instance has
+ * its own copy and it is lost when the instance stops.
+ */
 export class InMemorySpotReportRepository implements SpotReportRepository {
-  private reports: SpotReport[] = [];
+  private items: StoredReport[] = [];
 
   public async getRecentReports(spotId: string, limit: number = 10): Promise<SpotReport[]> {
-    return this.reports
-      .filter((r) => r.spotId === spotId)
-      .sort((a, b) => new Date(b.capturedAt).getTime() - new Date(a.capturedAt).getTime())
+    const threshold = Date.now() - REPORT_RETENTION.ttlHours * 3600_000;
+    return this.items
+      .map((i) => i.report)
+      .filter((r) => r.spotId === spotId && Date.parse(r.capturedAt) > threshold)
+      .sort((a, b) => Date.parse(b.capturedAt) - Date.parse(a.capturedAt))
       .slice(0, limit);
   }
 
-  public async saveReport(report: SpotReport): Promise<void> {
-    await this.deleteExpiredReports(REPORT_TTL_HOURS);
-    this.reports.unshift(report);
-    const forSpot = this.reports.filter((r) => r.spotId === report.spotId);
-    if (forSpot.length > MAX_REPORTS_PER_SPOT) {
-      const evicted = new Set(forSpot.slice(MAX_REPORTS_PER_SPOT).map((r) => r.id));
-      this.reports = this.reports.filter((r) => !evicted.has(r.id));
+  public async saveReport(report: NewSpotReport, photo: PhotoUpload, clientKey: string): Promise<SpotReport> {
+    await this.deleteExpiredReports(REPORT_RETENTION.ttlHours);
+    const stored: SpotReport = {
+      ...report,
+      photoUrl: `data:${photo.contentType};base64,${Buffer.from(photo.bytes).toString('base64')}`,
+    };
+    this.items.unshift({ report: stored, clientKey });
+    const forSpot = this.items.filter((i) => i.report.spotId === report.spotId);
+    if (forSpot.length > REPORT_RETENTION.maxPerSpot) {
+      const evicted = new Set(forSpot.slice(REPORT_RETENTION.maxPerSpot).map((i) => i.report.id));
+      this.items = this.items.filter((i) => !evicted.has(i.report.id));
     }
+    return stored;
   }
 
-  public async deleteExpiredReports(maxAgeHours: number = 48): Promise<number> {
-    const threshold = Date.now() - maxAgeHours * 60 * 60 * 1000;
-    const initialCount = this.reports.length;
-    this.reports = this.reports.filter((r) => new Date(r.capturedAt).getTime() > threshold);
-    return initialCount - this.reports.length;
+  public async countRecentUploads(clientKey: string, sinceIso: string): Promise<number> {
+    const since = Date.parse(sinceIso);
+    return this.items.filter((i) => i.clientKey === clientKey && Date.parse(i.report.uploadedAt) >= since).length;
   }
-}
 
-// Global singleton instance for the serverless process
-const globalForReports = global as unknown as { inMemoryReportsRepo?: InMemorySpotReportRepository };
-export const spotReportRepository =
-  globalForReports.inMemoryReportsRepo || new InMemorySpotReportRepository();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalForReports.inMemoryReportsRepo = spotReportRepository;
+  public async deleteExpiredReports(maxAgeHours: number = REPORT_RETENTION.ttlHours): Promise<number> {
+    const threshold = Date.now() - maxAgeHours * 3600_000;
+    const before = this.items.length;
+    this.items = this.items.filter((i) => Date.parse(i.report.capturedAt) > threshold);
+    return before - this.items.length;
+  }
 }

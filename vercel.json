@@ -4,5 +4,8 @@
     "deploymentEnabled": {
       "data": false
     }
-  }
+  },
+  "regions": [
+    "dub1"
+  ]
 }
