@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Minus, Plus, Maximize } from 'lucide-react';
+import { Minus, Plus, Maximize2, Minimize2, LocateFixed, X } from 'lucide-react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { ConditionQuality } from '@/domain/models/SpotScore';
 import { ZoneId } from '@/domain/models/Spot';
@@ -17,6 +17,10 @@ const W = (BOUNDS.maxLng - BOUNDS.minLng) * LNG_SCALE * SCALE;
 const H = (BOUNDS.maxLat - BOUNDS.minLat) * SCALE;
 const PAD = 20;
 const FULL: View = { x: -PAD, y: -PAD, w: W + PAD * 2, h: H + PAD * 2 };
+/** Land and sea colours, distinct from the page background so the island never blends in. */
+const LAND = '#e9dfc7';
+const COAST = '#8fb3c2';
+const SEA = '#d3e5ed';
 /** Closest zoom: about 3 km across. */
 const MIN_W = 30;
 
@@ -71,6 +75,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
   const [focusId, setFocusId] = useState<string | null>(null);
   const [view, setView] = useState<View>(FULL);
   const [activeZone, setActiveZone] = useState<ZoneId | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const animation = useRef<number | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -85,16 +90,18 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
   );
 
   /** Map units per screen pixel, so markers keep a constant on-screen size. */
-  const [pxWidth, setPxWidth] = useState(600);
+  const [px, setPx] = useState({ w: 600, h: 640 });
   useEffect(() => {
     const el = svgRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([e]) => setPxWidth(e.contentRect.width || 600));
+    const ro = new ResizeObserver(([e]) => setPx({ w: e.contentRect.width || 600, h: e.contentRect.height || 640 }));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const unit = view.w / pxWidth;
-  const zoomedIn = view.w < FULL.w * 0.45;
+  // The SVG letterboxes the view ("meet"), so the effective scale is the larger ratio
+  const unit = Math.max(view.w / px.w, view.h / px.h);
+  // Close enough to tell neighbouring spots apart: show their names
+  const zoomedIn = unit < 0.35;
 
   const viewRef = useRef(view);
   useEffect(() => {
@@ -133,32 +140,43 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
     []
   );
 
-  const toMapPoint = (clientX: number, clientY: number) => {
-    const rect = svgRef.current!.getBoundingClientRect();
-    return { x: view.x + ((clientX - rect.left) / rect.width) * view.w, y: view.y + ((clientY - rect.top) / rect.height) * view.h };
-  };
+  /** Screen → map coordinates, correct even when the SVG is letterboxed (expanded view). */
+  const toMapPoint = useCallback((clientX: number, clientY: number) => {
+    const svg = svgRef.current!;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const pt = new DOMPoint(clientX, clientY).matrixTransform(ctm.inverse());
+    return { x: pt.x, y: pt.y };
+  }, []);
 
   // Ctrl/⌘ + wheel and trackpad pinch zoom around the cursor
   useEffect(() => {
     const el = svgRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      // Plain wheel scrolls the page; Ctrl/⌘ + wheel (and trackpad pinch) zooms
-      if (!e.ctrlKey && !e.metaKey) return;
+      // Plain wheel scrolls the page; Ctrl/⌘ + wheel (and trackpad pinch) zooms.
+      // In the expanded view there is no page to scroll, so the wheel always zooms.
+      if (!expanded && !e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
-      const rect = el.getBoundingClientRect();
-      setView((v) => {
-        const origin = { x: v.x + ((e.clientX - rect.left) / rect.width) * v.w, y: v.y + ((e.clientY - rect.top) / rect.height) * v.h };
-        const factor = Math.exp(e.deltaY * 0.0015);
-        const w = v.w * factor;
-        const h = v.h * factor;
-        return clampView({ x: origin.x - ((origin.x - v.x) / v.w) * w, y: origin.y - ((origin.y - v.y) / v.h) * h, w, h });
-      });
+      zoomBy(Math.exp(e.deltaY * 0.0015), toMapPoint(e.clientX, e.clientY));
       setActiveZone(null);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, []);
+  }, [expanded, zoomBy, toMapPoint]);
+
+  // Expanded view: Escape closes it and the page behind does not scroll
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setExpanded(false);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [expanded]);
 
   // Drag to pan, two fingers to pinch
   const onPointerDown = (e: React.PointerEvent) => {
@@ -168,7 +186,6 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
   const onPointerMove = (e: React.PointerEvent) => {
     const prev = pointers.current.get(e.pointerId);
     if (!prev) return;
-    const rect = svgRef.current!.getBoundingClientRect();
     if (pointers.current.size === 1) {
       const dx = e.clientX - prev.x;
       const dy = e.clientY - prev.y;
@@ -177,7 +194,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
         (e.currentTarget as Element).setPointerCapture(e.pointerId);
       }
       if (dragged.current) {
-        setView((v) => clampView({ ...v, x: v.x - (dx / rect.width) * v.w, y: v.y - (dy / rect.height) * v.h }));
+        setView((v) => clampView({ ...v, x: v.x - dx * unit, y: v.y - dy * unit }));
         setActiveZone(null);
       }
     } else if (pointers.current.size === 2) {
@@ -213,27 +230,38 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          {[{ id: null, label: 'Toda la isla' } as const, ...ZONES].map((z) => (
-            <button
-              key={z.label}
-              onClick={() => showZone(z.id)}
-              aria-pressed={activeZone === z.id}
-              className={cn(
-                'rounded-full px-3 py-1.5 text-sm transition',
-                activeZone === z.id ? 'bg-ocean text-sand' : 'bg-paper/70 text-ink-2 hover:bg-sea hover:text-ink'
-              )}
-            >
-              {z.label}
-            </button>
-          ))}
+          <ZoneChips active={activeZone} onSelect={showZone} />
         </div>
 
-        <div className="relative overflow-hidden rounded-3xl bg-sea">
+        <div
+          className={cn(
+            'relative overflow-hidden ring-1 ring-[#bcd3dd]',
+            expanded ? 'fixed inset-0 z-[70] flex flex-col ring-0' : 'rounded-3xl'
+          )}
+          style={{ background: SEA }}
+          role={expanded ? 'dialog' : undefined}
+          aria-modal={expanded || undefined}
+          aria-label={expanded ? 'Mapa ampliado' : undefined}
+        >
+          {expanded && (
+            <div className="flex items-center justify-between gap-3 border-b border-[#bcd3dd] bg-sand/90 px-4 py-3 backdrop-blur" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}>
+              <div className="flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none [&>button]:shrink-0 [&>button]:whitespace-nowrap">
+                <ZoneChips active={activeZone} onSelect={showZone} />
+              </div>
+              <button
+                onClick={() => setExpanded(false)}
+                aria-label="Cerrar mapa ampliado"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-sm text-sand"
+              >
+                <X className="size-4" /> <span className="hidden sm:inline">Cerrar</span>
+              </button>
+            </div>
+          )}
           <svg
             ref={svgRef}
             viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
-            className="block h-auto w-full touch-none select-none"
-            style={{ aspectRatio: `${FULL.w} / ${FULL.h}`, cursor: zoomedIn ? 'grab' : 'default' }}
+            className={cn('block touch-none select-none', expanded ? 'min-h-0 w-full flex-1' : 'h-auto w-full')}
+            style={{ aspectRatio: expanded ? undefined : `${FULL.w} / ${FULL.h}`, cursor: zoomedIn ? 'grab' : 'default' }}
             role="group"
             aria-label="Mapa de spots de Gran Canaria. Usa los botones de zona o de zoom para acercarte."
             onPointerDown={onPointerDown}
@@ -241,8 +269,8 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           >
-            <path d={COAST_PATH} fill="none" stroke="var(--color-paper)" strokeWidth={12 * unit} strokeLinejoin="round" opacity="0.7" />
-            <path d={COAST_PATH} fill="var(--color-sand)" stroke="#c3d4dc" strokeWidth={1.2 * unit} strokeLinejoin="round" />
+            <path d={COAST_PATH} fill="none" stroke="#ffffff" strokeWidth={10 * unit} strokeLinejoin="round" opacity="0.55" />
+            <path d={COAST_PATH} fill={LAND} stroke={COAST} strokeWidth={1.4 * unit} strokeLinejoin="round" />
             {!zoomedIn && (
               <text
                 x={project(27.96, -15.6).x}
@@ -293,7 +321,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
                       y={y + 4 * unit}
                       fontSize={12 * unit}
                       fill="var(--color-ink)"
-                      stroke="var(--color-sand)"
+                      stroke={LAND}
                       strokeWidth={3 * unit}
                       paintOrder="stroke"
                     >
@@ -304,8 +332,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
               );
             })}
           </svg>
-
-          <div className="absolute bottom-3 right-3 flex flex-col overflow-hidden rounded-xl bg-paper shadow-sm ring-1 ring-line">
+          <div className="absolute bottom-3 right-3 flex flex-col overflow-hidden rounded-xl bg-paper shadow-sm ring-1 ring-line" style={expanded ? { bottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' } : undefined}>
             <MapButton label="Acercar" onClick={() => zoomBy(0.6)}>
               <Plus className="size-4" />
             </MapButton>
@@ -313,16 +340,18 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
               <Minus className="size-4" />
             </MapButton>
             <MapButton label="Ver toda la isla" onClick={() => showZone(null)}>
-              <Maximize className="size-3.5" />
+              <LocateFixed className="size-4" />
+            </MapButton>
+            <MapButton label={expanded ? 'Salir de pantalla completa' : 'Ampliar mapa a pantalla completa'} onClick={() => setExpanded((e) => !e)}>
+              {expanded ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
             </MapButton>
           </div>
-          <p className="pointer-events-none absolute bottom-3 left-4 text-[10px] text-ink-3">
-            <span className="hidden sm:inline">Ctrl/⌘ + rueda o pellizca para hacer zoom · </span>© OpenStreetMap
+          <p className="pointer-events-none absolute bottom-3 left-4 text-[10px] text-ink-2">
+            <span className="hidden sm:inline">{expanded ? 'Rueda o pellizca para hacer zoom · ' : 'Ctrl/⌘ + rueda o pellizca para hacer zoom · '}</span>© OpenStreetMap
           </p>
         </div>
         <MapLegend />
       </div>
-
       {focused && (
         <div className="border-t border-line pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0" aria-live="polite">
           <p className="eyebrow">{focused.spot.location.municipality}</p>
@@ -345,6 +374,26 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
         </div>
       )}
     </div>
+  );
+}
+
+function ZoneChips({ active, onSelect }: { active: ZoneId | null; onSelect: (zone: ZoneId | null) => void }) {
+  return (
+    <>
+      {[{ id: null, label: 'Toda la isla' } as const, ...ZONES].map((z) => (
+        <button
+          key={z.label}
+          onClick={() => onSelect(z.id)}
+          aria-pressed={active === z.id}
+          className={cn(
+            'rounded-full px-3 py-1.5 text-sm transition',
+            active === z.id ? 'bg-ocean text-sand' : 'bg-paper/80 text-ink-2 hover:bg-paper hover:text-ink'
+          )}
+        >
+          {z.label}
+        </button>
+      ))}
+    </>
   );
 }
 
