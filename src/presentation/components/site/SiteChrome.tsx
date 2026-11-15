@@ -4,12 +4,32 @@ import React from 'react';
 import { RotateCw } from 'lucide-react';
 import { cn } from '@/presentation/lib/utils';
 
+/** Brand mark: a breaking wave against the Canary sun. Kept in sync with src/app/icon.svg. */
+export function BrandMark({ className }: { className?: string }) {
+  const id = React.useId();
+  return (
+    <svg viewBox="0 0 64 64" className={className} aria-hidden>
+      <defs>
+        <clipPath id={id}>
+          <circle cx="32" cy="32" r="31" />
+        </clipPath>
+      </defs>
+      <circle cx="32" cy="32" r="31" fill="#F2C46D" />
+      <g clipPath={`url(#${id})`}>
+        <path
+          d="M-2 66V41C9 41 15 19 33 16.5C46 14.8 54.5 23.5 51.5 31.5C49 37.5 40.5 36.5 40.5 30.5C40.5 28 42.5 26.5 44.5 27.5C35.5 27.5 33 37 38 42C42 46 52 45.5 66 38V66Z"
+          fill="#0E4F6B"
+        />
+        <path d="M-2 52C10 52 18 49 28 49C38 49 46 53 66 50" fill="none" stroke="#F6F4EF" strokeWidth="2.2" strokeLinecap="round" opacity="0.9" />
+      </g>
+    </svg>
+  );
+}
+
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <a href="#" className={cn('inline-flex items-baseline gap-1.5 text-ink', className)} aria-label="Wavez, inicio">
-      <svg viewBox="0 0 40 20" className="h-4 w-8 self-center" aria-hidden>
-        <path d="M2 13c4 0 5-7 9-7s5 7 9 7 6-10 18-10" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-      </svg>
+    <a href="#" className={cn('inline-flex items-center gap-2 text-ink', className)} aria-label="Wavez, inicio">
+      <BrandMark className="size-7" />
       <span className="display text-2xl">Wavez</span>
     </a>
   );

@@ -24,8 +24,12 @@ export const metadata: Metadata = {
   description:
     "Condiciones de surf hora a hora en 20 spots de Gran Canaria: oleaje, viento, marea, temperatura del agua, webcams en directo y fotos de la comunidad.",
   manifest: "/manifest.json",
-  icons: {
-    icon: "/icon.svg",
+  openGraph: {
+    title: "Wavez · El parte de olas de Gran Canaria",
+    description: "Oleaje, viento, marea y webcams en directo de 20 spots de Gran Canaria.",
+    images: ["/brand/wavez-lockup-light.png"],
+    locale: "es_ES",
+    type: "website",
   },
 };
 
