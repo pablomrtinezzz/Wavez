@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,21 +12,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+});
+
 export const metadata: Metadata = {
-  title: "Wavez · Gran Canaria Surf Radar & Webcams",
+  title: "Wavez · El parte de olas de Gran Canaria",
   description:
-    "Monitor de surf en tiempo real para Gran Canaria. Previsiones Open-Meteo Marine, energía de olas en kJ de Surf-Forecast, webcams oficiales en directo y reportes de la comunidad.",
+    "Condiciones de surf hora a hora en 20 spots de Gran Canaria: oleaje, viento, marea, temperatura del agua, webcams en directo y fotos de la comunidad.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icon.svg",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#060D17",
+  themeColor: "#f6f4ef",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -35,10 +41,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full dark`}>
-      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 antialiased">
-        {children}
-      </body>
+    <html
+      lang="es"
+      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
+    >
+      <body className="min-h-dvh bg-sand text-ink antialiased">{children}</body>
     </html>
   );
 }
