@@ -4,6 +4,7 @@ import { EnergyScraperService } from '@/domain/ports/EnergyScraperService';
 import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
 import { SpotDetailDTO } from '../dtos/SpotSummaryDTO';
+import { estimatedEnergy } from './GetSpotsWithForecastUseCase';
 
 export class GetSpotDetailUseCase {
   constructor(
@@ -19,7 +20,7 @@ export class GetSpotDetailUseCase {
 
     const [conditions, hourly, reports] = await Promise.all([
       this.marineService.getCurrentConditions(spot.id, spot.location.lat, spot.location.lng),
-      this.marineService.getHourlyForecast(spot.id, spot.location.lat, spot.location.lng, 2),
+      this.marineService.getHourlyForecast(spot.id, spot.location.lat, spot.location.lng, 48),
       this.reportRepo.getRecentReports(spot.id, 10),
     ]);
 
@@ -29,14 +30,7 @@ export class GetSpotDetailUseCase {
           conditions.primarySwell.heightM,
           conditions.primarySwell.periodSec
         )
-      : {
-          spotSlug: spot.slug,
-          timestamp: conditions.timestamp,
-          energyKj: Math.round(
-            40 * Math.pow(conditions.primarySwell.heightM, 2) * conditions.primarySwell.periodSec
-          ),
-          source: 'calculated_fallback' as const,
-        };
+      : estimatedEnergy(spot, conditions);
 
     const score = SpotScoreCalculator.calculate(spot, conditions);
 

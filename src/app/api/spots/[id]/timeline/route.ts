@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSpotHourlyEvolutionUseCase } from '@/application/container';
+import { canaryNow, isValidDateStr } from '@/domain/models/LocalTime';
 
 export async function GET(
   request: NextRequest,
@@ -8,8 +9,10 @@ export async function GET(
   try {
     const { id } = await params;
     const dateParam = request.nextUrl.searchParams.get('date');
-    const todayStr = new Date().toISOString().split('T')[0];
-    const targetDate = dateParam || todayStr;
+    if (dateParam && !isValidDateStr(dateParam)) {
+      return NextResponse.json({ success: false, error: 'Fecha no válida' }, { status: 400 });
+    }
+    const targetDate = dateParam || canaryNow().dateStr;
 
     const timeline = await getSpotHourlyEvolutionUseCase.execute(id, targetDate);
 

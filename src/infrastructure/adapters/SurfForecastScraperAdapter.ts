@@ -112,26 +112,4 @@ export class SurfForecastScraperAdapter implements EnergyScraperService {
       return fallbackResult;
     }
   }
-
-  public async getBatchEnergy(spotSlugs: string[]): Promise<Record<string, SurfForecastEnergy>> {
-    const results: Record<string, SurfForecastEnergy> = {};
-
-    // Run concurrently with Promise.all
-    await Promise.all(
-      spotSlugs.map(async (slug) => {
-        try {
-          results[slug] = await this.getSpotEnergy(slug);
-        } catch {
-          results[slug] = {
-            spotSlug: slug,
-            timestamp: new Date().toISOString(),
-            energyKj: 800,
-            source: 'calculated_fallback',
-          };
-        }
-      })
-    );
-
-    return results;
-  }
 }
