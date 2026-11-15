@@ -87,6 +87,9 @@ describe('GetSpotHourlyEvolutionUseCase', () => {
     // Verify best window was calculated
     assert.ok(result.bestWindow, 'Best window should be defined');
     assert.ok(result.bestWindow.summary.includes('Ventana óptima'));
+    // Peak conditions span 08:00-10:59 in the mock
+    assert.strictEqual(result.bestWindow.startHour, 8);
+    assert.strictEqual(result.bestWindow.endHour, 11);
 
     // Daily summary
     assert.strictEqual(result.dailySummary.maxWaveHeightM, 2.0);

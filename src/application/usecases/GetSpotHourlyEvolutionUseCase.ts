@@ -2,6 +2,14 @@ import { SpotRepository } from '@/domain/ports/SpotRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
 import { ConditionQuality } from '@/domain/models/SpotScore';
+import { estimateWaveEnergyKj } from '@/domain/models/SurfForecastEnergy';
+import { localHourOf } from '@/domain/models/LocalTime';
+
+/** Daylight hours used when no sunrise/sunset data is available. */
+const DEFAULT_FIRST_LIGHT_HOUR = 7;
+const DEFAULT_LAST_LIGHT_HOUR = 19;
+/** Hours within this many points of the peak count as part of the best window. */
+const BEST_WINDOW_TOLERANCE = 5;
 
 export interface HourlyEvolutionPoint {
   hour: number;
@@ -71,9 +79,9 @@ export class GetSpotHourlyEvolutionUseCase {
       const calculatedScore = SpotScoreCalculator.calculate(spot, entry);
       const height = entry.primarySwell.heightM;
       const period = entry.primarySwell.periodSec;
-      const energyKj = Math.round(40 * Math.pow(height, 2) * period);
+      const energyKj = estimateWaveEnergyKj(height, period);
 
-      const hourNumber = new Date(entry.timestamp).getHours();
+      const hourNumber = localHourOf(entry.timestamp);
       const timeLabel = `${String(hourNumber).padStart(2, '0')}:00`;
 
       return {
@@ -100,27 +108,7 @@ export class GetSpotHourlyEvolutionUseCase {
       };
     });
 
-    // Compute Best Window (consecutive 2-3 hours with top score during daylight 07:00 - 20:00)
-    const daylight = hourlyPoints.filter((p) => p.hour >= 7 && p.hour <= 20);
-    let bestWindow: SpotHourlyEvolutionDTO['bestWindow'] = undefined;
-
-    if (daylight.length > 0) {
-      let topPoint = daylight[0];
-      for (const p of daylight) {
-        if (p.score.overallScore > topPoint.score.overallScore) {
-          topPoint = p;
-        }
-      }
-
-      const start = Math.max(7, topPoint.hour - 1);
-      const end = Math.min(20, topPoint.hour + 1);
-      bestWindow = {
-        startHour: start,
-        endHour: end,
-        peakScore: topPoint.score.scoreOutOfTen,
-        summary: `Ventana óptima entre ${String(start).padStart(2, '0')}:00 y ${String(end).padStart(2, '0')}:00 con ola de ${topPoint.waveHeightM}m @ ${topPoint.periodSec}s y viento ${topPoint.windCompassDir} (${topPoint.windSpeedKmh} km/h).`,
-      };
-    }
+    const bestWindow = this.findBestWindow(hourlyPoints, DEFAULT_FIRST_LIGHT_HOUR, DEFAULT_LAST_LIGHT_HOUR);
 
     // Daily summary
     const heights = hourlyPoints.map((p) => p.waveHeightM);
@@ -153,6 +141,43 @@ export class GetSpotHourlyEvolutionUseCase {
         predominantWindDir,
         averageScore: avgScore,
       },
+    };
+  }
+
+  /**
+   * Longest run of consecutive daylight hours whose score stays close to the
+   * day's daylight peak. Returns undefined when the whole day is flat.
+   */
+  private findBestWindow(
+    points: HourlyEvolutionPoint[],
+    firstLightHour: number,
+    lastLightHour: number
+  ): SpotHourlyEvolutionDTO['bestWindow'] {
+    const daylight = points.filter((p) => p.hour >= firstLightHour && p.hour <= lastLightHour);
+    if (!daylight.length) return undefined;
+
+    const peak = daylight.reduce((best, p) => (p.score.overallScore > best.score.overallScore ? p : best));
+    if (peak.score.quality === 'flat') return undefined;
+
+    const threshold = peak.score.overallScore - BEST_WINDOW_TOLERANCE;
+    const peakIdx = daylight.indexOf(peak);
+    let startIdx = peakIdx;
+    let endIdx = peakIdx;
+    while (startIdx > 0 && daylight[startIdx - 1].score.overallScore >= threshold &&
+      daylight[startIdx - 1].hour === daylight[startIdx].hour - 1) startIdx--;
+    while (endIdx < daylight.length - 1 && daylight[endIdx + 1].score.overallScore >= threshold &&
+      daylight[endIdx + 1].hour === daylight[endIdx].hour + 1) endIdx++;
+
+    const startHour = daylight[startIdx].hour;
+    // The window covers the whole last hour, so it ends at the next o'clock
+    const endHour = Math.min(24, daylight[endIdx].hour + 1);
+    const hh = (h: number) => `${String(h).padStart(2, '0')}:00`;
+
+    return {
+      startHour,
+      endHour,
+      peakScore: peak.score.scoreOutOfTen,
+      summary: `Ventana óptima entre ${hh(startHour)} y ${hh(endHour)} con ola de ${peak.waveHeightM}m @ ${peak.periodSec}s y viento ${peak.windCompassDir} (${peak.windSpeedKmh} km/h).`,
     };
   }
 }
