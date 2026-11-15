@@ -1,6 +1,6 @@
 # 🌊 Wavez — Gran Canaria Surf Radar & Webcams
 
-**Wavez** es una plataforma web desarrollada para monitorizar en tiempo real y comparar las condiciones de surf en los mejores spots de Gran Canaria, combinando modelos oceanográficos de libre acceso, mediciones de energía en kilojulios ($kJ$) de Surf-Forecast, webcams oficiales embebidas y un sistema de reportes comunitarios con verificación anti-trampas (EXIF y geolocalización GPS).
+**Wavez** es una plataforma web desarrollada para monitorizar en tiempo real y comparar las condiciones de surf en los mejores spots de Gran Canaria, combinando modelos oceanográficos de libre acceso, mediciones de energía en kilojulios ($kJ$) de Surf-Forecast, webcams oficiales embebidas y un sistema de fotos comunitarias verificadas (cámara en vivo y ubicación en el spot).
 
 ---
 
@@ -26,9 +26,11 @@
 
 6. **Webcams oficiales de In2theBeach** (10 cámaras) cargadas bajo demanda y restringidas a los dominios aprobados.
 
-7. **Fotos de la comunidad con verificación:** EXIF (hora) y GPS (distancia al spot) comprobados con el mismo validador de dominio en cliente y servidor; compresión en el dispositivo; solo se aceptan imágenes JPEG/PNG/WebP de tamaño acotado.
+7. **Fotos de la comunidad con verificación en el sitio:** la foto solo se puede hacer en el momento con la cámara integrada en la web (sin acceso al carrete) y exige la ubicación del dispositivo, que debe estar a menos de 2,5 km del spot. Cliente y servidor aplican la misma regla; las imágenes se comprimen en el dispositivo y el envío está limitado por IP.
 
-8. **Abierta al público:** sin registro ni clave. El envío de fotos está limitado por IP para evitar abusos.
+8. **Abierta al público:** sin registro ni clave.
+
+9. **Marca:** logo en `public/brand/` (símbolo SVG, versiones horizontales clara y oscura e iconos PNG para PWA y redes).
 
 ---
 
@@ -66,7 +68,7 @@ src/
 * **Lenguaje:** TypeScript 5 (tipado estricto)
 * **Estilos:** Tailwind CSS 4 (tokens propios), Instrument Serif + Geist
 * **Scraping seguro:** Cheerio (con rate-limiting y caché)
-* **Procesamiento de imágenes y EXIF:** `exifr` + Canvas API HTML5
+* **Cámara y ubicación:** `getUserMedia` + Geolocation API + Canvas
 * **Iconografía:** Lucide React
 * **Testing:** Node.js native test runner con TypeScript (`npm test`)
 
