@@ -1,6 +1,7 @@
 import { ConditionQuality } from '@/domain/models/SpotScore';
 import { BreakType, SkillLevel, ZoneId } from '@/domain/models/Spot';
 import { TideState, TIDE_PHASE_LABEL, TIDE_TREND_LABEL } from '@/domain/models/Tide';
+import { degreesToCompass } from '@/domain/models/MarineConditions';
 
 /** Quality bands come from the domain score, so UI and ranking never disagree. */
 export const QUALITY: Record<ConditionQuality, { label: string; color: string; rank: number }> = {
@@ -97,4 +98,9 @@ export function describeWind(
   if (isOffshore) return { label: 'Terral', tone: 'good' };
   if (speedKmh > 25) return { label: 'Onshore fuerte', tone: 'bad' };
   return { label: 'Cruzado', tone: 'neutral' };
+}
+
+/** { min: 290, max: 20 } → 'WNW – NNE' */
+export function degreesToCompassRange(range: { min: number; max: number }): string {
+  return `${degreesToCompass(range.min)} – ${degreesToCompass(range.max)}`;
 }

@@ -1,0 +1,224 @@
+'use client';
+
+import React, { useMemo, useState } from 'react';
+import { Search, Video, Camera } from 'lucide-react';
+import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
+import { ZoneId } from '@/domain/models/Spot';
+import { isDirectionInRange } from '@/domain/models/MarineConditions';
+import { DirectionArrow, QualityDot } from '@/presentation/components/ui/primitives';
+import {
+  BREAK_LABEL,
+  QUALITY,
+  ZONES,
+  ZONE_LABEL,
+  describeWind,
+  formatScore,
+  formatTide,
+} from '@/presentation/lib/format';
+import { cn } from '@/presentation/lib/utils';
+
+type SortKey = 'score' | 'height' | 'energy' | 'name';
+
+const SORTS: { id: SortKey; label: string }[] = [
+  { id: 'score', label: 'Mejores condiciones' },
+  { id: 'height', label: 'Más tamaño' },
+  { id: 'energy', label: 'Más energía' },
+  { id: 'name', label: 'Nombre' },
+];
+
+/** Accent-insensitive search ("cicer" finds "Cícer"). */
+function normalize(s: string) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+interface SpotListProps {
+  summaries: SpotSummaryDTO[];
+  onSelectSpot: (spotId: string) => void;
+  isRefreshing?: boolean;
+}
+
+export function SpotList({ summaries, onSelectSpot, isRefreshing }: SpotListProps) {
+  const [zone, setZone] = useState<ZoneId | 'all'>('all');
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<SortKey>('score');
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: summaries.length };
+    summaries.forEach((s) => (c[s.spot.zone] = (c[s.spot.zone] ?? 0) + 1));
+    return c;
+  }, [summaries]);
+
+  const rows = useMemo(() => {
+    const q = normalize(query.trim());
+    return summaries
+      .filter((s) => zone === 'all' || s.spot.zone === zone)
+      .filter(
+        (s) =>
+          !q ||
+          normalize(s.spot.name).includes(q) ||
+          normalize(s.spot.location.municipality).includes(q) ||
+          normalize(BREAK_LABEL[s.spot.breakType]).includes(q)
+      )
+      .sort((a, b) => {
+        if (sort === 'height') return b.conditions.primarySwell.heightM - a.conditions.primarySwell.heightM;
+        if (sort === 'energy') return b.energy.energyKj - a.energy.energyKj;
+        if (sort === 'name') return a.spot.name.localeCompare(b.spot.name, 'es');
+        return b.score.overallScore - a.score.overallScore;
+      });
+  }, [summaries, zone, query, sort]);
+
+  return (
+    <div>
+      {/* Controls */}
+      <div className="flex flex-col gap-4 border-b border-line pb-4 md:flex-row md:items-end md:justify-between">
+        <nav aria-label="Filtrar por zona" className="-mx-1 flex gap-1 overflow-x-auto scrollbar-none">
+          {[{ id: 'all' as const, label: 'Toda la isla' }, ...ZONES].map((z) => (
+            <button
+              key={z.id}
+              onClick={() => setZone(z.id)}
+              aria-pressed={zone === z.id}
+              className={cn(
+                'whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition',
+                zone === z.id ? 'bg-ink text-sand' : 'text-ink-2 hover:bg-line/60 hover:text-ink'
+              )}
+            >
+              {z.label}
+              <span className={cn('ml-1.5 tabular-nums', zone === z.id ? 'text-sand/60' : 'text-ink-3')}>
+                {counts[z.id] ?? 0}
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <label className="relative flex-1 md:w-56 md:flex-none">
+            <span className="sr-only">Buscar spot</span>
+            <Search className="pointer-events-none absolute left-0 top-1/2 size-4 -translate-y-1/2 text-ink-3" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar spot o municipio"
+              className="w-full border-b border-line-strong bg-transparent py-1.5 pl-6 text-sm text-ink placeholder:text-ink-3 focus:border-ink focus:outline-none"
+            />
+          </label>
+          <label className="shrink-0">
+            <span className="sr-only">Ordenar</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              className="cursor-pointer border-b border-line-strong bg-transparent py-1.5 pr-1 text-sm text-ink-2 focus:border-ink focus:outline-none"
+            >
+              {SORTS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+
+      {/* Column headings (desktop) */}
+      <div className="hidden grid-cols-[2rem_minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_4.5rem] gap-4 border-b border-line py-2.5 text-xs text-ink-3 lg:grid">
+        <span />
+        <span>Spot</span>
+        <span>Condiciones</span>
+        <span>Oleaje</span>
+        <span>Viento</span>
+        <span>Marea</span>
+        <span className="text-right">Energía</span>
+      </div>
+
+      <ol className={cn('transition-opacity', isRefreshing && 'opacity-60')}>
+        {rows.map((s, i) => (
+          <SpotRow key={s.spot.id} summary={s} rank={sort === 'score' ? i + 1 : undefined} onSelect={onSelectSpot} />
+        ))}
+      </ol>
+
+      {rows.length === 0 && (
+        <p className="py-16 text-center text-sm text-ink-3">
+          Ningún spot coincide con «{query}»{zone !== 'all' && ` en ${ZONE_LABEL[zone]}`}.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SpotRow({
+  summary,
+  rank,
+  onSelect,
+}: {
+  summary: SpotSummaryDTO;
+  rank?: number;
+  onSelect: (id: string) => void;
+}) {
+  const { spot, conditions, score, energy } = summary;
+  const swell = conditions.primarySwell;
+  const wind = conditions.wind;
+  const isOffshore = isDirectionInRange(
+    wind.directionDeg,
+    spot.idealConditions.favorableWindDegrees.min,
+    spot.idealConditions.favorableWindDegrees.max
+  );
+  const windInfo = describeWind(wind.speedKmh, isOffshore);
+
+  return (
+    <li className="border-b border-line">
+      <button
+        onClick={() => onSelect(spot.id)}
+        className="group grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 py-4 text-left transition hover:bg-paper/70 lg:grid-cols-[2rem_minmax(0,2.2fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1fr)_4.5rem] lg:py-5"
+      >
+        <span className="hidden text-sm text-ink-3 tabular-nums lg:block">{rank ? String(rank).padStart(2, '0') : ''}</span>
+
+        <span className="min-w-0">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-base font-medium text-ink group-hover:underline group-hover:underline-offset-4">
+              {spot.name}
+            </span>
+            {spot.webcam && <Video className="size-3.5 shrink-0 text-ink-3" aria-label="Con webcam" />}
+            {summary.recentReportCount > 0 && <Camera className="size-3.5 shrink-0 text-accent" aria-label="Con fotos recientes" />}
+          </span>
+          <span className="mt-0.5 block truncate text-xs text-ink-3">
+            {ZONE_LABEL[spot.zone]} · {spot.location.municipality} · {BREAK_LABEL[spot.breakType]}
+          </span>
+        </span>
+
+        <span className="flex flex-col items-end gap-0.5 lg:items-start">
+          <span className="inline-flex items-center gap-1.5 text-sm text-ink">
+            <QualityDot quality={score.quality} />
+            {QUALITY[score.quality].label}
+          </span>
+          <span className="text-xs text-ink-3 tabular-nums">{formatScore(score.overallScore)} / 10</span>
+        </span>
+
+        {/* On small screens the measurements collapse into one line */}
+        <span className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-2 lg:contents">
+          <span className="inline-flex items-center gap-1 tabular-nums">
+            <span className="text-ink">{swell.heightM.toFixed(1)} m</span>· {Math.round(swell.periodSec)} s
+            <DirectionArrow degrees={swell.directionDeg} className="text-ink-3" />
+            {swell.compassDir}
+          </span>
+          <span className="inline-flex items-center gap-1 tabular-nums">
+            <span className="text-ink">{Math.round(wind.speedKmh)}</span> km/h
+            <DirectionArrow degrees={wind.directionDeg} className="text-ink-3" />
+            {wind.compassDir}
+            <span
+              className={cn(
+                'ml-1 text-xs',
+                windInfo.tone === 'good' ? 'text-accent' : windInfo.tone === 'bad' ? 'text-danger' : 'text-ink-3'
+              )}
+            >
+              {windInfo.label}
+            </span>
+          </span>
+          <span className="text-sm">{conditions.tide ? formatTide(conditions.tide) : '—'}</span>
+          <span className="tabular-nums lg:text-right">
+            {energy.energyKj.toLocaleString('es-ES')} <span className="text-ink-3">kJ</span>
+          </span>
+        </span>
+      </button>
+    </li>
+  );
+}
