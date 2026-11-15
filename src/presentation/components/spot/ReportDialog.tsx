@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import exifr from 'exifr';
-import { Camera, ImageUp, X, Check, AlertTriangle } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Camera, MapPin, RotateCcw, X } from 'lucide-react';
 import { Spot } from '@/domain/models/Spot';
-import { ExifData } from '@/domain/models/SpotReport';
-import { ExifSecurityValidator, ValidationResult } from '@/domain/services/ExifSecurityValidator';
+import { DeviceLocation } from '@/domain/models/SpotReport';
+import { ExifSecurityValidator } from '@/domain/services/ExifSecurityValidator';
 import { Spinner } from '@/presentation/components/ui/primitives';
 
 interface ReportDialogProps {
@@ -14,128 +13,139 @@ interface ReportDialogProps {
   onSubmitted: () => void;
 }
 
-type CaptureMethod = 'camera_direct' | 'gallery_upload';
-
+/** Same geofence the server enforces. */
+const MAX_DISTANCE_METERS = 2500;
 const MAX_DIMENSION = 1280;
 
-/** Downscale on the device so uploads stay light on mobile data. */
-function compressImage(file: File): Promise<string> {
+type Step =
+  | { kind: 'intro' }
+  | { kind: 'locating' }
+  | { kind: 'camera' }
+  | { kind: 'review'; photo: string }
+  | { kind: 'blocked'; message: string };
+
+function getPosition(): Promise<DeviceLocation> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const ratio = Math.min(1, MAX_DIMENSION / Math.max(img.width, img.height));
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * ratio);
-      canvas.height = Math.round(img.height * ratio);
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return reject(new Error('Tu navegador no permite procesar la imagen'));
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL('image/jpeg', 0.8));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('No se pudo leer la imagen'));
-    };
-    img.src = url;
+    if (!('geolocation' in navigator)) return reject(new Error('Tu navegador no permite compartir la ubicación.'));
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracyM: pos.coords.accuracy }),
+      (err) =>
+        reject(
+          new Error(
+            err.code === err.PERMISSION_DENIED
+              ? 'Sin acceso a tu ubicación no podemos verificar que estás en el spot. Actívala en los ajustes del navegador.'
+              : 'No pudimos obtener tu ubicación. Prueba de nuevo al aire libre.'
+          )
+        ),
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   });
 }
 
-/** Human summary of the same checks the server will run. */
-function describeChecks(method: CaptureMethod, exif: ExifData, v: ValidationResult): { ok: boolean | null; text: string }[] {
-  const checks: { ok: boolean | null; text: string }[] = [
-    method === 'camera_direct'
-      ? { ok: true, text: 'Hecha con la cámara ahora' }
-      : { ok: null, text: 'Elegida de la galería' },
-  ];
-  if (!exif.dateTimeOriginal) {
-    checks.push({ ok: method === 'camera_direct' ? true : null, text: method === 'camera_direct' ? 'Hora de captura: ahora' : 'Sin fecha de captura (WhatsApp y otras apps la borran)' });
-  } else if (!v.isValid) {
-    checks.push({ ok: false, text: v.rejectionReason ?? 'Fecha no válida' });
-  } else {
-    const minutes = Math.max(0, Math.round((Date.now() - Date.parse(exif.dateTimeOriginal)) / 60000));
-    checks.push({ ok: true, text: `Tomada hace ${minutes} min` });
-  }
-  if (v.distanceToSpotMeters === undefined) {
-    checks.push({ ok: null, text: 'Sin ubicación GPS en la foto' });
-  } else {
-    const km = (v.distanceToSpotMeters / 1000).toFixed(1);
-    checks.push(
-      v.flags.some((f) => f.startsWith('FUERA_DE_RANGO'))
-        ? { ok: false, text: `Tomada a ${km} km del spot` }
-        : { ok: true, text: `Tomada a ${v.distanceToSpotMeters < 1000 ? `${v.distanceToSpotMeters} m` : `${km} km`} del spot` }
-    );
-  }
-  return checks;
-}
-
+/**
+ * Community photo capture. To keep reports honest the photo can only be taken
+ * live with the in-page camera (no camera roll) and the device must be within
+ * the spot's geofence; the server enforces the same rules.
+ */
 export function ReportDialog({ spot, onClose, onSubmitted }: ReportDialogProps) {
   if (!spot) return null;
   return <ReportDialogPanel key={spot.id} spot={spot} onClose={onClose} onSubmitted={onSubmitted} />;
 }
 
 function ReportDialogPanel({ spot, onClose, onSubmitted }: { spot: Spot; onClose: () => void; onSubmitted: () => void }) {
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [method, setMethod] = useState<CaptureMethod>('camera_direct');
-  const [exif, setExif] = useState<ExifData>({});
+  const [step, setStep] = useState<Step>({ kind: 'intro' });
+  const [location, setLocation] = useState<DeviceLocation | null>(null);
   const [note, setNote] = useState('');
-  const [busy, setBusy] = useState<'processing' | 'submitting' | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
-  const galleryRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      stopCamera();
+    };
+  }, [onClose, stopCamera]);
 
-  const validation = photo
-    ? ExifSecurityValidator.validate({ captureMethod: method, exifData: exif, spotCoordinates: spot.location })
-    : null;
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>, m: CaptureMethod) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    setBusy('processing');
+  const openCamera = async () => {
     setError(null);
-    setMethod(m);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStep({ kind: 'blocked', message: 'Tu navegador no permite usar la cámara desde la web.' });
+      return;
+    }
     try {
-      let extracted: ExifData = {};
-      try {
-        const parsed = await exifr.parse(file, ['DateTimeOriginal', 'latitude', 'longitude', 'Make', 'Model']);
-        if (parsed) {
-          extracted = {
-            dateTimeOriginal: parsed.DateTimeOriginal ? new Date(parsed.DateTimeOriginal).toISOString() : undefined,
-            latitude: parsed.latitude,
-            longitude: parsed.longitude,
-            deviceMake: parsed.Make,
-            deviceModel: parsed.Model,
-          };
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setStep({ kind: 'camera' });
+      // The <video> element mounts with the camera step
+      requestAnimationFrame(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => null);
         }
-      } catch {
-        // Photos without EXIF are still accepted, just not verified
-      }
-      setExif(extracted);
-      setPhoto(await compressImage(file));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(null);
+      });
+    } catch {
+      setStep({ kind: 'blocked', message: 'Necesitamos acceso a la cámara para hacer la foto. Actívalo en los ajustes del navegador.' });
     }
   };
 
-  const submit = async () => {
-    if (!photo) return;
-    setBusy('submitting');
+  const start = async () => {
+    setStep({ kind: 'locating' });
+    try {
+      const position = await getPosition();
+      const check = ExifSecurityValidator.validate({
+        captureMethod: 'camera_direct',
+        deviceLocation: position,
+        spotCoordinates: spot.location,
+        maxDistanceMeters: MAX_DISTANCE_METERS,
+      });
+      const distance = check.distanceToSpotMeters ?? Infinity;
+      if (distance > MAX_DISTANCE_METERS) {
+        setStep({
+          kind: 'blocked',
+          message: `Estás a unos ${(distance / 1000).toFixed(1)} km de ${spot.name}. Solo se pueden subir fotos hechas desde el spot.`,
+        });
+        return;
+      }
+      setLocation(position);
+      await openCamera();
+    } catch (err) {
+      setStep({ kind: 'blocked', message: (err as Error).message });
+    }
+  };
+
+  const shoot = () => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return;
+    const ratio = Math.min(1, MAX_DIMENSION / Math.max(video.videoWidth, video.videoHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(video.videoWidth * ratio);
+    canvas.height = Math.round(video.videoHeight * ratio);
+    canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    stopCamera();
+    setStep({ kind: 'review', photo: canvas.toDataURL('image/jpeg', 0.8) });
+  };
+
+  const submit = async (photo: string) => {
+    if (!location) return;
+    setSubmitting(true);
     setError(null);
     try {
       const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spotId: spot.id, photoUrl: photo, captureMethod: method, exifData: exif, userNote: note }),
+        body: JSON.stringify({ spotId: spot.id, photoUrl: photo, captureMethod: 'camera_direct', deviceLocation: location, userNote: note }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.success) throw new Error(data?.error || 'No se pudo publicar la foto');
@@ -144,14 +154,14 @@ function ReportDialogPanel({ spot, onClose, onSubmitted }: { spot: Spot; onClose
     } catch (err) {
       setError((err as Error).message);
     } finally {
-      setBusy(null);
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="report-title">
       <button aria-label="Cerrar" tabIndex={-1} onClick={onClose} className="absolute inset-0 bg-ink/40 animate-fade-in" />
-      <div className="relative max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-paper p-6 shadow-2xl animate-fade-in sm:rounded-2xl">
+      <div className="relative max-h-[94dvh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-paper p-6 shadow-2xl animate-fade-in sm:rounded-2xl">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="eyebrow">Foto del pico</p>
@@ -162,62 +172,58 @@ function ReportDialogPanel({ spot, onClose, onSubmitted }: { spot: Spot; onClose
           </button>
         </div>
 
-        <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => handleFile(e, 'camera_direct')} />
-        <input ref={galleryRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e, 'gallery_upload')} />
-
-        {!photo ? (
-          <div className="mt-6 space-y-3">
+        {step.kind === 'intro' && (
+          <div className="mt-6 space-y-5">
             <p className="text-sm leading-relaxed text-ink-2">
-              Las fotos hechas en el momento y en la playa se marcan como verificadas. Comprobamos la hora y la ubicación que guarda la
-              propia foto.
+              Para que las fotos sean fiables, solo se pueden hacer <span className="text-ink">en el momento y desde el spot</span>.
             </p>
+            <ul className="space-y-3 text-sm text-ink-2">
+              <li className="flex gap-3">
+                <MapPin className="mt-0.5 size-4 shrink-0 text-ocean" />
+                Comprobaremos tu ubicación (debes estar a menos de {MAX_DISTANCE_METERS / 1000} km). No la guardamos más allá de la foto.
+              </li>
+              <li className="flex gap-3">
+                <Camera className="mt-0.5 size-4 shrink-0 text-ocean" />
+                Se abrirá la cámara aquí mismo; no se pueden subir fotos del carrete.
+              </li>
+            </ul>
             <button
-              onClick={() => cameraRef.current?.click()}
-              disabled={busy !== null}
-              className="flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-medium text-sand transition hover:bg-accent disabled:opacity-60"
+              onClick={start}
+              className="flex w-full items-center justify-center gap-2 rounded-full bg-ink px-5 py-3 text-sm font-medium text-sand transition hover:bg-ocean"
             >
-              {busy === 'processing' ? <Spinner className="border-sand/40 border-t-sand" /> : <Camera className="size-4" />}
-              Hacer foto ahora
-            </button>
-            <button
-              onClick={() => galleryRef.current?.click()}
-              disabled={busy !== null}
-              className="flex w-full items-center justify-center gap-2 rounded-full border border-line-strong px-5 py-3 text-sm text-ink transition hover:border-ink disabled:opacity-60"
-            >
-              <ImageUp className="size-4" /> Elegir de la galería
+              <Camera className="size-4" /> Empezar
             </button>
           </div>
-        ) : (
+        )}
+
+        {step.kind === 'locating' && (
+          <p className="mt-10 mb-6 flex items-center gap-3 text-sm text-ink-2">
+            <Spinner /> Comprobando tu ubicación…
+          </p>
+        )}
+
+        {step.kind === 'camera' && (
+          <div className="mt-6 space-y-4">
+            <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-ink sm:aspect-[4/3]">
+              <video ref={videoRef} playsInline muted className="absolute inset-0 size-full object-cover" />
+            </div>
+            <button
+              onClick={shoot}
+              className="mx-auto flex size-16 items-center justify-center rounded-full border-4 border-ink/15 bg-ink transition hover:bg-ocean"
+              aria-label="Hacer foto"
+            >
+              <span className="size-12 rounded-full border-2 border-sand" />
+            </button>
+          </div>
+        )}
+
+        {step.kind === 'review' && (
           <div className="mt-6 space-y-5">
             {/* eslint-disable-next-line @next/next/no-img-element -- local preview of a data URL */}
-            <img src={photo} alt="Vista previa" className="aspect-[4/3] w-full rounded-lg object-cover" />
-
-            {validation && (
-              <div>
-                <ul className="space-y-1.5 text-sm">
-                  {describeChecks(method, exif, validation).map((c) => (
-                    <li key={c.text} className="flex items-start gap-2">
-                      {c.ok === true ? (
-                        <Check className="mt-0.5 size-4 shrink-0 text-accent" />
-                      ) : c.ok === false ? (
-                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-danger" />
-                      ) : (
-                        <span className="mt-2 size-1.5 shrink-0 rounded-full bg-ink-3 mx-[5px]" aria-hidden />
-                      )}
-                      <span className={c.ok === false ? 'text-danger' : 'text-ink-2'}>{c.text}</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3 text-sm text-ink">
-                  {!validation.isValid
-                    ? 'Esta foto no se puede publicar.'
-                    : validation.isRealtimeVerified
-                    ? 'Se publicará como foto verificada.'
-                    : 'Se publicará sin el sello de verificada.'}
-                </p>
-              </div>
-            )}
-
+            <img src={step.photo} alt="Vista previa" className="aspect-[4/3] w-full rounded-lg object-cover" />
+            <p className="flex items-center gap-2 text-sm text-ink-2">
+              <MapPin className="size-4 text-q-good" /> Ubicación verificada en {spot.name.split(' (')[0]}
+            </p>
             <label className="block">
               <span className="text-sm text-ink-2">¿Cómo está? (opcional)</span>
               <textarea
@@ -229,20 +235,31 @@ function ReportDialogPanel({ spot, onClose, onSubmitted }: { spot: Spot; onClose
                 className="mt-1.5 w-full resize-none rounded-lg border border-line-strong bg-transparent p-3 text-sm text-ink placeholder:text-ink-3 focus:border-ink focus:outline-none"
               />
             </label>
-
             <div className="flex gap-3">
-              <button onClick={() => setPhoto(null)} className="flex-1 rounded-full border border-line-strong px-4 py-3 text-sm text-ink hover:border-ink">
-                Otra foto
+              <button
+                onClick={openCamera}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-line-strong px-4 py-3 text-sm text-ink hover:border-ink"
+              >
+                <RotateCcw className="size-4" /> Repetir
               </button>
               <button
-                onClick={submit}
-                disabled={busy !== null || (validation !== null && !validation.isValid)}
-                className="flex flex-[2] items-center justify-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-medium text-sand transition hover:bg-accent disabled:opacity-50"
+                onClick={() => submit(step.photo)}
+                disabled={submitting}
+                className="flex flex-[2] items-center justify-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-medium text-sand transition hover:bg-ocean disabled:opacity-50"
               >
-                {busy === 'submitting' && <Spinner className="border-sand/40 border-t-sand" />}
+                {submitting && <Spinner className="border-sand/40 border-t-sand" />}
                 Publicar foto
               </button>
             </div>
+          </div>
+        )}
+
+        {step.kind === 'blocked' && (
+          <div className="mt-6 space-y-5">
+            <p className="rounded-lg bg-warn-soft px-4 py-3 text-sm text-warn">{step.message}</p>
+            <button onClick={start} className="w-full rounded-full border border-line-strong px-4 py-3 text-sm text-ink hover:border-ink">
+              Intentar de nuevo
+            </button>
           </div>
         )}
 

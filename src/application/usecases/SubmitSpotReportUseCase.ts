@@ -2,14 +2,30 @@ import { SpotRepository } from '@/domain/ports/SpotRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
 import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { ExifSecurityValidator } from '@/domain/services/ExifSecurityValidator';
-import { ExifData, SpotReport } from '@/domain/models/SpotReport';
+import { DeviceLocation, ExifData, SpotReport } from '@/domain/models/SpotReport';
 
 export interface SubmitReportCommand {
   spotId: string;
   photoUrl: string;
   captureMethod: 'camera_direct' | 'gallery_upload';
   exifData?: ExifData;
+  deviceLocation?: DeviceLocation;
   userNote?: string;
+}
+
+/** Photos must be taken on the beach: within this distance of the spot. */
+const MAX_DISTANCE_METERS = 2500;
+
+function sanitizeLocation(loc: unknown): DeviceLocation | undefined {
+  if (!loc || typeof loc !== 'object') return undefined;
+  const l = loc as Record<string, unknown>;
+  const finite = (v: unknown) => typeof v === 'number' && Number.isFinite(v);
+  if (!finite(l.lat) || !finite(l.lng) || Math.abs(l.lat as number) > 90 || Math.abs(l.lng as number) > 180) return undefined;
+  return {
+    lat: l.lat as number,
+    lng: l.lng as number,
+    accuracyM: finite(l.accuracyM) && (l.accuracyM as number) >= 0 ? (l.accuracyM as number) : 1000,
+  };
 }
 
 /** ~1.5 MB of base64, far above a 1280px JPEG at 80% (~150-300 KB). */
@@ -52,8 +68,13 @@ export class SubmitSpotReportUseCase {
     if (command.photoUrl.length > MAX_PHOTO_DATA_URL_LENGTH) {
       throw new Error('La foto es demasiado pesada');
     }
-    if (command.captureMethod !== 'camera_direct' && command.captureMethod !== 'gallery_upload') {
-      throw new Error('Método de captura no válido');
+    // Only live captures from the in-app camera, with the device's position
+    if (command.captureMethod !== 'camera_direct') {
+      throw new Error('Solo se aceptan fotos hechas en el momento con la cámara');
+    }
+    const deviceLocation = sanitizeLocation(command.deviceLocation);
+    if (!deviceLocation) {
+      throw new Error('Necesitamos tu ubicación para comprobar que estás en el spot');
     }
     const exifData = sanitizeExif(command.exifData);
 
@@ -61,13 +82,18 @@ export class SubmitSpotReportUseCase {
     const validation = ExifSecurityValidator.validate({
       captureMethod: command.captureMethod,
       exifData,
+      deviceLocation,
       spotCoordinates: spot.location,
       maxAgeHours: 3,
-      maxDistanceMeters: 2500,
+      maxDistanceMeters: MAX_DISTANCE_METERS,
     });
 
     if (!validation.isValid) {
       throw new Error(validation.rejectionReason || 'La foto no cumple los criterios de validación temporal.');
+    }
+    if (validation.distanceToSpotMeters === undefined || validation.distanceToSpotMeters > MAX_DISTANCE_METERS) {
+      const km = ((validation.distanceToSpotMeters ?? 0) / 1000).toFixed(1);
+      throw new Error(`Estás a unos ${km} km de ${spot.name}. Las fotos tienen que hacerse desde el spot.`);
     }
 
     // Capture condition snapshot
@@ -98,6 +124,7 @@ export class SubmitSpotReportUseCase {
       isRealtimeVerified: validation.isRealtimeVerified,
       captureMethod: command.captureMethod,
       exifData,
+      deviceLocation,
       distanceToSpotMeters: validation.distanceToSpotMeters,
       verificationFlags: validation.flags,
       conditionSnapshot: snapshot,

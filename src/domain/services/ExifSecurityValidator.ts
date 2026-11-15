@@ -1,4 +1,4 @@
-import { ExifData } from '../models/SpotReport';
+import { DeviceLocation, ExifData } from '../models/SpotReport';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -37,6 +37,8 @@ export class ExifSecurityValidator {
   public static validate(params: {
     captureMethod: 'camera_direct' | 'gallery_upload';
     exifData?: ExifData;
+    /** Live device position; preferred over EXIF GPS, which can be edited. */
+    deviceLocation?: DeviceLocation;
     spotCoordinates: { lat: number; lng: number };
     maxAgeHours?: number; // default: 3 hours
     maxDistanceMeters?: number; // default: 2500 meters (2.5km)
@@ -45,6 +47,7 @@ export class ExifSecurityValidator {
     const {
       captureMethod,
       exifData,
+      deviceLocation,
       spotCoordinates,
       maxAgeHours = 3,
       maxDistanceMeters = 2500,
@@ -97,17 +100,19 @@ export class ExifSecurityValidator {
       flags.push('SIN_EXIF_FECHA: Las fotos de galería sin metadatos no reciben el sello de verificación.');
     }
 
-    // 3. Geofencing check (if GPS available)
+    // 3. Geofencing check: live device position first, EXIF GPS otherwise.
+    // The device's own uncertainty is given the benefit of the doubt, up to 1 km.
     let distanceMeters: number | undefined;
-    if (
-      exifData?.latitude !== undefined &&
-      exifData?.longitude !== undefined
-    ) {
-      distanceMeters = this.calculateHaversineDistanceMeters(
-        exifData.latitude,
-        exifData.longitude,
-        spotCoordinates.lat,
-        spotCoordinates.lng
+    const position = deviceLocation
+      ? { lat: deviceLocation.lat, lng: deviceLocation.lng, slack: Math.min(1000, Math.max(0, deviceLocation.accuracyM)) }
+      : exifData?.latitude !== undefined && exifData?.longitude !== undefined
+      ? { lat: exifData.latitude, lng: exifData.longitude, slack: 0 }
+      : undefined;
+    if (position) {
+      distanceMeters = Math.max(
+        0,
+        this.calculateHaversineDistanceMeters(position.lat, position.lng, spotCoordinates.lat, spotCoordinates.lng) -
+          position.slack
       );
 
       if (distanceMeters > maxDistanceMeters) {

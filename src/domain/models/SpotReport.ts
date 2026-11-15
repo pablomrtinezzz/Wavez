@@ -6,6 +6,14 @@ export interface ExifData {
   deviceModel?: string;
 }
 
+/** Position reported by the device's geolocation API at capture time. */
+export interface DeviceLocation {
+  lat: number;
+  lng: number;
+  /** Radius of uncertainty in metres, as reported by the browser. */
+  accuracyM: number;
+}
+
 export interface SpotReport {
   id: string;
   spotId: string;
@@ -17,6 +25,7 @@ export interface SpotReport {
   isRealtimeVerified: boolean;
   captureMethod: 'camera_direct' | 'gallery_upload';
   exifData?: ExifData;
+  deviceLocation?: DeviceLocation;
   distanceToSpotMeters?: number;
   verificationFlags: string[];
   // Weather condition snapshot when the photo was reported
