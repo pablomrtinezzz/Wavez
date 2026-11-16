@@ -45,7 +45,7 @@ export interface ForecastLocation {
 export interface FetchOptions {
   timeoutMs?: number;
   /**
-   * Extra attempts after a rate limit (429) or server error (5xx). Shared CI
+   * Extra attempts after a rate limit (429), server error (5xx) or network error. Shared CI
    * runners often hit Open-Meteo's per-IP limit, so the scheduled job retries;
    * the website does not (it has its own fallback).
    */
@@ -54,10 +54,30 @@ export interface FetchOptions {
 
 const RETRY_DELAYS_MS = [15_000, 45_000, 90_000];
 
-/** fetch() that retries on 429/5xx, honouring Retry-After when present. */
+/** "fetch failed" hides the real reason (ECONNRESET, ENOTFOUND, timeout...) in `cause`. */
+function describeFetchError(error: unknown): string {
+  const err = error as Error & { cause?: { code?: string; message?: string } };
+  const cause = err.cause ? ` (${err.cause.code ?? err.cause.message ?? String(err.cause)})` : '';
+  return `${err.name}: ${err.message}${cause}`;
+}
+
+/**
+ * fetch() that retries on 429/5xx (honouring Retry-After) and on network
+ * errors such as dropped connections or timeouts.
+ */
 async function fetchWithRetry(url: string, timeoutMs: number, retries: number): Promise<Response> {
   for (let attempt = 0; ; attempt++) {
-    const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    let res: Response;
+    try {
+      res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    } catch (error) {
+      const reason = describeFetchError(error);
+      if (attempt >= retries) throw new Error(`Open-Meteo request failed: ${reason}`);
+      const wait = RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)];
+      console.warn(`[Open-Meteo] ${reason}, retrying in ${Math.round(wait / 1000)} s (${attempt + 1}/${retries})`);
+      await new Promise((r) => setTimeout(r, wait));
+      continue;
+    }
     const retryable = res.status === 429 || res.status >= 500;
     if (!retryable || attempt >= retries) return res;
     const retryAfterS = Number(res.headers.get('retry-after'));
