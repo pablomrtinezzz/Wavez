@@ -48,7 +48,7 @@ Lo más interesante del proyecto no es la interfaz, sino los problemas de datos 
 - **Nunca inventar datos.** Los valores nulos del modelo se descartaban con valores por defecto (1 m, 10 s…). Ahora esas horas se omiten y el spot se marca "sin datos".
 - **Hora canaria en todas partes.** Open-Meteo da horas locales sin zona horaria; parsearlas con `new Date()` las desplazaba según el servidor o el navegador. Todo se compara como cadenas locales.
 - **Topes en la nota.** Sumar puntos de forma independiente hacía que 0,3 m con calma y periodo largo saliera "Muy bueno". El mar plato y el oleaje por debajo del mínimo del spot tienen tope.
-- **Una descarga para todos.** Una GitHub Action descarga los 20 spots cada 15 min en **2 peticiones** (Open-Meteo admite varias coordenadas) y publica un JSON en la rama `data`. Si falta o tiene más de 3 h, la web consulta Open-Meteo en directo.
+- **Una descarga para todos.** Una GitHub Action descarga los 20 spots cada 15 min en **2 peticiones** (Open-Meteo admite varias coordenadas) y publica un JSON en la rama `data`. Los visitantes nunca consultan Open-Meteo: la web muestra siempre esa instantánea, que cubre 15 días hora a hora, e indica cuándo se descargó ("Datos actualizados hace 15 min (14:30)"). Solo si no se puede leer en absoluto recurre a Open-Meteo en directo como emergencia.
 - **Energía calculada, no scrapeada.** Índice `40·H²·T`, proporcional a la potencia de ola en aguas profundas `P = ρg²H²T/64π`.
 - **Gráficas legibles**: un único eje por gráfica, paleta de calidad validada para daltonismo y siempre acompañada de texto, navegación por teclado y vista en tabla.
 
