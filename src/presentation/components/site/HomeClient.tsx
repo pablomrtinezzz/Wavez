@@ -5,6 +5,7 @@ import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { Spot } from '@/domain/models/Spot';
 import { canaryNow, LocalMoment } from '@/domain/models/LocalTime';
 import { SiteFooter, SiteHeader } from '@/presentation/components/site/SiteChrome';
+import { DataFreshness } from '@/presentation/components/ui/DataFreshness';
 import { TimeControl, TimeSelection } from '@/presentation/components/site/TimeControl';
 import { Hero } from '@/presentation/components/site/Hero';
 import { SpotList } from '@/presentation/components/site/SpotList';
@@ -22,6 +23,7 @@ interface SpotsResponse {
   data: SpotSummaryDTO[];
   unavailable: { id: string; name: string }[];
   updatedAt: string;
+  dataUpdatedAt: string | null;
   error?: string;
 }
 
@@ -40,7 +42,7 @@ export function HomeClient({ guide }: { guide?: React.ReactNode }) {
   const [selection, setSelection] = useState<TimeSelection | null>(null);
   const [summaries, setSummaries] = useState<SpotSummaryDTO[]>([]);
   const [unavailable, setUnavailable] = useState<SpotsResponse['unavailable']>([]);
-  const [updatedAt, setUpdatedAt] = useState<string>();
+  const [dataUpdatedAt, setDataUpdatedAt] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -109,7 +111,7 @@ export function HomeClient({ guide }: { guide?: React.ReactNode }) {
         if (!json.success) throw new Error(json.error || 'No se pudieron cargar los spots');
         setSummaries(json.data);
         setUnavailable(json.unavailable ?? []);
-        setUpdatedAt(json.updatedAt);
+        setDataUpdatedAt(json.dataUpdatedAt);
         setError(null);
       } catch (err) {
         if ((err as Error).name !== 'AbortError') setError('No se pudieron cargar las condiciones. Revisa tu conexión.');
@@ -135,7 +137,7 @@ export function HomeClient({ guide }: { guide?: React.ReactNode }) {
 
   return (
     <>
-      <SiteHeader updatedAt={updatedAt} isRefreshing={isRefreshing} onRefresh={goLive} />
+      <SiteHeader dataUpdatedAt={dataUpdatedAt} isRefreshing={isRefreshing} onRefresh={goLive} />
 
       <main className="mx-auto max-w-6xl px-5 sm:px-8">
         <div className="pt-10 text-xs uppercase tracking-[0.14em] text-ocean sm:pt-14">
@@ -155,6 +157,8 @@ export function HomeClient({ guide }: { guide?: React.ReactNode }) {
             <p className="inline-flex items-center gap-2 text-xs text-ink-3">
               {selection.isLive && <span className="size-1.5 rounded-full bg-accent animate-pulse-soft" aria-hidden />}
               {modeLabel}
+              <span className="text-ink-3/60" aria-hidden>·</span>
+              <DataFreshness updatedAt={dataUpdatedAt} />
             </p>
           </div>
           <TimeControl today={now.dateStr} currentHour={now.hour} value={selection} onChange={setSelection} />

@@ -24,4 +24,6 @@ export interface MarineWeatherService {
   getHourlyForecast(spotId: string, lat: number, lng: number, hours?: number): Promise<HourlyMarineForecast[]>;
   getHourlyForecastForDate(spotId: string, lat: number, lng: number, dateStr: string): Promise<HourlyMarineForecast[]>;
   getDaylight(spotId: string, lat: number, lng: number, dateStr: string): Promise<Daylight | null>;
+  /** When the data being served was downloaded from the provider (ISO), if known. */
+  getDataUpdatedAt(): Promise<string | null>;
 }

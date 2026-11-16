@@ -2,20 +2,24 @@ import { SpotTimeline, parseOpenMeteo } from './openMeteo';
 import { MarineSnapshot } from './marineSnapshot';
 import { TimelineMarineService } from './OpenMeteoMarineAdapter';
 
-/** How often the published snapshot is re-read. */
+/** How often the published snapshot is re-read (it lives on GitHub, not Open-Meteo). */
 const RELOAD_EVERY_MS = 5 * 60 * 1000;
-/** Older snapshots are ignored (e.g. the scheduled workflow stopped running). */
-const MAX_SNAPSHOT_AGE_MS = 3 * 60 * 60 * 1000;
 
 /**
- * Reads the marine snapshot refreshed by GitHub Actions, so visitors never
- * hit Open-Meteo directly (20 spots = 2 upstream requests per refresh, instead
- * of 2 per spot, per server instance). Falls back to the live adapter when
- * the snapshot is unreachable, stale or missing a spot.
+ * Serves marine data only from the snapshot published by the scheduled
+ * GitHub Action: visitors never trigger Open-Meteo requests. The snapshot
+ * spans 15 days hour by hour, so even an old one still contains the current
+ * hour; its age is shown to the user instead of being hidden.
+ *
+ * The live adapter is an emergency fallback used only when the snapshot
+ * cannot be read at all (or a spot is missing from it), so the site never
+ * goes blank.
  */
 export class SnapshotMarineAdapter extends TimelineMarineService {
   private loaded: { at: number; generatedAt: number; timelines: Map<string, SpotTimeline> } | null = null;
   private loading: Promise<void> | null = null;
+  /** Set when the emergency fallback had to serve data since the last snapshot load. */
+  private usedFallback = false;
 
   constructor(
     private readonly snapshotUrl: string,
@@ -26,10 +30,16 @@ export class SnapshotMarineAdapter extends TimelineMarineService {
 
   public async getTimeline(spotId: string, lat: number, lng: number): Promise<SpotTimeline> {
     await this.ensureLoaded();
-    const fresh = this.loaded && Date.now() - this.loaded.generatedAt < MAX_SNAPSHOT_AGE_MS;
-    const timeline = fresh ? this.loaded!.timelines.get(spotId) : undefined;
+    const timeline = this.loaded?.timelines.get(spotId);
     if (timeline?.hours.length) return timeline;
+    this.usedFallback = true;
     return this.fallback.getTimeline(spotId, lat, lng);
+  }
+
+  public async getDataUpdatedAt(): Promise<string | null> {
+    await this.ensureLoaded();
+    if (this.loaded?.generatedAt && !this.usedFallback) return new Date(this.loaded.generatedAt).toISOString();
+    return (await this.fallback.getDataUpdatedAt()) ?? (this.loaded?.generatedAt ? new Date(this.loaded.generatedAt).toISOString() : null);
   }
 
   private async ensureLoaded(): Promise<void> {
@@ -48,6 +58,7 @@ export class SnapshotMarineAdapter extends TimelineMarineService {
         timelines.set(spotId, parseOpenMeteo(raw));
       }
       this.loaded = { at: Date.now(), generatedAt: Date.parse(snapshot.generatedAt), timelines };
+      this.usedFallback = false;
     } catch (error) {
       console.warn('[SnapshotMarineAdapter] Snapshot unavailable, using live Open-Meteo:', (error as Error).message);
       // Retry later but keep serving the previous snapshot meanwhile

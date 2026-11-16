@@ -30,6 +30,10 @@ class MockMarineWeatherService implements MarineWeatherService {
     return [];
   }
 
+  async getDataUpdatedAt(): Promise<string | null> {
+    return null;
+  }
+
   async getDaylight(spotId: string, lat: number, lng: number, dateStr: string): Promise<Daylight | null> {
     return { sunrise: `${dateStr}T07:23`, sunset: `${dateStr}T18:08` };
   }

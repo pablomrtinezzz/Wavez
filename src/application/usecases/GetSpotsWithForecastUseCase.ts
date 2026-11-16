@@ -11,6 +11,8 @@ export interface SpotsForecastResult {
   summaries: SpotSummaryDTO[];
   /** Spots for which no real marine data could be obtained. */
   unavailable: Pick<Spot, 'id' | 'name'>[];
+  /** When the marine data was downloaded from the provider (ISO), if known. */
+  dataUpdatedAt: string | null;
 }
 
 export class GetSpotsWithForecastUseCase {
@@ -59,7 +61,7 @@ export class GetSpotsWithForecastUseCase {
       else unavailable.push({ id: spots[i].id, name: spots[i].name });
     });
 
-    return { summaries, unavailable };
+    return { summaries, unavailable, dataUpdatedAt: await this.marineService.getDataUpdatedAt() };
   }
 
 }

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       targetLocalHour = toLocalHourKey({ dateStr: date, hour });
     }
 
-    const { summaries, unavailable } = await getSpotsWithForecastUseCase.execute(zone, targetLocalHour);
+    const { summaries, unavailable, dataUpdatedAt } = await getSpotsWithForecastUseCase.execute(zone, targetLocalHour);
 
     // Sort by overallScore descending (best conditions first)
     const sorted = [...summaries].sort((a, b) => b.score.overallScore - a.score.overallScore);
@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
       unavailable,
       targetLocalHour: targetLocalHour || null,
       updatedAt: new Date().toISOString(),
+      dataUpdatedAt,
     });
   } catch (error) {
     if ((error as { digest?: string })?.digest?.startsWith('NEXT_')) {

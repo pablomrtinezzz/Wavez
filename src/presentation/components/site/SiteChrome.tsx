@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { RotateCw } from 'lucide-react';
 import { cn } from '@/presentation/lib/utils';
+import { DataFreshness } from '@/presentation/components/ui/DataFreshness';
 
 /** Brand mark: the sun setting over the Atlantic. Kept in sync with src/app/icon.svg. */
 export function BrandMark({ className }: { className?: string }) {
@@ -41,12 +42,12 @@ const NAV = [
 ];
 
 interface SiteHeaderProps {
-  updatedAt?: string;
+  dataUpdatedAt?: string | null;
   isRefreshing: boolean;
   onRefresh: () => void;
 }
 
-export function SiteHeader({ updatedAt, isRefreshing, onRefresh }: SiteHeaderProps) {
+export function SiteHeader({ dataUpdatedAt, isRefreshing, onRefresh }: SiteHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-sand/85 backdrop-blur-md" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-5 sm:px-8">
@@ -59,11 +60,7 @@ export function SiteHeader({ updatedAt, isRefreshing, onRefresh }: SiteHeaderPro
           ))}
         </nav>
         <div className="flex items-center gap-3 text-xs text-ink-3">
-          {updatedAt && (
-            <span className="hidden tabular-nums md:inline">
-              Actualizado {new Date(updatedAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'Atlantic/Canary' })}
-            </span>
-          )}
+          <DataFreshness updatedAt={dataUpdatedAt} className="hidden md:inline" />
           <button
             onClick={onRefresh}
             className="flex size-8 items-center justify-center rounded-full transition hover:bg-line/70 hover:text-ink"

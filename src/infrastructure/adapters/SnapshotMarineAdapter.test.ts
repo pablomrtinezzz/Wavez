@@ -28,6 +28,9 @@ function dataUrl(snapshot: MarineSnapshot) {
 
 class FakeLive extends TimelineMarineService {
   calls = 0;
+  async getDataUpdatedAt(): Promise<string | null> {
+    return null;
+  }
   async getTimeline(): Promise<SpotTimeline> {
     this.calls++;
     return { hours: [], daylight: new Map() };
@@ -47,12 +50,24 @@ describe('SnapshotMarineAdapter', () => {
     assert.equal(live.calls, 0);
   });
 
-  test('falls back to live data for stale snapshots and unknown spots', async () => {
+  test('keeps serving an old snapshot and reports when it was generated', async () => {
     const live = new FakeLive();
-    const stale = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
-    const adapter = new SnapshotMarineAdapter(dataUrl({ version: 1, generatedAt: stale, spots: { 'la-cicer': raw } }), live);
+    const old = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+    const adapter = new SnapshotMarineAdapter(dataUrl({ version: 1, generatedAt: old, spots: { 'la-cicer': raw } }), live);
+    const c = await adapter.getConditionsForTimestamp('la-cicer', 0, 0, '2026-11-15T09:00');
+    assert.equal(c.primarySwell.heightM, 1.2);
+    assert.equal(live.calls, 0);
+    assert.equal(await adapter.getDataUpdatedAt(), old);
+  });
+
+  test('uses the live adapter only for spots missing from the snapshot', async () => {
+    const live = new FakeLive();
+    const adapter = new SnapshotMarineAdapter(
+      dataUrl({ version: 1, generatedAt: new Date().toISOString(), spots: { 'la-cicer': raw } }),
+      live
+    );
     await adapter.getTimeline('la-cicer', 0, 0);
     await adapter.getTimeline('el-confital', 0, 0);
-    assert.equal(live.calls, 2);
+    assert.equal(live.calls, 1);
   });
 });

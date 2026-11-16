@@ -23,6 +23,7 @@ const MAX_GAP_MS = 2 * 60 * 60 * 1000;
  */
 export abstract class TimelineMarineService implements MarineWeatherService {
   public abstract getTimeline(spotId: string, lat: number, lng: number): Promise<SpotTimeline>;
+  public abstract getDataUpdatedAt(): Promise<string | null>;
 
   public async getCurrentConditions(spotId: string, lat: number, lng: number): Promise<MarineConditions> {
     return this.getConditionsForTimestamp(spotId, lat, lng, toLocalHourKey(canaryNow()));
@@ -91,6 +92,11 @@ export class OpenMeteoMarineAdapter extends TimelineMarineService {
   private timelineCache = new Map<string, CacheEntry<SpotTimeline>>();
   private inFlight = new Map<string, Promise<SpotTimeline>>();
   private readonly CACHE_TTL_MS = 10 * 60 * 1000;
+  private lastFetchedAt: string | null = null;
+
+  public async getDataUpdatedAt(): Promise<string | null> {
+    return this.lastFetchedAt;
+  }
 
   public async getTimeline(spotId: string, lat: number, lng: number): Promise<SpotTimeline> {
     const marine = this.marinePointOf(spotId);
@@ -106,6 +112,7 @@ export class OpenMeteoMarineAdapter extends TimelineMarineService {
       .then(([raw]) => {
         const data = parseOpenMeteo(raw);
         if (data.hours.length) {
+          this.lastFetchedAt = new Date().toISOString();
           this.timelineCache.set(cacheKey, { data, expiresAt: Date.now() + this.CACHE_TTL_MS });
         }
         return data;
