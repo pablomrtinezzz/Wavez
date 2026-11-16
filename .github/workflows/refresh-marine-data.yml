@@ -19,7 +19,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
 
@@ -34,6 +34,8 @@ jobs:
 
       # The branch always holds a single commit, so the repository does not grow
       - name: Publish to the data branch
+        # Skipped when the download was rate-limited (previous snapshot kept)
+        if: hashFiles('out/marine-snapshot.json') != ''
         working-directory: out
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

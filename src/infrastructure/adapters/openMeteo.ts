@@ -42,15 +42,45 @@ export interface ForecastLocation {
   marine?: { lat: number; lng: number };
 }
 
-export async function fetchOpenMeteo(locations: ForecastLocation[], timeoutMs = 9000): Promise<OpenMeteoRaw[]> {
+export interface FetchOptions {
+  timeoutMs?: number;
+  /**
+   * Extra attempts after a rate limit (429) or server error (5xx). Shared CI
+   * runners often hit Open-Meteo's per-IP limit, so the scheduled job retries;
+   * the website does not (it has its own fallback).
+   */
+  retries?: number;
+}
+
+const RETRY_DELAYS_MS = [15_000, 45_000, 90_000];
+
+/** fetch() that retries on 429/5xx, honouring Retry-After when present. */
+async function fetchWithRetry(url: string, timeoutMs: number, retries: number): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt >= retries) return res;
+    const retryAfterS = Number(res.headers.get('retry-after'));
+    const wait = Number.isFinite(retryAfterS) && retryAfterS > 0 ? Math.min(retryAfterS * 1000, 120_000) : RETRY_DELAYS_MS[Math.min(attempt, RETRY_DELAYS_MS.length - 1)];
+    console.warn(`[Open-Meteo] HTTP ${res.status}, retrying in ${Math.round(wait / 1000)} s (${attempt + 1}/${retries})`);
+    await new Promise((r) => setTimeout(r, wait));
+  }
+}
+
+export async function fetchOpenMeteo(
+  locations: ForecastLocation[],
+  { timeoutMs = 9000, retries = 0 }: FetchOptions = {}
+): Promise<OpenMeteoRaw[]> {
   const join = (values: number[]) => values.join(',');
   const marinePoints = locations.map((l) => l.marine ?? l);
   const range = `past_days=${PAST_DAYS}&forecast_days=${FORECAST_DAYS}&timezone=Atlantic%2FCanary`;
   const marineUrl = `https://marine-api.open-meteo.com/v1/marine?latitude=${join(marinePoints.map((p) => p.lat))}&longitude=${join(marinePoints.map((p) => p.lng))}&hourly=${MARINE_VARS}&${range}`;
   const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${join(locations.map((l) => l.lat))}&longitude=${join(locations.map((l) => l.lng))}&hourly=${WEATHER_VARS}&daily=sunrise,sunset&${range}`;
 
-  const signal = AbortSignal.timeout(timeoutMs);
-  const [marineRes, weatherRes] = await Promise.all([fetch(marineUrl, { signal }), fetch(weatherUrl, { signal })]);
+  const [marineRes, weatherRes] = await Promise.all([
+    fetchWithRetry(marineUrl, timeoutMs, retries),
+    fetchWithRetry(weatherUrl, timeoutMs, retries),
+  ]);
   if (!marineRes.ok || !weatherRes.ok) {
     throw new Error(`Open-Meteo HTTP error: marine=${marineRes.status}, weather=${weatherRes.status}`);
   }

@@ -13,10 +13,18 @@ import { MarineSnapshot, slimRaw } from '@/infrastructure/adapters/marineSnapsho
 
 async function main() {
   const out = process.argv[2] ?? 'out/marine-snapshot.json';
-  const raws = await fetchOpenMeteo(
-    GRAN_CANARIA_SPOTS.map((s) => ({ ...s.location, marine: s.marinePoint })),
-    30000
-  );
+  let raws;
+  try {
+    raws = await fetchOpenMeteo(
+      GRAN_CANARIA_SPOTS.map((s) => ({ ...s.location, marine: s.marinePoint })),
+      { timeoutMs: 30_000, retries: 3 }
+    );
+  } catch (error) {
+    // Not fatal: the previous snapshot stays published and the website falls
+    // back to live Open-Meteo requests once it is older than 3 hours.
+    console.log(`::warning::Open-Meteo unavailable, keeping the previous snapshot: ${(error as Error).message}`);
+    return;
+  }
 
   const snapshot: MarineSnapshot = { version: 1, generatedAt: new Date().toISOString(), spots: {} };
   GRAN_CANARIA_SPOTS.forEach((spot, i) => {
