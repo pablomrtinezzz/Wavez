@@ -5,8 +5,11 @@ name: Refresh marine data
 # scheduled runs by a few minutes under load; the site falls back to live
 # Open-Meteo requests if the snapshot is older than 3 hours.
 on:
+  # Main trigger: cron-job.org calls the workflow_dispatch API every 15 min
+  # (GitHub's own scheduler delays runs by hours). This hourly schedule is
+  # only a backup in case the external cron stops.
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '7 * * * *'
   workflow_dispatch:
 
 permissions:
