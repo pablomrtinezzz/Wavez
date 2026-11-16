@@ -7,3 +7,11 @@ export const SITE_NAME = 'Wavez';
 export const SITE_TAGLINE = 'El parte de olas de Gran Canaria';
 export const SITE_DESCRIPTION =
   'Previsión de surf gratuita para 20 spots de Gran Canaria: oleaje, viento, marea, temperatura del agua y webcams en directo, hora a hora, con una nota de 0 a 10 para cada pico.';
+
+/** Author and project links shown in the footer. */
+export const AUTHOR_NAME = 'Pablo Martínez';
+export const REPO_URL = 'https://github.com/pablomrtinezzz/wavez';
+export const GITHUB_URL = 'https://github.com/pablomrtinezzz';
+export const LINKEDIN_URL = 'https://www.linkedin.com/in/pablomrtinezzz/';
+/** Buy Me a Coffee page; the support link is hidden while this is null. */
+export const SUPPORT_URL: string | null = 'https://buymeacoffee.com/pablomrtinezzz';

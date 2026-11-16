@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Map as MapIcon, RotateCw, Video, Waves } from 'lucide-react';
+import { Coffee, Map as MapIcon, RotateCw, Video, Waves } from 'lucide-react';
 import { cn } from '@/presentation/lib/utils';
 import { DataFreshness } from '@/presentation/components/ui/DataFreshness';
+import { AUTHOR_NAME, GITHUB_URL, LINKEDIN_URL, REPO_URL, SUPPORT_URL } from '@/presentation/lib/site';
 
 /** Brand mark: the sun setting over the Atlantic. Kept in sync with src/app/icon.svg. */
 export function BrandMark({ className }: { className?: string }) {
@@ -199,6 +200,33 @@ export function SiteFooter() {
           >
             Cómo calculamos la nota (PDF)
           </a>
+          <p className="mt-6 text-ink-3">
+            Hecho por {AUTHOR_NAME} ·{' '}
+            <a className="underline underline-offset-4 hover:text-ink" href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+              LinkedIn
+            </a>{' '}
+            ·{' '}
+            <a className="underline underline-offset-4 hover:text-ink" href={GITHUB_URL} target="_blank" rel="noopener noreferrer">
+              GitHub
+            </a>
+          </p>
+          <p className="mt-2 text-ink-3">
+            Código abierto en{' '}
+            <a className="underline underline-offset-4 hover:text-ink" href={REPO_URL} target="_blank" rel="noopener noreferrer">
+              GitHub
+            </a>
+          </p>
+          {SUPPORT_URL && (
+            <a
+              href={SUPPORT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex items-center gap-2 rounded-full border border-line bg-paper/70 px-4 py-2 text-ink-2 transition hover:border-sun hover:bg-sun-soft hover:text-ink"
+            >
+              <Coffee className="size-4 text-warn" aria-hidden />
+              ¿Te ha servido? Invítame a un café
+            </a>
+          )}
         </div>
         <div>
           <p className="eyebrow">Datos</p>
