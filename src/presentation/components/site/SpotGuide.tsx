@@ -8,11 +8,13 @@ import { BREAK_LABEL, SKILL_LABEL, ZONES } from '@/presentation/lib/format';
  */
 export function SpotGuide() {
   return (
-    <section id="guia" className="mt-28 sm:mt-36" aria-labelledby="guia-title">
+    <section id="guia" className="reveal mt-20 sm:mt-36" aria-labelledby="guia-title">
       <div className="mb-10 grid gap-3 sm:grid-cols-2 sm:items-end">
         <div>
           <p className="eyebrow inline-flex items-center gap-2 tabular-nums !text-ocean">
-            <span className="h-px w-6 bg-sun" aria-hidden />
+            <svg viewBox="0 0 28 8" className="h-2 w-7 text-sun" aria-hidden>
+              <path d="M1 4c3 0 3-3 6.5-3S11 7 14 7s3.5-6 6.5-6S24 4 27 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
             04
           </p>
           <h2 id="guia-title" className="display mt-2 text-5xl sm:text-6xl">

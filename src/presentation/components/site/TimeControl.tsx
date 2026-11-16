@@ -88,7 +88,7 @@ export function TimeControl({ today, currentHour, value, onChange }: TimeControl
         ))}
       </div>
 
-      <div ref={stripRef} className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 scrollbar-none" role="group" aria-label="Día">
+      <div ref={stripRef} className="fade-x -mx-1 flex gap-1 overflow-x-auto px-1 pb-1 scrollbar-none" role="group" aria-label="Día">
         {days.map((d) => {
           const { weekday, day } = formatDayParts(d);
           const selected = d === value.dateStr;

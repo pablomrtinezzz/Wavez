@@ -5,7 +5,6 @@ import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { Spot } from '@/domain/models/Spot';
 import { canaryNow, LocalMoment } from '@/domain/models/LocalTime';
 import { SiteFooter, SiteHeader } from '@/presentation/components/site/SiteChrome';
-import { DataFreshness } from '@/presentation/components/ui/DataFreshness';
 import { TimeControl, TimeSelection } from '@/presentation/components/site/TimeControl';
 import { Hero } from '@/presentation/components/site/Hero';
 import { SpotList } from '@/presentation/components/site/SpotList';
@@ -137,10 +136,10 @@ export function HomeClient({ guide }: { guide?: React.ReactNode }) {
 
   return (
     <>
-      <SiteHeader dataUpdatedAt={dataUpdatedAt} isRefreshing={isRefreshing} onRefresh={goLive} />
+      <SiteHeader dataUpdatedAt={dataUpdatedAt} isRefreshing={isRefreshing} isLive={selection?.isLive ?? true} onRefresh={goLive} />
 
       <main className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="pt-10 text-xs uppercase tracking-[0.14em] text-ocean sm:pt-14">
+        <div className="pt-8 text-xs uppercase tracking-[0.14em] text-ocean sm:pt-14">
           <h1 className="inline">Parte de olas de Gran Canaria</h1>
           <span className="text-ink-3"> · 20 spots · oleaje, viento, marea y webcams</span>
         </div>
@@ -157,8 +156,6 @@ export function HomeClient({ guide }: { guide?: React.ReactNode }) {
             <p className="inline-flex items-center gap-2 text-xs text-ink-3">
               {selection.isLive && <span className="size-1.5 rounded-full bg-accent animate-pulse-soft" aria-hidden />}
               {modeLabel}
-              <span className="text-ink-3/60" aria-hidden>·</span>
-              <DataFreshness updatedAt={dataUpdatedAt} />
             </p>
           </div>
           <TimeControl today={now.dateStr} currentHour={now.hour} value={selection} onChange={setSelection} />
@@ -180,7 +177,7 @@ export function HomeClient({ guide }: { guide?: React.ReactNode }) {
           </div>
         )}
 
-        <div className="mt-16 sm:mt-24">
+        <div className="mt-12 sm:mt-24">
           {summaries.length && now && selection ? (
             <Hero summaries={summaries} selection={selection} today={now.dateStr} currentHour={now.hour} onSelectSpot={openSpot} />
           ) : (
@@ -254,14 +251,16 @@ function PageSection({
   children: React.ReactNode;
 }) {
   return (
-    <section id={id} className="mt-28 sm:mt-36" aria-labelledby={`${id}-title`}>
-      <div className="mb-10 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
+    <section id={id} className="reveal mt-20 sm:mt-36" aria-labelledby={`${id}-title`}>
+      <div className="mb-8 grid gap-3 sm:mb-10 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] sm:items-end">
         <div>
           <p className="eyebrow inline-flex items-center gap-2 tabular-nums !text-ocean">
-            <span className="h-px w-6 bg-sun" aria-hidden />
+            <svg viewBox="0 0 28 8" className="h-2 w-7 text-sun" aria-hidden>
+              <path d="M1 4c3 0 3-3 6.5-3S11 7 14 7s3.5-6 6.5-6S24 4 27 4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            </svg>
             {index}
           </p>
-          <h2 id={`${id}-title`} className="display mt-2 text-5xl sm:text-6xl">
+          <h2 id={`${id}-title`} className="display mt-2 text-[2.75rem] leading-none sm:text-6xl">
             {title}
           </h2>
         </div>

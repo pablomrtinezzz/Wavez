@@ -245,7 +245,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
         >
           {expanded && (
             <div className="flex items-center justify-between gap-3 border-b border-[#bcd3dd] bg-sand/90 px-4 py-3 backdrop-blur" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}>
-              <div className="flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none [&>button]:shrink-0 [&>button]:whitespace-nowrap">
+              <div className="fade-x flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none [&>button]:shrink-0 [&>button]:whitespace-nowrap">
                 <ZoneChips active={activeZone} onSelect={showZone} />
               </div>
               <button

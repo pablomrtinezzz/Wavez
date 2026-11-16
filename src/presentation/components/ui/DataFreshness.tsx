@@ -11,7 +11,16 @@ const STALE_AFTER_MS = 3 * 60 * 60 * 1000;
  * "Datos actualizados hace 15 min (14:30)": when the marine data was
  * downloaded by the scheduled job, re-rendered every minute.
  */
-export function DataFreshness({ updatedAt, className }: { updatedAt?: string | null; className?: string }) {
+export function DataFreshness({
+  updatedAt,
+  className,
+  compact = false,
+}: {
+  updatedAt?: string | null;
+  className?: string;
+  /** Short form for tight spaces ("hace 20 min"); the full text stays in the tooltip. */
+  compact?: boolean;
+}) {
   // The clock is read in the browser only (never during prerendering)
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
@@ -28,8 +37,11 @@ export function DataFreshness({ updatedAt, className }: { updatedAt?: string | n
   const isStale = now - Date.parse(updatedAt) > STALE_AFTER_MS;
 
   return (
-    <span className={cn('tabular-nums', isStale && 'text-warn', className)} title="Hora de la última descarga de datos de Open-Meteo">
-      Datos actualizados {formatRelativeTime(updatedAt, now)} ({clock})
+    <span
+      className={cn('tabular-nums', isStale && 'text-warn', className)}
+      title={`Datos de Open-Meteo descargados a las ${clock}`}
+    >
+      {compact ? formatRelativeTime(updatedAt, now) : `Datos actualizados ${formatRelativeTime(updatedAt, now)} (${clock})`}
     </span>
   );
 }

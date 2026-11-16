@@ -42,12 +42,24 @@
     color: var(--color-ink);
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
-    scroll-padding-top: 5rem;
+    /* Sticky header: two rows on phones (brand + section tabs), one from sm up */
+    scroll-padding-top: 8rem;
+  }
+
+  @media (min-width: 40rem) {
+    html {
+      scroll-padding-top: 5.5rem;
+    }
   }
 
   body {
     font-family: var(--font-sans);
-    background: var(--color-sand);
+    /* A faint morning glow (sun, top right) and sea haze (top left) behind the first screen */
+    background:
+      radial-gradient(60rem 28rem at 100% -6rem, rgb(242 196 109 / 0.16), transparent 70%),
+      radial-gradient(48rem 26rem at -10% 0, rgb(14 79 107 / 0.07), transparent 70%),
+      var(--color-sand);
+    background-repeat: no-repeat;
     min-height: 100dvh;
   }
 
@@ -93,6 +105,11 @@
 
   .hairline {
     border-color: var(--color-line);
+  }
+
+  /* Horizontal scrollers fade at their edges instead of cutting items off */
+  .fade-x {
+    mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 28px), transparent);
   }
 
   .scrollbar-none {
@@ -151,6 +168,34 @@
   }
 }
 
+@keyframes ping-slow {
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Swell lines drift sideways; the path repeats every half of its width */
+@keyframes swell-drift {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes sun-breathe {
+  50% {
+    box-shadow: 0 0 0 14px rgb(242 196 109 / 0.1), 0 0 70px 10px rgb(242 196 109 / 0.35);
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
 @keyframes pulse-soft {
   50% {
     opacity: 0.45;
@@ -167,4 +212,30 @@
 
 .animate-pulse-soft {
   animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-swell {
+  animation: swell-drift 22s linear infinite;
+}
+
+.animate-swell-slow {
+  animation: swell-drift 34s linear infinite;
+}
+
+.animate-sun {
+  box-shadow: 0 0 0 8px rgb(242 196 109 / 0.08), 0 0 50px 4px rgb(242 196 109 / 0.25);
+  animation: sun-breathe 6s ease-in-out infinite;
+}
+
+/* Sections ease in as they scroll into view; browsers without scroll timelines just show them */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
 }

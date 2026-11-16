@@ -71,7 +71,7 @@ export function SpotList({ summaries, onSelectSpot, isRefreshing }: SpotListProp
     <div>
       {/* Controls */}
       <div className="flex flex-col gap-4 border-b border-line pb-4 md:flex-row md:items-end md:justify-between">
-        <nav aria-label="Filtrar por zona" className="-mx-1 flex gap-1 overflow-x-auto scrollbar-none">
+        <nav aria-label="Filtrar por zona" className="fade-x -mx-1 flex gap-1 overflow-x-auto scrollbar-none">
           {[{ id: 'all' as const, label: 'Toda la isla' }, ...ZONES].map((z) => (
             <button
               key={z.id}

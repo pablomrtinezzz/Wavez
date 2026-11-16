@@ -42,15 +42,22 @@ export function Hero({ summaries, selection, today, currentHour, onSelectSpot }:
 
   return (
     <section
-      className="relative isolate overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,var(--color-ocean-deep),var(--color-ocean)_70%)] px-6 py-10 text-sand animate-fade-in sm:px-12 sm:py-14"
+      className="relative isolate overflow-hidden rounded-[28px] bg-[linear-gradient(135deg,var(--color-ocean-deep),var(--color-ocean)_70%)] px-6 pb-24 pt-9 text-sand shadow-[0_30px_60px_-30px_rgba(10,51,71,0.55)] animate-fade-in sm:px-12 sm:pb-28 sm:pt-14"
       aria-labelledby="hero-title"
     >
       {/* Sun and swell lines, purely decorative */}
-      <span aria-hidden className="pointer-events-none absolute right-6 top-6 -z-10 size-16 rounded-full bg-sun sm:right-10 sm:top-10 sm:size-24" />
-      <svg aria-hidden viewBox="0 0 1200 200" preserveAspectRatio="none" className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-40 w-full opacity-25">
-        <path d="M0 120C150 120 220 60 400 60S650 140 800 140 1050 80 1200 90" fill="none" stroke="var(--color-sand)" strokeWidth="2" />
-        <path d="M0 160C180 160 260 110 430 110S680 175 840 175 1060 130 1200 135" fill="none" stroke="var(--color-sand)" strokeWidth="2" />
-      </svg>
+      <span aria-hidden className="pointer-events-none absolute right-6 top-6 -z-10 size-14 rounded-full bg-sun animate-sun sm:right-10 sm:top-10 sm:size-24" />
+      <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 -z-20 size-72 rounded-full bg-sun/10 blur-3xl" />
+      {/* Two swell trains drifting at different speeds, kept below the content */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-24 overflow-hidden sm:h-28">
+        <svg viewBox="0 0 2400 200" preserveAspectRatio="none" className="absolute inset-y-0 left-0 h-full w-[200%] opacity-20 animate-swell-slow">
+          <path d="M0 100 Q100 70 200 100 T400 100 Q500 70 600 100 T800 100 Q900 70 1000 100 T1200 100 Q1300 70 1400 100 T1600 100 Q1700 70 1800 100 T2000 100 Q2100 70 2200 100 T2400 100" fill="none" stroke="var(--color-sand)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <svg viewBox="0 0 2400 200" preserveAspectRatio="none" className="absolute inset-y-0 left-0 h-full w-[200%] animate-swell">
+          <path d="M0 140 Q150 115 300 140 T600 140 Q750 115 900 140 T1200 140 Q1350 115 1500 140 T1800 140 Q1950 115 2100 140 T2400 140 V200 H0 Z" fill="var(--color-ocean-deep)" opacity="0.45" />
+          <path d="M0 140 Q150 115 300 140 T600 140 Q750 115 900 140 T1200 140 Q1350 115 1500 140 T1800 140 Q1950 115 2100 140 T2400 140" fill="none" stroke="var(--color-sun)" strokeWidth="1.25" opacity="0.5" vectorEffect="non-scaling-stroke" />
+        </svg>
+      </div>
 
       <p className="pr-20 text-base text-sand/75 sm:pr-32 sm:text-lg">{headline(selection, today, currentHour, isFlat)}</p>
       <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-4 lg:pr-32">
