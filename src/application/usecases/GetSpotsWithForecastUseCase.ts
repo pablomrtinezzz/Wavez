@@ -2,7 +2,8 @@ import { SpotRepository } from '@/domain/ports/SpotRepository';
 import { MarineWeatherService } from '@/domain/ports/MarineWeatherService';
 import { SpotReportRepository } from '@/domain/ports/SpotReportRepository';
 import { SpotScoreCalculator } from '@/domain/services/SpotScoreCalculator';
-import { Spot, ZoneId } from '@/domain/models/Spot';
+import { Spot } from '@/domain/models/Spot';
+import { IslandId, ZoneId } from '@/domain/models/Island';
 import { MarineConditions } from '@/domain/models/MarineConditions';
 import { WaveEnergy, estimateWaveEnergyKj } from '@/domain/models/WaveEnergy';
 import { SpotSummaryDTO } from '../dtos/SpotSummaryDTO';
@@ -23,13 +24,16 @@ export class GetSpotsWithForecastUseCase {
   ) {}
 
   /**
-   * @param targetLocalHour Gran Canaria wall-clock hour ('YYYY-MM-DDTHH:00').
+   * @param filter Limit the result to one island and/or one zone; all spots otherwise.
+   * @param targetLocalHour Canary Islands wall-clock hour ('YYYY-MM-DDTHH:00').
    *   When omitted, current conditions are returned.
    */
-  public async execute(zone?: ZoneId, targetLocalHour?: string): Promise<SpotsForecastResult> {
-    const spots = zone
-      ? await this.spotRepo.getSpotsByZone(zone)
-      : await this.spotRepo.getAllSpots();
+  public async execute(filter: { island?: IslandId; zone?: ZoneId } = {}, targetLocalHour?: string): Promise<SpotsForecastResult> {
+    const spots = filter.zone
+      ? await this.spotRepo.getSpotsByZone(filter.zone)
+      : filter.island
+        ? await this.spotRepo.getSpotsByIsland(filter.island)
+        : await this.spotRepo.getAllSpots();
 
     const results = await Promise.allSettled(
       spots.map(async (spot): Promise<SpotSummaryDTO> => {
