@@ -1,5 +1,5 @@
 import { SpotTimeline, parseOpenMeteo } from './openMeteo';
-import { MarineSnapshot } from './marineSnapshot';
+import { MarineSnapshot, snapshotFreshAt } from './marineSnapshot';
 import { TimelineMarineService } from './OpenMeteoMarineAdapter';
 
 /** How often the published snapshot is re-read (it lives on GitHub, not Open-Meteo). */
@@ -57,7 +57,8 @@ export class SnapshotMarineAdapter extends TimelineMarineService {
       for (const [spotId, raw] of Object.entries(snapshot.spots ?? {})) {
         timelines.set(spotId, parseOpenMeteo(raw));
       }
-      this.loaded = { at: Date.now(), generatedAt: Date.parse(snapshot.generatedAt), timelines };
+      // The data is as recent as the last check that found no newer model run
+      this.loaded = { at: Date.now(), generatedAt: Date.parse(snapshotFreshAt(snapshot)), timelines };
       this.usedFallback = false;
     } catch (error) {
       console.warn('[SnapshotMarineAdapter] Snapshot unavailable, using live Open-Meteo:', (error as Error).message);

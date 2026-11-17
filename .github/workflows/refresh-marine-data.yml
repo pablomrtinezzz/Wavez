@@ -1,9 +1,9 @@
 name: Refresh marine data
 
-# Downloads Open-Meteo data for every spot and publishes it as a single JSON
-# file on the `data` branch, which the website reads. GitHub may delay
-# scheduled runs by a few minutes under load; the site falls back to live
-# Open-Meteo requests if the snapshot is older than 3 hours.
+# Publishes Open-Meteo data for every spot as a single JSON file on the
+# `data` branch, which the website reads. Each run first checks one probe spot
+# and only downloads every spot when a model has published new data (a few
+# times a day); otherwise it re-publishes the same data marked as checked.
 on:
   # Main trigger: cron-job.org calls the workflow_dispatch API every 15 min
   # (GitHub's own scheduler delays runs by hours). This hourly schedule is
@@ -33,11 +33,16 @@ jobs:
 
       - run: npm ci --no-audit --no-fund
 
-      - run: npx tsx scripts/refresh-marine-snapshot.ts out/marine-snapshot.json
+      # The script compares one probe spot against this copy and only downloads
+      # every spot when Open-Meteo has published a new model run
+      - name: Read the published snapshot
+        run: git fetch -q --depth=1 origin data && git show FETCH_HEAD:marine-snapshot.json > previous-snapshot.json || echo "No published snapshot yet"
+
+      - run: npx tsx scripts/refresh-marine-snapshot.ts out/marine-snapshot.json previous-snapshot.json
 
       # The branch always holds a single commit, so the repository does not grow
       - name: Publish to the data branch
-        # Skipped when the download was rate-limited (previous snapshot kept)
+        # Skipped when Open-Meteo could not be reached (previous snapshot kept)
         if: hashFiles('out/marine-snapshot.json') != ''
         working-directory: out
         env:
