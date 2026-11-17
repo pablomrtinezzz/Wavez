@@ -42,4 +42,24 @@ export const LA_GOMERA_SPOTS = defineSpots('la-gomera', [
       preferredTide: 'mid',
     },
   },
+  {
+    id: 'vallehermoso',
+    slug: 'vallehermoso',
+    name: 'Playa de Vallehermoso',
+    zone: 'lg-norte',
+    location: { lat: 28.2031, lng: -17.2522, municipality: 'Vallehermoso' },
+    marinePoint: offshore(28.2031, -17.2522, 0),
+    breakType: 'reef-break',
+    skillLevel: 'advanced',
+    description: 'Playa de callaos abierta al norte, al pie del barranco. Mar de fondo potente y orilla de piedras: solo con experiencia.',
+    idealConditions: {
+      minSwellHeightM: 0.9,
+      maxSwellHeightM: 2.5,
+      minPeriodSec: 10,
+      optimalSwellDegrees: { min: 300, max: 40 }, // WNW to NE
+      favorableWindDegrees: { min: 140, max: 230 }, // SE to SW
+      maxFavorableWindKmh: 22,
+      preferredTide: 'mid',
+    },
+  },
 ]);

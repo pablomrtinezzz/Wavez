@@ -3,7 +3,7 @@
  * Every Canary island shares the Atlantic/Canary timezone, so local times
  * are comparable across the whole archipelago.
  */
-export type IslandId = 'gran-canaria' | 'tenerife' | 'lanzarote' | 'fuerteventura' | 'la-palma' | 'la-gomera';
+export type IslandId = 'gran-canaria' | 'tenerife' | 'lanzarote' | 'fuerteventura' | 'la-palma' | 'la-gomera' | 'el-hierro';
 
 export type ZoneId =
   // Gran Canaria
@@ -19,16 +19,22 @@ export type ZoneId =
   // Lanzarote
   | 'lz-famara'
   | 'lz-la-santa'
-  | 'lz-norte-este'
+  | 'lz-norte'
+  | 'lz-este'
   // Fuerteventura
   | 'fv-corralejo'
   | 'fv-north-shore'
   | 'fv-oeste'
+  | 'fv-este'
   // La Palma
   | 'lp-este'
+  | 'lp-oeste'
   // La Gomera
   | 'lg-norte'
-  | 'lg-oeste';
+  | 'lg-oeste'
+  // El Hierro
+  | 'eh-sur'
+  | 'eh-este';
 
 export interface Zone {
   id: ZoneId;
@@ -60,7 +66,7 @@ export const ISLANDS: Island[] = [
   {
     id: 'tenerife',
     name: 'Tenerife',
-    summary: 'Izquierdas de fondo volcánico en Las Américas en invierno y el norte salvaje de Anaga.',
+    summary: 'Izquierdas volcánicas en Las Américas en invierno, reefs potentes en el norte y el salvaje Anaga.',
     zones: [
       { id: 'tf-norte', label: 'Norte' },
       { id: 'tf-anaga', label: 'Anaga' },
@@ -75,7 +81,8 @@ export const ISLANDS: Island[] = [
     zones: [
       { id: 'lz-famara', label: 'Famara' },
       { id: 'lz-la-santa', label: 'La Santa' },
-      { id: 'lz-norte-este', label: 'Norte y este' },
+      { id: 'lz-norte', label: 'Órzola' },
+      { id: 'lz-este', label: 'Costa este' },
     ],
   },
   {
@@ -86,21 +93,34 @@ export const ISLANDS: Island[] = [
       { id: 'fv-corralejo', label: 'Corralejo y Lobos' },
       { id: 'fv-north-shore', label: 'North Shore' },
       { id: 'fv-oeste', label: 'Costa oeste' },
+      { id: 'fv-este', label: 'Costa este' },
     ],
   },
   {
     id: 'la-palma',
     name: 'La Palma',
-    summary: 'Pocas olas y poca gente: Nogales, bajo los acantilados del este.',
-    zones: [{ id: 'lp-este', label: 'Este' }],
+    summary: 'Pocas olas y casi nadie en el agua: Nogales bajo los acantilados del este y las calas negras del oeste.',
+    zones: [
+      { id: 'lp-este', label: 'Este' },
+      { id: 'lp-oeste', label: 'Oeste' },
+    ],
   },
   {
     id: 'la-gomera',
     name: 'La Gomera',
-    summary: 'Olas tranquilas en Valle Gran Rey y fondos de callao en el norte.',
+    summary: 'Olas de callao en el norte salvaje y Valle Gran Rey cuando entra mar del oeste.',
     zones: [
       { id: 'lg-norte', label: 'Norte' },
       { id: 'lg-oeste', label: 'Valle Gran Rey' },
+    ],
+  },
+  {
+    id: 'el-hierro',
+    name: 'El Hierro',
+    summary: 'La isla con menos surf: la derecha de Tecorón en el sur y calas de callao en el este.',
+    zones: [
+      { id: 'eh-sur', label: 'Sur' },
+      { id: 'eh-este', label: 'Este' },
     ],
   },
 ];

@@ -13,6 +13,7 @@ export const ISLAND_COASTS: Record<IslandId, LatLng[][]> = {
   fuerteventura: GENERATED_COASTS['fuerteventura'],
   'la-palma': GENERATED_COASTS['la-palma'],
   'la-gomera': GENERATED_COASTS['la-gomera'],
+  'el-hierro': GENERATED_COASTS['el-hierro'],
 };
 
 export interface Bounds {

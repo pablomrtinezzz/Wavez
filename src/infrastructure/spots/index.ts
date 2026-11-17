@@ -6,6 +6,7 @@ import { LANZAROTE_SPOTS } from './lanzarote';
 import { FUERTEVENTURA_SPOTS } from './fuerteventura';
 import { LA_PALMA_SPOTS } from './laPalma';
 import { LA_GOMERA_SPOTS } from './laGomera';
+import { EL_HIERRO_SPOTS } from './elHierro';
 
 /** Every spot in the archipelago. Ids and slugs are unique across islands. */
 export const ALL_SPOTS: Spot[] = [
@@ -15,6 +16,7 @@ export const ALL_SPOTS: Spot[] = [
   ...FUERTEVENTURA_SPOTS,
   ...LA_PALMA_SPOTS,
   ...LA_GOMERA_SPOTS,
+  ...EL_HIERRO_SPOTS,
 ];
 
 export function spotsOfIsland(island: IslandId): Spot[] {

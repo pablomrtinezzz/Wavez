@@ -115,13 +115,13 @@ export const LANZAROTE_SPOTS = defineSpots('lanzarote', [
   },
 
   // ==========================================
-  // NORTE Y ESTE
+  // ÓRZOLA
   // ==========================================
   {
     id: 'la-canteria',
     slug: 'la-canteria',
     name: 'La Cantería (Órzola)',
-    zone: 'lz-norte-este',
+    zone: 'lz-norte',
     location: { lat: 29.2155, lng: -13.466, municipality: 'Haría' },
     marinePoint: offshore(29.2155, -13.466, 0),
     breakType: 'beach-break',
@@ -141,7 +141,7 @@ export const LANZAROTE_SPOTS = defineSpots('lanzarote', [
     id: 'jameos-del-agua',
     slug: 'jameos-del-agua',
     name: 'Jameos del Agua',
-    zone: 'lz-norte-este',
+    zone: 'lz-este',
     location: { lat: 29.1575, lng: -13.432, municipality: 'Haría' },
     marinePoint: offshore(29.1575, -13.432, 60),
     breakType: 'point-break',
@@ -155,6 +155,126 @@ export const LANZAROTE_SPOTS = defineSpots('lanzarote', [
       favorableWindDegrees: { min: 200, max: 290 }, // SSW to WNW
       maxFavorableWindKmh: 25,
       preferredTide: 'mid',
+    },
+  },
+  {
+    id: 'ghost-town',
+    slug: 'ghost-town',
+    name: 'Ghost Town (Famara)',
+    zone: 'lz-famara',
+    location: { lat: 29.115, lng: -13.548, municipality: 'Teguise' },
+    marinePoint: offshore(29.115, -13.548, 330),
+    breakType: 'reef-break',
+    skillLevel: 'advanced',
+    description: 'Reef frente a la urbanización abandonada de Famara, con derechas e izquierdas rápidas cuando la playa ya está demasiado grande.',
+    idealConditions: {
+      minSwellHeightM: 1.2,
+      maxSwellHeightM: 3.5,
+      minPeriodSec: 11,
+      optimalSwellDegrees: { min: 280, max: 20 }, // W to NNE
+      favorableWindDegrees: { min: 100, max: 190 }, // ESE to S
+      maxFavorableWindKmh: 20,
+      preferredTide: 'mid',
+    },
+  },
+  {
+    id: 'caleta-de-famara',
+    slug: 'caleta-de-famara',
+    name: 'La Caleta de Famara',
+    zone: 'lz-famara',
+    location: { lat: 29.1188, lng: -13.566, municipality: 'Teguise' },
+    marinePoint: offshore(29.1188, -13.566, 330),
+    breakType: 'reef-break',
+    skillLevel: 'advanced',
+    description: 'Picos sobre roca junto al pueblo de Caleta de Famara, a izquierdas y derechas. Más protegidos del viento que la playa.',
+    idealConditions: {
+      minSwellHeightM: 1.0,
+      maxSwellHeightM: 3.0,
+      minPeriodSec: 10,
+      optimalSwellDegrees: { min: 280, max: 20 },
+      favorableWindDegrees: { min: 90, max: 190 },
+      maxFavorableWindKmh: 22,
+      preferredTide: 'mid',
+    },
+  },
+  {
+    id: 'morro-negro',
+    slug: 'morro-negro',
+    name: 'Morro Negro',
+    zone: 'lz-la-santa',
+    location: { lat: 29.1204, lng: -13.6614, municipality: 'Tinajo' },
+    marinePoint: offshore(29.1204, -13.6614, 330),
+    breakType: 'point-break',
+    skillLevel: 'intermediate',
+    description: 'Derecha de point junto al islote de La Santa: la opción más amable de la zona cuando La Izquierda y El Quemao son demasiado.',
+    idealConditions: {
+      minSwellHeightM: 1.0,
+      maxSwellHeightM: 3.0,
+      minPeriodSec: 10,
+      optimalSwellDegrees: { min: 300, max: 30 }, // WNW to NNE
+      favorableWindDegrees: { min: 90, max: 180 }, // E to S
+      maxFavorableWindKmh: 20,
+      preferredTide: 'mid',
+    },
+  },
+  {
+    id: 'punta-mujeres',
+    slug: 'punta-mujeres',
+    name: 'Punta Mujeres',
+    zone: 'lz-este',
+    location: { lat: 29.1448, lng: -13.4476, municipality: 'Haría' },
+    marinePoint: offshore(29.1448, -13.4476, 60),
+    breakType: 'reef-break',
+    skillLevel: 'intermediate',
+    description: 'Reef de la costa este, junto a las piscinas del pueblo. Se despierta con mar grande del norte que rola hacia la isla.',
+    idealConditions: {
+      minSwellHeightM: 1.0,
+      maxSwellHeightM: 3.0,
+      minPeriodSec: 10,
+      optimalSwellDegrees: { min: 340, max: 60 }, // NNW to ENE
+      favorableWindDegrees: { min: 200, max: 290 }, // SSW to WNW
+      maxFavorableWindKmh: 25,
+      preferredTide: 'mid',
+    },
+  },
+  {
+    id: 'arrieta',
+    slug: 'arrieta',
+    name: 'Arrieta (La Garita)',
+    zone: 'lz-este',
+    location: { lat: 29.1262, lng: -13.465, municipality: 'Haría' },
+    marinePoint: offshore(29.1262, -13.465, 80),
+    breakType: 'beach-break',
+    skillLevel: 'all-levels',
+    description: 'Playa de arena del pueblo de Arrieta con olas suaves de mar del norte rolado o de alisio: de las pocas opciones para empezar en el este.',
+    idealConditions: {
+      minSwellHeightM: 0.5,
+      maxSwellHeightM: 2.0,
+      minPeriodSec: 8,
+      optimalSwellDegrees: { min: 0, max: 100 }, // N to E
+      favorableWindDegrees: { min: 200, max: 290 },
+      maxFavorableWindKmh: 22,
+      preferredTide: 'all',
+    },
+  },
+  {
+    id: 'las-cucharas',
+    slug: 'las-cucharas',
+    name: 'Las Cucharas (Costa Teguise)',
+    zone: 'lz-este',
+    location: { lat: 28.9986, lng: -13.4884, municipality: 'Teguise' },
+    marinePoint: offshore(28.9986, -13.4884, 110),
+    breakType: 'beach-break',
+    skillLevel: 'all-levels',
+    description: 'Playa de Costa Teguise con izquierdas de mar de alisio; más conocida por el windsurf que por el surf, pero rompe todo el año.',
+    idealConditions: {
+      minSwellHeightM: 0.6,
+      maxSwellHeightM: 2.0,
+      minPeriodSec: 7,
+      optimalSwellDegrees: { min: 20, max: 120 }, // NNE to ESE
+      favorableWindDegrees: { min: 220, max: 320 }, // SW to NW
+      maxFavorableWindKmh: 20,
+      preferredTide: 'all',
     },
   },
 ]);

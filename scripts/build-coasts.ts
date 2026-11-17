@@ -3,11 +3,14 @@
  * coastlines (© OpenStreetMap contributors, ODbL). Run by hand when an island
  * is added; the output is committed:
  *
- *   npx tsx scripts/build-coasts.ts
+ *   npx tsx scripts/build-coasts.ts [island-id ...]
+ *
+ * With island ids, only those are downloaded and the rest of the file is kept.
  *
  * Gran Canaria keeps its hand-cleaned outline (harbour docks removed).
  */
 import { writeFileSync } from 'node:fs';
+import { GENERATED_COASTS } from '../src/presentation/components/site/canaryCoasts';
 
 type Pt = [number, number]; // [lat, lng]
 
@@ -18,6 +21,7 @@ const ISLANDS: Record<string, [number, number, number, number]> = {
   fuerteventura: [28.03, -14.53, 28.78, -13.8],
   'la-palma': [28.44, -18.02, 28.87, -17.71],
   'la-gomera': [28.0, -17.36, 28.22, -17.08],
+  'el-hierro': [27.62, -18.17, 27.86, -17.87],
 };
 
 const OVERPASS_ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
@@ -109,8 +113,10 @@ function distanceToSegment([py, px]: Pt, [ay, ax]: Pt, [by, bx]: Pt): number {
 }
 
 async function main() {
-  const out: Record<string, Pt[][]> = {};
+  const only = process.argv.slice(2);
+  const out: Record<string, Pt[][]> = only.length ? { ...GENERATED_COASTS } : {};
   for (const [id, bbox] of Object.entries(ISLANDS)) {
+    if (only.length && !only.includes(id)) continue;
     const rings = stitch(await fetchCoastWays(bbox))
       .filter((r) => area(r) >= MIN_AREA)
       .sort((a, b) => area(b) - area(a))
