@@ -8,6 +8,7 @@ const mockPlayaDelHombre: Spot = {
   id: 'playa-del-hombre',
   slug: 'playa-del-hombre',
   name: 'Playa del Hombre',
+  island: 'gran-canaria',
   zone: 'telde-este',
   location: { lat: 28.006, lng: -15.378, municipality: 'Telde' },
   breakType: 'beach-break',

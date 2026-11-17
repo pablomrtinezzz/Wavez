@@ -1,4 +1,6 @@
-export type ZoneId = 'las-palmas' | 'costa-norte' | 'telde-este' | 'sur-sureste';
+import { IslandId, ZoneId } from './Island';
+
+export type { IslandId, ZoneId };
 
 export type BreakType = 'beach-break' | 'reef-break' | 'point-break' | 'slab';
 
@@ -36,6 +38,7 @@ export interface Spot {
   id: string;
   slug: string;
   name: string;
+  island: IslandId;
   zone: ZoneId;
   location: {
     lat: number;

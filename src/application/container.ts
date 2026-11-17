@@ -1,4 +1,5 @@
-import { GRAN_CANARIA_SPOTS, StaticSpotRepository } from '@/infrastructure/repositories/StaticSpotRepository';
+import { StaticSpotRepository } from '@/infrastructure/repositories/StaticSpotRepository';
+import { ALL_SPOTS } from '@/infrastructure/spots';
 import { OpenMeteoMarineAdapter } from '@/infrastructure/adapters/OpenMeteoMarineAdapter';
 import { SnapshotMarineAdapter } from '@/infrastructure/adapters/SnapshotMarineAdapter';
 import { createClient } from '@supabase/supabase-js';
@@ -14,14 +15,14 @@ import { GetSpotClimatologyUseCase } from './usecases/GetSpotClimatologyUseCase'
 
 // Singletons for infrastructure
 const spotRepo = new StaticSpotRepository();
-// Marine data published every 15 min by the "Refresh marine data" GitHub Action,
+// Marine data checked every 15 min by the "Refresh marine data" GitHub Action,
 // with live Open-Meteo as fallback
 const MARINE_SNAPSHOT_URL =
   process.env.MARINE_SNAPSHOT_URL ??
   'https://raw.githubusercontent.com/pablomrtinezzz/Wavez/data/marine-snapshot.json';
 const marineService = new SnapshotMarineAdapter(
   MARINE_SNAPSHOT_URL,
-  new OpenMeteoMarineAdapter((spotId) => GRAN_CANARIA_SPOTS.find((s) => s.id === spotId)?.marinePoint)
+  new OpenMeteoMarineAdapter((spotId) => ALL_SPOTS.find((s) => s.id === spotId)?.marinePoint)
 );
 // Community photos: Supabase when configured, process memory otherwise (dev/tests only)
 // Accept the project URL with or without the "/rest/v1/" suffix the dashboard sometimes shows

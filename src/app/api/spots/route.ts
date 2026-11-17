@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSpotsWithForecastUseCase } from '@/application/container';
-import { ZoneId } from '@/domain/models/Spot';
+import { ZoneId, isZoneId } from '@/domain/models/Island';
 import { isValidDateStr, toLocalHourKey } from '@/domain/models/LocalTime';
-
-const ZONES: ZoneId[] = ['las-palmas', 'costa-norte', 'telde-este', 'sur-sureste'];
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +10,7 @@ export async function GET(request: NextRequest) {
     const date = params.get('date'); // 'YYYY-MM-DD' (Gran Canaria local date)
     const hourParam = params.get('hour'); // '0' to '23' (Gran Canaria local hour)
 
-    const zone = ZONES.includes(zoneParam as ZoneId) ? (zoneParam as ZoneId) : undefined;
+    const zone: ZoneId | undefined = isZoneId(zoneParam) ? zoneParam : undefined;
     if (zoneParam && !zone) {
       return NextResponse.json({ success: false, error: 'Zona no válida' }, { status: 400 });
     }

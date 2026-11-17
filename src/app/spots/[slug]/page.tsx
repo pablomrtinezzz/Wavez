@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-import { GRAN_CANARIA_SPOTS } from '@/infrastructure/repositories/StaticSpotRepository';
+import { ALL_SPOTS } from '@/infrastructure/spots';
 import { StaticClimatologyRepository } from '@/infrastructure/repositories/StaticClimatologyRepository';
 import { TIDE_PHASE_LABEL } from '@/domain/models/Tide';
 import { BrandMark, SiteFooter } from '@/presentation/components/site/SiteChrome';
@@ -20,12 +20,12 @@ const climatology = new StaticClimatologyRepository();
 const CROWD_LABEL = { low: 'Poca gente', medium: 'Gente moderada', high: 'Mucha gente', extreme: 'Masificado' } as const;
 
 export function generateStaticParams() {
-  return GRAN_CANARIA_SPOTS.map((s) => ({ slug: s.slug }));
+  return ALL_SPOTS.map((s) => ({ slug: s.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const spot = GRAN_CANARIA_SPOTS.find((s) => s.slug === slug);
+  const spot = ALL_SPOTS.find((s) => s.slug === slug);
   if (!spot) return {};
   const shortName = spot.name.split(' (')[0];
   const title = `Surf en ${shortName}: previsión, olas y webcam`;
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function SpotPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const spot = GRAN_CANARIA_SPOTS.find((s) => s.slug === slug);
+  const spot = ALL_SPOTS.find((s) => s.slug === slug);
   if (!spot) notFound();
   const climate = await climatology.getClimatologyBySpotId(spot.id);
   const ideal = spot.idealConditions;

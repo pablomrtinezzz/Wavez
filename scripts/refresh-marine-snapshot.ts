@@ -11,7 +11,7 @@
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { GRAN_CANARIA_SPOTS as ALL_SPOTS } from '@/infrastructure/repositories/StaticSpotRepository';
+import { ALL_SPOTS } from '@/infrastructure/spots';
 import { fetchOpenMeteo, parseOpenMeteo } from '@/infrastructure/adapters/openMeteo';
 import { MarineSnapshot, decideRefresh, slimRaw } from '@/infrastructure/adapters/marineSnapshot';
 

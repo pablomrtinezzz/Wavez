@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { GRAN_CANARIA_SPOTS } from '@/infrastructure/repositories/StaticSpotRepository';
+import { spotsOfIsland } from '@/infrastructure/spots';
 import { BREAK_LABEL, SKILL_LABEL, ZONES } from '@/presentation/lib/format';
 
 /**
@@ -31,7 +31,7 @@ export function SpotGuide() {
           <div key={zone.id}>
             <h3 className="border-b border-line pb-2 text-lg font-medium text-ink">{zone.label}</h3>
             <ul className="mt-3 divide-y divide-line">
-              {GRAN_CANARIA_SPOTS.filter((s) => s.zone === zone.id).map((spot) => (
+              {spotsOfIsland('gran-canaria').filter((s) => s.zone === zone.id).map((spot) => (
                 <li key={spot.id} className="py-3">
                   <Link href={`/spots/${spot.slug}`} className="group block">
                     <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">{spot.name}</span>
