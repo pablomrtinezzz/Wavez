@@ -15,6 +15,7 @@ import {
   formatTide,
 } from '@/presentation/lib/format';
 import { cn } from '@/presentation/lib/utils';
+import { webcamsOfSpot } from '@/infrastructure/webcams';
 
 type SortKey = 'score' | 'height' | 'energy' | 'name';
 
@@ -211,7 +212,7 @@ function SpotRow({
             <span className="truncate text-base font-medium text-ink group-hover:underline group-hover:underline-offset-4">
               {spot.name}
             </span>
-            {spot.webcam && <Video className="size-3.5 shrink-0 text-ink-3" aria-label="Con webcam" />}
+            {webcamsOfSpot(spot.id).length > 0 && <Video className="size-3.5 shrink-0 text-ink-3" aria-label="Con webcam" />}
             {summary.recentReportCount > 0 && <Camera className="size-3.5 shrink-0 text-accent" aria-label="Con fotos recientes" />}
           </span>
           <span className="mt-0.5 block truncate text-xs text-ink-3">

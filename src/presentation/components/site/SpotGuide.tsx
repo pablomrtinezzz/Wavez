@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { IslandId, getIsland, ISLANDS } from '@/domain/models/Island';
 import { spotsOfIsland } from '@/infrastructure/spots';
+import { webcamsOfSpot } from '@/infrastructure/webcams';
 import { BREAK_LABEL, SKILL_LABEL } from '@/presentation/lib/format';
 import { SectionIndex } from './sections';
 
@@ -40,7 +41,7 @@ export function SpotGuide({ island, index }: { island: IslandId; index: string }
                       <span className="font-medium text-ink group-hover:underline group-hover:underline-offset-4">{spot.name}</span>
                       <span className="ml-2 text-xs text-ink-3">
                         {BREAK_LABEL[spot.breakType]} · {SKILL_LABEL[spot.skillLevel]}
-                        {spot.webcam ? ' · webcam' : ''}
+                        {webcamsOfSpot(spot.id).length ? ' · webcam' : ''}
                       </span>
                       <span className="mt-1 block text-sm leading-relaxed text-ink-2">{spot.description}</span>
                     </Link>

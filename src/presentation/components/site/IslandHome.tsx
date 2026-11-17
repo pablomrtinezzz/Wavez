@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import { Spot } from '@/domain/models/Spot';
 import { IslandId, getIsland } from '@/domain/models/Island';
+import { webcamsOfIsland } from '@/infrastructure/webcams';
 import { ISLAND_NAV, SiteFooter, SiteHeader } from '@/presentation/components/site/SiteChrome';
 import { Hero } from '@/presentation/components/site/Hero';
 import { SpotList } from '@/presentation/components/site/SpotList';
@@ -12,30 +13,40 @@ import { SpotDrawer } from '@/presentation/components/spot/SpotDrawer';
 import { ReportDialog } from '@/presentation/components/spot/ReportDialog';
 import { HeroSkeleton, PageSection } from './sections';
 import { ErrorBanner, WhenSection } from './WhenSection';
+import { IslandIntro } from './IslandIntro';
+import { CoastCards } from './CoastCards';
 import { useForecast, useSpotParam } from './useForecast';
 
 /**
- * One island: best wave now, every spot ranked, the island map and its
- * webcams. `guide` is static, server-rendered content (the island's spot
- * guide) so the page is meaningful to search engines before data loads.
+ * One island: where it sits in the archipelago, the best wave now, which
+ * coast is working, every spot ranked, the map and its webcams. `guide` is
+ * static, server-rendered content (the island's spot guide) for search
+ * engines.
  */
 export function IslandHome({ island, spotIds, guide }: { island: IslandId; spotIds: string[]; guide?: React.ReactNode }) {
   const info = getIsland(island);
-  const forecast = useForecast(island);
-  const { now, selection, summaries, error } = forecast;
+  // Every island is loaded: the archipelago picker shows how the others are doing
+  const forecast = useForecast();
+  const { now, selection, error } = forecast;
+  const all = forecast.summaries;
+  const summaries = useMemo(() => all.filter((s) => s.spot.island === island), [all, island]);
   const known = useMemo(() => new Set(spotIds), [spotIds]);
   const drawer = useSpotParam(known);
   const [reportingSpot, setReportingSpot] = useState<Spot | null>(null);
   const [reportsVersion, setReportsVersion] = useState(0);
 
-  const webcamCount = summaries.filter((s) => s.spot.webcam?.iframeUrl).length;
+  const webcams = webcamsOfIsland(island);
   const zones = info.zones;
+  const hasZones = zones.length > 1;
+  const nav = ISLAND_NAV.filter((n) => (n.id !== 'webcams' || webcams.length > 0) && (n.id !== 'costas' || hasZones));
+  let n = 0;
+  const index = () => String(++n).padStart(2, '0');
 
   return (
     <>
       <SiteHeader
         island={island}
-        nav={webcamCount > 0 ? ISLAND_NAV : ISLAND_NAV.filter((n) => n.id !== 'webcams')}
+        nav={nav}
         dataUpdatedAt={forecast.dataUpdatedAt}
         isRefreshing={forecast.isRefreshing}
         isLive={selection?.isLive ?? true}
@@ -43,19 +54,15 @@ export function IslandHome({ island, spotIds, guide }: { island: IslandId; spotI
       />
 
       <main className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="pt-8 text-xs uppercase tracking-[0.14em] text-ocean sm:pt-14">
-          <h1 className="inline">Parte de olas de {info.name}</h1>
-          <span className="text-ink-3">
-            {' '}
-            · {spotIds.length} spots · oleaje, viento, marea{webcamCount > 0 ? ' y webcams' : ''}
-          </span>
-        </div>
+        <IslandIntro island={island} summaries={all} spotCount={spotIds.length} webcamCount={webcams.length} />
 
-        <WhenSection now={now} selection={selection} modeLabel={forecast.modeLabel} onChange={forecast.setSelection} />
+        <div className="mt-12">
+          <WhenSection now={now} selection={selection} modeLabel={forecast.modeLabel} onChange={forecast.setSelection} />
+        </div>
 
         {error && <ErrorBanner message={error} onRetry={forecast.reload} />}
 
-        <div className="mt-12 sm:mt-24">
+        <div className="mt-12 sm:mt-20">
           {summaries.length && now && selection ? (
             <Hero summaries={summaries} selection={selection} today={now.dateStr} currentHour={now.hour} onSelectSpot={drawer.open} />
           ) : (
@@ -71,7 +78,13 @@ export function IslandHome({ island, spotIds, guide }: { island: IslandId; spotI
 
         {summaries.length > 0 && (
           <>
-            <PageSection id="spots" index="01" title="Todos los spots" intro="Ordenados por la nota del momento elegido. Toca un spot para ver su informe completo.">
+            {hasZones && (
+              <PageSection id="costas" index={index()} title="Por costas" intro="Cada costa recibe el mar y el viento de una forma distinta. Así está cada una en el momento elegido.">
+                <CoastCards island={island} summaries={summaries} onSelectSpot={drawer.open} />
+              </PageSection>
+            )}
+
+            <PageSection id="spots" index={index()} title="Todos los spots" intro="Ordenados por la nota del momento elegido. Toca un spot para ver su informe completo.">
               <SpotList
                 summaries={summaries}
                 onSelectSpot={drawer.open}
@@ -82,7 +95,7 @@ export function IslandHome({ island, spotIds, guide }: { island: IslandId; spotI
               />
             </PageSection>
 
-            <PageSection id="mapa" index="02" title="La isla" intro="Cada costa recibe el mar de una forma distinta. Así está cada rincón ahora.">
+            <PageSection id="mapa" index={index()} title="La isla" intro="Cada punto es un spot con el color de su nota. Elige una costa o acércate con el zoom.">
               <IslandMap
                 summaries={summaries}
                 onSelectSpot={drawer.open}
@@ -94,9 +107,14 @@ export function IslandHome({ island, spotIds, guide }: { island: IslandId; spotI
               />
             </PageSection>
 
-            {webcamCount > 0 && (
-              <PageSection id="webcams" index="03" title="Webcams" intro={`${webcamCount} ${webcamCount === 1 ? 'cámara' : 'cámaras'} en directo. Ábrelas para comprobar el mar antes de salir.`}>
-                <WebcamGallery summaries={summaries} onSelectSpot={drawer.open} />
+            {webcams.length > 0 && (
+              <PageSection
+                id="webcams"
+                index={index()}
+                title="Webcams"
+                intro={`${webcams.length} ${webcams.length === 1 ? 'cámara' : 'cámaras'} para mirar el mar antes de salir. Las de In2theBeach se ven aquí; las demás se abren en la web de su autor.`}
+              >
+                <WebcamGallery webcams={webcams} summaries={summaries} onSelectSpot={drawer.open} />
               </PageSection>
             )}
           </>

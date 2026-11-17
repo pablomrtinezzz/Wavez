@@ -37,7 +37,6 @@ export class GetSpotDetailUseCase {
       latestReportAt: reports[0]?.capturedAt,
       hourlyForecast: hourly,
       reports,
-      webcam: spot.webcam,
       daylight: daylight ?? undefined,
     };
   }

@@ -2,14 +2,17 @@
 
 import React, { useMemo, useState } from 'react';
 import { Spot } from '@/domain/models/Spot';
-import { ISLANDS, ISLAND_IDS } from '@/domain/models/Island';
+import { ISLANDS } from '@/domain/models/Island';
+import { WEBCAMS } from '@/infrastructure/webcams';
 import { CANARY_NAV, SiteFooter, SiteHeader } from '@/presentation/components/site/SiteChrome';
 import { Hero } from '@/presentation/components/site/Hero';
 import { SpotList } from '@/presentation/components/site/SpotList';
-import { IslandMap } from '@/presentation/components/site/IslandMap';
 import { SpotDrawer } from '@/presentation/components/spot/SpotDrawer';
 import { ReportDialog } from '@/presentation/components/spot/ReportDialog';
 import { IslandCards } from './IslandCards';
+import { ArchipelagoPicker } from './ArchipelagoPicker';
+import { LevelPicks } from './LevelPicks';
+import { CanaryWebcams } from './CanaryWebcams';
 import { HeroSkeleton, PageSection } from './sections';
 import { ErrorBanner, WhenSection } from './WhenSection';
 import { useForecast, useSpotParam } from './useForecast';
@@ -17,8 +20,8 @@ import { useForecast, useSpotParam } from './useForecast';
 const ISLAND_GROUPS = ISLANDS.map((i) => ({ id: i.id, label: i.name }));
 
 /**
- * The whole archipelago: the best wave in the Canaries, how each island is
- * doing, the map of every spot and a ranking across islands.
+ * The whole archipelago: pick an island on the map, the best wave in the
+ * Canaries, where to go for each level, every webcam and a ranking.
  */
 export function CanaryHome({ spotIds, guide }: { spotIds: string[]; guide?: React.ReactNode }) {
   const forecast = useForecast();
@@ -40,28 +43,28 @@ export function CanaryHome({ spotIds, guide }: { spotIds: string[]; guide?: Reac
       />
 
       <main className="mx-auto max-w-6xl px-5 sm:px-8">
-        <div className="pt-8 text-xs uppercase tracking-[0.14em] text-ocean sm:pt-14">
-          <h1 className="inline">Parte de olas de Canarias</h1>
-          <span className="text-ink-3">
-            {' '}
-            · {spotIds.length} spots en {ISLANDS.length} islas · oleaje, viento, marea y webcams
-          </span>
-        </div>
+        <section className="pt-8 sm:pt-14" aria-labelledby="canarias-title">
+          <p className="text-xs uppercase tracking-[0.14em] text-ocean">
+            Parte de olas de Canarias <span className="text-ink-3">· {spotIds.length} spots · {ISLANDS.length} islas · {WEBCAMS.length} webcams</span>
+          </p>
+          <h1 id="canarias-title" className="display mt-3 max-w-3xl text-[clamp(2.75rem,8vw,5.5rem)] leading-[0.98] text-ink">
+            ¿Dónde hay olas hoy en Canarias?
+          </h1>
+          <p className="mt-4 max-w-xl text-ink-2">
+            Cada isla toma el color de su mejor ola en este momento. Toca una para ver sus spots, sus costas y sus webcams.
+          </p>
+          <ArchipelagoPicker summaries={summaries} className="mt-6 sm:mt-2" />
+        </section>
 
-        <WhenSection now={now} selection={selection} modeLabel={forecast.modeLabel} onChange={forecast.setSelection} />
+        <div className="mt-8 sm:mt-10">
+          <WhenSection now={now} selection={selection} modeLabel={forecast.modeLabel} onChange={forecast.setSelection} />
+        </div>
 
         {error && <ErrorBanner message={error} onRetry={forecast.reload} />}
 
-        <div className="mt-12 sm:mt-24">
+        <div className="mt-12 sm:mt-20">
           {summaries.length && now && selection ? (
-            <Hero
-              summaries={summaries}
-              selection={selection}
-              today={now.dateStr}
-              currentHour={now.hour}
-              onSelectSpot={drawer.open}
-              scope="canarias"
-            />
+            <Hero summaries={summaries} selection={selection} today={now.dateStr} currentHour={now.hour} onSelectSpot={drawer.open} scope="canarias" />
           ) : (
             !error && <HeroSkeleton />
           )}
@@ -75,23 +78,19 @@ export function CanaryHome({ spotIds, guide }: { spotIds: string[]; guide?: Reac
 
         {summaries.length > 0 && (
           <>
-            <PageSection id="islas" index="01" title="Las islas" intro="Cada isla tiene su temporada y su costa buena. Entra en una para ver todos sus spots, el mapa y las webcams.">
+            <PageSection id="para-ti" index="01" title="Hoy para ti" intro="El mejor sitio según tu nivel, entre los spots pensados para él. Nada de mandar a quien empieza a un reef.">
+              <LevelPicks summaries={summaries} onSelectSpot={drawer.open} showIsland />
+            </PageSection>
+
+            <PageSection id="webcams" index="02" title="Mira el mar" intro="Todas las webcams de las islas en un sitio. Comprueba el mar antes de coger el coche.">
+              <CanaryWebcams summaries={summaries} onSelectSpot={drawer.open} />
+            </PageSection>
+
+            <PageSection id="islas" index="03" title="Las islas" intro="Cada isla tiene su temporada y su costa buena. Entra en una para ver todos sus spots, el mapa y las webcams.">
               <IslandCards summaries={summaries} />
             </PageSection>
 
-            <PageSection id="mapa" index="02" title="El archipiélago" intro="Todos los spots en un mapa. Elige una isla para acercarte o toca un punto para ver su informe.">
-              <IslandMap
-                summaries={summaries}
-                onSelectSpot={drawer.open}
-                islands={ISLAND_IDS}
-                groups={ISLAND_GROUPS}
-                groupBy="island"
-                allLabel="Todas las islas"
-                ariaLabel="Mapa de spots de Canarias. Usa los botones de isla o de zoom para acercarte."
-              />
-            </PageSection>
-
-            <PageSection id="ranking" index="03" title="Ranking" intro="Todos los spots de Canarias ordenados por la nota del momento elegido.">
+            <PageSection id="ranking" index="04" title="Ranking" intro="Todos los spots de Canarias ordenados por la nota del momento elegido.">
               <SpotList
                 summaries={summaries}
                 onSelectSpot={drawer.open}

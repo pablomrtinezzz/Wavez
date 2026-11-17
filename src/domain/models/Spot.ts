@@ -8,15 +8,6 @@ export type SkillLevel = 'all-levels' | 'intermediate' | 'advanced' | 'expert';
 
 export type TidePreference = 'low' | 'mid' | 'high' | 'all';
 
-export interface WebcamConfig {
-  provider: 'in2thebeach' | 'generic-iframe' | 'image-stream';
-  iframeUrl?: string;
-  externalUrl?: string;
-  attributionTitle?: string;
-  attributionUrl?: string;
-  aspectRatio?: string;
-}
-
 export interface IdealConditions {
   minSwellHeightM: number;
   maxSwellHeightM: number;
@@ -49,7 +40,6 @@ export interface Spot {
   skillLevel: SkillLevel;
   description: string;
   idealConditions: IdealConditions;
-  webcam?: WebcamConfig;
   /**
    * Where to read the ocean model, when the nearest model cell to the beach
    * sits on another side of the island. Must be open sea facing the spot's

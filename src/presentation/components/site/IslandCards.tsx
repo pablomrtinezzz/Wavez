@@ -2,7 +2,8 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Video } from 'lucide-react';
+import { webcamsOfIsland } from '@/infrastructure/webcams';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { ISLANDS, IslandId } from '@/domain/models/Island';
 import { QUALITY } from '@/presentation/lib/format';
@@ -43,7 +44,7 @@ export function IslandSilhouette({ island, className }: { island: IslandId; clas
 /** One card per island: its best spot right now and how many are worth a session. */
 export function IslandCards({ summaries }: { summaries: SpotSummaryDTO[] }) {
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {ISLANDS.map((island) => {
         const spots = summaries.filter((s) => s.spot.island === island.id);
         const best = [...spots].sort((a, b) => b.score.overallScore - a.score.overallScore)[0];
@@ -56,13 +57,23 @@ export function IslandCards({ summaries }: { summaries: SpotSummaryDTO[] }) {
             >
               <IslandSilhouette
                 island={island.id}
-                className="pointer-events-none absolute -right-6 -top-6 size-36 text-sea transition-colors group-hover:text-accent-soft"
+                className="pointer-events-none absolute -right-6 -top-6 size-32 text-sea transition-colors group-hover:text-accent-soft"
               />
               <div className="relative flex items-start justify-between gap-3">
-                <h3 className="display text-4xl text-ink">{island.name}</h3>
+                <h3 className="display text-[2.4rem] leading-none text-ink">{island.name}</h3>
                 <ArrowUpRight className="mt-1 size-5 shrink-0 text-ink-3 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-ink" aria-hidden />
               </div>
-              <p className="relative mt-2 max-w-[85%] text-sm leading-relaxed text-ink-2">{island.summary}</p>
+              <p className="relative mt-3 max-w-[90%] text-sm leading-relaxed text-ink-2">{island.summary}</p>
+              <p className="relative mt-3 inline-flex items-center gap-1.5 text-xs text-ink-3">
+                {spots.length} spots
+                {webcamsOfIsland(island.id).length > 0 && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <Video className="size-3.5" aria-hidden /> {webcamsOfIsland(island.id).length}{' '}
+                    {webcamsOfIsland(island.id).length === 1 ? 'webcam' : 'webcams'}
+                  </>
+                )}
+              </p>
 
               <div className="relative mt-auto pt-6">
                 {best ? (
@@ -85,6 +96,17 @@ export function IslandCards({ summaries }: { summaries: SpotSummaryDTO[] }) {
           </li>
         );
       })}
+      <li>
+        <a
+          href="#ranking"
+          className="group flex h-full min-h-48 flex-col justify-between rounded-3xl bg-[linear-gradient(135deg,var(--color-ocean-deep),var(--color-ocean))] p-5 text-sand transition hover:-translate-y-0.5 sm:p-6"
+        >
+          <span className="display text-[2.4rem] leading-none">¿No sabes a cuál ir?</span>
+          <span className="mt-6 inline-flex items-center gap-2 text-sm text-sand/80 group-hover:text-sand">
+            Todos los spots de Canarias por nota <ArrowDown className="size-4 transition group-hover:translate-y-0.5" aria-hidden />
+          </span>
+        </a>
+      </li>
     </ul>
   );
 }

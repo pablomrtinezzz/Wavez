@@ -22,7 +22,7 @@ export default function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <CanaryHome spotIds={ALL_SPOTS.map((s) => s.id)} guide={<CanaryGuide index="04" />} />
+      <CanaryHome spotIds={ALL_SPOTS.map((s) => s.id)} guide={<CanaryGuide index="05" />} />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSpotClimatologyUseCase } from '@/application/container';
+import { ALL_SPOTS } from '@/infrastructure/spots';
 
 export async function GET(
   request: NextRequest,
@@ -9,6 +10,10 @@ export async function GET(
     const { id } = await params;
     const climatology = await getSpotClimatologyUseCase.execute(id);
 
+    // Known spot without a season profile yet: not an error, there is just nothing to show
+    if (!climatology && ALL_SPOTS.some((s) => s.id === id)) {
+      return NextResponse.json({ success: true, data: null });
+    }
     if (!climatology) {
       return NextResponse.json(
         { success: false, error: 'Datos climatológicos no encontrados para este spot' },

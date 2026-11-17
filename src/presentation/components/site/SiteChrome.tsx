@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Check, ChevronDown, Coffee, ListOrdered, Map as MapIcon, RotateCw, Video, Waves } from 'lucide-react';
+import { Check, ChevronDown, Coffee, Compass, ListOrdered, Map as MapIcon, RotateCw, Sparkles, Video, Waves } from 'lucide-react';
 import { ISLANDS, IslandId } from '@/domain/models/Island';
 import { ISLAND_NAME } from '@/presentation/lib/format';
 import { cn } from '@/presentation/lib/utils';
@@ -46,6 +46,7 @@ export interface NavItem {
 
 /** Sections of an island page. */
 export const ISLAND_NAV: NavItem[] = [
+  { id: 'costas', label: 'Costas', icon: Compass },
   { id: 'spots', label: 'Spots', icon: Waves },
   { id: 'mapa', label: 'Mapa', icon: MapIcon },
   { id: 'webcams', label: 'Webcams', icon: Video },
@@ -53,8 +54,9 @@ export const ISLAND_NAV: NavItem[] = [
 
 /** Sections of the archipelago page. */
 export const CANARY_NAV: NavItem[] = [
-  { id: 'islas', label: 'Islas', icon: Waves },
-  { id: 'mapa', label: 'Mapa', icon: MapIcon },
+  { id: 'para-ti', label: 'Para ti', icon: Sparkles },
+  { id: 'webcams', label: 'Webcams', icon: Video },
+  { id: 'islas', label: 'Islas', icon: MapIcon },
   { id: 'ranking', label: 'Ranking', icon: ListOrdered },
 ];
 

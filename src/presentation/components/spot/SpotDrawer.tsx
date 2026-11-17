@@ -10,6 +10,7 @@ import { isDirectionInRange } from '@/domain/models/MarineConditions';
 import { addDays } from '@/domain/models/LocalTime';
 import { DayChart } from '@/presentation/components/charts/DayChart';
 import { SeasonChart } from '@/presentation/components/charts/SeasonChart';
+import { webcamsOfSpot } from '@/infrastructure/webcams';
 import { WebcamEmbed } from './WebcamEmbed';
 import { DataDisclaimer, DirectionArrow, Figure, ScoreBadge, Spinner } from '@/presentation/components/ui/primitives';
 import {
@@ -83,7 +84,7 @@ function SpotDrawerPanel({ spotId, initialDate, today, currentHour, onClose, onR
   const base = `/api/spots/${encodeURIComponent(spotId)}`;
   const detail = useResource<SpotDetailDTO>(`${base}${refreshKey ? `?r=${refreshKey}` : ''}`);
   const timeline = useResource<SpotHourlyEvolutionDTO>(`${base}/timeline?date=${encodeURIComponent(date)}`);
-  const climate = useResource<SpotClimatology>(`${base}/climatology`);
+  const climate = useResource<SpotClimatology | null>(`${base}/climatology`);
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -98,6 +99,7 @@ function SpotDrawerPanel({ spotId, initialDate, today, currentHour, onClose, onR
   }, [onClose]);
 
   const d = detail.status === 'ready' ? detail.data : null;
+  const webcams = webcamsOfSpot(spotId);
   const minDate = addDays(today, -7);
   const maxDate = addDays(today, 6);
 
@@ -142,9 +144,13 @@ function SpotDrawerPanel({ spotId, initialDate, today, currentHour, onClose, onR
                 <NowFigures detail={d} />
               </Section>
 
-              {d.webcam?.iframeUrl && (
-                <Section title="Webcam">
-                  <WebcamEmbed webcam={d.webcam} spotName={d.spot.name} />
+              {webcams.length > 0 && (
+                <Section title={webcams.length === 1 ? 'Webcam' : `Webcams (${webcams.length})`}>
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    {webcams.map((w) => (
+                      <WebcamEmbed key={w.id} webcam={w} spotId={d.spot.id} />
+                    ))}
+                  </div>
                 </Section>
               )}
 
@@ -189,12 +195,14 @@ function SpotDrawerPanel({ spotId, initialDate, today, currentHour, onClose, onR
                 )}
               </Section>
 
-              {/* Season */}
-              <Section title="Temporada">
-                {climate.status === 'loading' && <ChartSkeleton />}
-                {climate.status === 'error' && <p className="text-sm text-ink-3">{climate.message}</p>}
-                {climate.status === 'ready' && <SeasonSection climate={climate.data} currentMonth={Number(today.slice(5, 7))} />}
-              </Section>
+              {/* Season: only spots with a season profile have one */}
+              {!(climate.status === 'ready' && !climate.data) && (
+                <Section title="Temporada">
+                  {climate.status === 'loading' && <ChartSkeleton />}
+                  {climate.status === 'error' && <p className="text-sm text-ink-3">{climate.message}</p>}
+                  {climate.status === 'ready' && climate.data && <SeasonSection climate={climate.data} currentMonth={Number(today.slice(5, 7))} />}
+                </Section>
+              )}
 
               <Section title="Ficha del spot">
                 <SpotSpecs detail={d} />

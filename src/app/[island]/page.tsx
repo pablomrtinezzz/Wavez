@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ISLAND_IDS, getIsland, isIslandId } from '@/domain/models/Island';
 import { spotsOfIsland } from '@/infrastructure/spots';
+import { webcamsOfIsland } from '@/infrastructure/webcams';
 import { IslandHome } from '@/presentation/components/site/IslandHome';
 import { SpotGuide } from '@/presentation/components/site/SpotGuide';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
@@ -41,7 +42,8 @@ export default async function IslandPage({ params }: { params: Promise<{ island:
   if (!isIslandId(island)) notFound();
   const info = getIsland(island);
   const spots = spotsOfIsland(island);
-  const hasWebcams = spots.some((s) => s.webcam?.iframeUrl);
+  // Sections are numbered in order: coasts (if several), spots, map, webcams (if any), guide
+  const guideIndex = 2 + (info.zones.length > 1 ? 1 : 0) + (webcamsOfIsland(island).length > 0 ? 1 : 0) + 1;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -58,7 +60,7 @@ export default async function IslandPage({ params }: { params: Promise<{ island:
         key={island}
         island={island}
         spotIds={spots.map((s) => s.id)}
-        guide={<SpotGuide island={island} index={hasWebcams ? '04' : '03'} />}
+        guide={<SpotGuide island={island} index={String(guideIndex).padStart(2, '0')} />}
       />
     </>
   );
