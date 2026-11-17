@@ -13,7 +13,7 @@ export interface TimeSelection {
 }
 
 interface TimeControlProps {
-  /** Today in Gran Canaria; the strip is always anchored to it. */
+  /** Today in the Canary Islands; the strip is always anchored to it. */
   today: string;
   currentHour: number;
   value: TimeSelection;

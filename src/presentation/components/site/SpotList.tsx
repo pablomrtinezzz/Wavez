@@ -3,14 +3,13 @@
 import React, { useMemo, useState } from 'react';
 import { Search, Video, Camera } from 'lucide-react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
-import { ZoneId } from '@/domain/models/Spot';
 import { isDirectionInRange } from '@/domain/models/MarineConditions';
 import { DirectionArrow, QualityDot, ScoreBadge } from '@/presentation/components/ui/primitives';
 import {
   BREAK_LABEL,
   QUALITY,
+  ISLAND_NAME,
   QUALITY_ORDER,
-  ZONES,
   ZONE_LABEL,
   describeWind,
   formatTide,
@@ -31,27 +30,41 @@ function normalize(s: string) {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
+const zoneOf = (s: SpotSummaryDTO): string => s.spot.zone;
+const islandOf = (s: SpotSummaryDTO): string => s.spot.island;
+
+export interface SpotGroup {
+  id: string;
+  label: string;
+}
+
 interface SpotListProps {
   summaries: SpotSummaryDTO[];
   onSelectSpot: (spotId: string) => void;
   isRefreshing?: boolean;
+  /** Filter chips: the island's zones, or the islands on the archipelago page. */
+  groups: SpotGroup[];
+  groupBy: 'zone' | 'island';
+  /** Label of the "everything" chip. */
+  allLabel: string;
 }
 
-export function SpotList({ summaries, onSelectSpot, isRefreshing }: SpotListProps) {
-  const [zone, setZone] = useState<ZoneId | 'all'>('all');
+export function SpotList({ summaries, onSelectSpot, isRefreshing, groups, groupBy, allLabel }: SpotListProps) {
+  const groupOf = groupBy === 'zone' ? zoneOf : islandOf;
+  const [zone, setZone] = useState<string>('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<SortKey>('score');
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: summaries.length };
-    summaries.forEach((s) => (c[s.spot.zone] = (c[s.spot.zone] ?? 0) + 1));
+    summaries.forEach((s) => (c[groupOf(s)] = (c[groupOf(s)] ?? 0) + 1));
     return c;
-  }, [summaries]);
+  }, [summaries, groupOf]);
 
   const rows = useMemo(() => {
     const q = normalize(query.trim());
     return summaries
-      .filter((s) => zone === 'all' || s.spot.zone === zone)
+      .filter((s) => zone === 'all' || groupOf(s) === zone)
       .filter(
         (s) =>
           !q ||
@@ -65,14 +78,14 @@ export function SpotList({ summaries, onSelectSpot, isRefreshing }: SpotListProp
         if (sort === 'name') return a.spot.name.localeCompare(b.spot.name, 'es');
         return b.score.overallScore - a.score.overallScore;
       });
-  }, [summaries, zone, query, sort]);
+  }, [summaries, zone, query, sort, groupOf]);
 
   return (
     <div>
       {/* Controls */}
       <div className="flex flex-col gap-4 border-b border-line pb-4 md:flex-row md:items-end md:justify-between">
         <nav aria-label="Filtrar por zona" className="fade-x -mx-1 flex gap-1 overflow-x-auto scrollbar-none">
-          {[{ id: 'all' as const, label: 'Toda la isla' }, ...ZONES].map((z) => (
+          {[{ id: 'all', label: allLabel }, ...groups].map((z) => (
             <button
               key={z.id}
               onClick={() => setZone(z.id)}
@@ -144,13 +157,13 @@ export function SpotList({ summaries, onSelectSpot, isRefreshing }: SpotListProp
 
       <ol className={cn('transition-opacity', isRefreshing && 'opacity-60')}>
         {rows.map((s, i) => (
-          <SpotRow key={s.spot.id} summary={s} rank={sort === 'score' ? i + 1 : undefined} onSelect={onSelectSpot} />
+          <SpotRow key={s.spot.id} summary={s} rank={sort === 'score' ? i + 1 : undefined} onSelect={onSelectSpot} showIsland={groupBy === 'island'} />
         ))}
       </ol>
 
       {rows.length === 0 && (
         <p className="py-16 text-center text-sm text-ink-3">
-          Ningún spot coincide con «{query}»{zone !== 'all' && ` en ${ZONE_LABEL[zone]}`}.
+          Ningún spot coincide con «{query}»{zone !== 'all' && ` en ${groups.find((g) => g.id === zone)?.label ?? ''}`}.
         </p>
       )}
     </div>
@@ -161,10 +174,12 @@ function SpotRow({
   summary,
   rank,
   onSelect,
+  showIsland,
 }: {
   summary: SpotSummaryDTO;
   rank?: number;
   onSelect: (id: string) => void;
+  showIsland?: boolean;
 }) {
   const { spot, conditions, score, energy } = summary;
   const swell = conditions.primarySwell;
@@ -200,6 +215,7 @@ function SpotRow({
             {summary.recentReportCount > 0 && <Camera className="size-3.5 shrink-0 text-accent" aria-label="Con fotos recientes" />}
           </span>
           <span className="mt-0.5 block truncate text-xs text-ink-3">
+            {showIsland ? `${ISLAND_NAME[spot.island]} · ` : ''}
             {ZONE_LABEL[spot.zone]} · {spot.location.municipality} · {BREAK_LABEL[spot.breakType]}
           </span>
         </span>

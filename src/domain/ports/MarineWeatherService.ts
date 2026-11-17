@@ -18,7 +18,7 @@ export class MarineDataUnavailableError extends Error {
 
 export interface MarineWeatherService {
   getCurrentConditions(spotId: string, lat: number, lng: number): Promise<MarineConditions>;
-  /** `targetLocalHour` is a Gran Canaria wall-clock timestamp: 'YYYY-MM-DDTHH:00'. */
+  /** `targetLocalHour` is a Canary Islands wall-clock timestamp: 'YYYY-MM-DDTHH:00'. */
   getConditionsForTimestamp(spotId: string, lat: number, lng: number, targetLocalHour: string): Promise<MarineConditions>;
   /** Next `hours` hourly entries starting at the current local hour. */
   getHourlyForecast(spotId: string, lat: number, lng: number, hours?: number): Promise<HourlyMarineForecast[]>;

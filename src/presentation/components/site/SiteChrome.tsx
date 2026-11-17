@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Coffee, Map as MapIcon, RotateCw, Video, Waves } from 'lucide-react';
+import { Check, ChevronDown, Coffee, ListOrdered, Map as MapIcon, RotateCw, Video, Waves } from 'lucide-react';
+import { ISLANDS, IslandId } from '@/domain/models/Island';
+import { ISLAND_NAME } from '@/presentation/lib/format';
 import { cn } from '@/presentation/lib/utils';
 import { DataFreshness } from '@/presentation/components/ui/DataFreshness';
 import { AUTHOR_NAME, GITHUB_URL, LINKEDIN_URL, REPO_URL, SUPPORT_URL } from '@/presentation/lib/site';
@@ -27,26 +29,129 @@ export function BrandMark({ className }: { className?: string }) {
   );
 }
 
-export function Wordmark({ className, tagline = false }: { className?: string; tagline?: boolean }) {
+export function Wordmark({ className }: { className?: string }) {
   return (
     <Link href="/" className={cn('inline-flex items-center gap-2.5 text-ink', className)} aria-label="Wavez, inicio">
       <BrandMark className="size-8 drop-shadow-[0_2px_6px_rgba(14,79,107,0.25)]" />
-      <span className="flex flex-col leading-none">
-        <span className="display text-[1.65rem]">Wavez</span>
-        {tagline && <span className="mt-0.5 text-[0.625rem] font-medium uppercase tracking-[0.18em] text-ocean/80">Gran Canaria</span>}
-      </span>
+      <span className="display text-[1.65rem] leading-none">Wavez</span>
     </Link>
   );
 }
 
-const NAV = [
+export interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string; 'aria-hidden'?: boolean }>;
+}
+
+/** Sections of an island page. */
+export const ISLAND_NAV: NavItem[] = [
   { id: 'spots', label: 'Spots', icon: Waves },
   { id: 'mapa', label: 'Mapa', icon: MapIcon },
   { id: 'webcams', label: 'Webcams', icon: Video },
 ];
 
+/** Sections of the archipelago page. */
+export const CANARY_NAV: NavItem[] = [
+  { id: 'islas', label: 'Islas', icon: Waves },
+  { id: 'mapa', label: 'Mapa', icon: MapIcon },
+  { id: 'ranking', label: 'Ranking', icon: ListOrdered },
+];
+
+/**
+ * Brand plus the island switcher: "Wavez" over the current island's name,
+ * which opens a menu with every island and the archipelago overview.
+ */
+function BrandAndIsland({ island }: { island: IslandId | null }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const menuId = React.useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+        ref.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', onPointer);
+    document.addEventListener('keydown', onKey);
+    // Move focus into the menu so keyboard users land on the options
+    ref.current?.querySelector<HTMLAnchorElement>('[role="menu"] a')?.focus();
+    return () => {
+      document.removeEventListener('pointerdown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const current = island ? ISLAND_NAME[island] : 'Canarias';
+  const items: { href: string; label: string; id: IslandId | null }[] = [
+    { href: '/', label: 'Toda Canarias', id: null },
+    ...ISLANDS.map((i) => ({ href: `/${i.id}`, label: i.name, id: i.id })),
+  ];
+
+  return (
+    <div ref={ref} className="relative flex items-center gap-2.5 justify-self-start">
+      <Link href="/" aria-label="Wavez, inicio" className="shrink-0">
+        <BrandMark className="size-8 drop-shadow-[0_2px_6px_rgba(14,79,107,0.25)]" />
+      </Link>
+      <span className="flex flex-col leading-none">
+        <Link href="/" className="display text-[1.65rem] text-ink">
+          Wavez
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          aria-controls={menuId}
+          className="-mx-1 -my-1 mt-0 inline-flex items-center gap-0.5 rounded px-1 py-1 text-[0.625rem] font-medium uppercase tracking-[0.18em] text-ocean/80 transition hover:text-ocean"
+        >
+          {current}
+          <ChevronDown className={cn('size-3 transition-transform', open && 'rotate-180')} aria-hidden />
+          <span className="sr-only">: cambiar de isla</span>
+        </button>
+      </span>
+
+      {open && (
+        <div
+          id={menuId}
+          role="menu"
+          aria-label="Islas"
+          className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-2xl border border-line bg-paper p-1.5 shadow-[0_18px_40px_-18px_rgba(14,26,36,0.35)] animate-fade-in"
+        >
+          {items.map((item) => {
+            const active = item.id === island;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                aria-current={active ? 'page' : undefined}
+                onClick={() => setOpen(false)}
+                className={cn(
+                  'flex items-center justify-between rounded-xl px-3 py-2 text-sm transition',
+                  active ? 'bg-ocean text-sand' : 'text-ink-2 hover:bg-sea hover:text-ink',
+                  item.id === null && 'mb-1 font-medium'
+                )}
+              >
+                {item.label}
+                {active && <Check className="size-4" aria-hidden />}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** Tracks whether the page has scrolled and which section sits under the header. */
-function useScrollState() {
+function useScrollState(nav: NavItem[]) {
   const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState<string | null>(null);
 
@@ -57,7 +162,7 @@ function useScrollState() {
       setScrolled(window.scrollY > 8);
       // The last section whose top has passed below the sticky header is the current one
       let current: string | null = null;
-      for (const { id } of NAV) {
+      for (const { id } of nav) {
         const el = document.getElementById(id);
         if (el && el.getBoundingClientRect().top <= 160) current = id;
       }
@@ -79,20 +184,23 @@ function useScrollState() {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
     };
-  }, []);
+  }, [nav]);
 
   return { scrolled, active };
 }
 
 interface SiteHeaderProps {
+  /** Current island, or null on the archipelago page. */
+  island: IslandId | null;
+  nav: NavItem[];
   dataUpdatedAt?: string | null;
   isRefreshing: boolean;
   isLive?: boolean;
   onRefresh: () => void;
 }
 
-export function SiteHeader({ dataUpdatedAt, isRefreshing, isLive = true, onRefresh }: SiteHeaderProps) {
-  const { scrolled, active } = useScrollState();
+export function SiteHeader({ island, nav, dataUpdatedAt, isRefreshing, isLive = true, onRefresh }: SiteHeaderProps) {
+  const { scrolled, active } = useScrollState(nav);
 
   return (
     <header
@@ -103,10 +211,10 @@ export function SiteHeader({ dataUpdatedAt, isRefreshing, isLive = true, onRefre
       style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:px-8">
-        <Wordmark tagline className="justify-self-start" />
+        <BrandAndIsland island={island} />
 
         <nav className="hidden items-center gap-1 rounded-full border border-line bg-paper/60 p-1 text-sm sm:flex" aria-label="Secciones">
-          {NAV.map((n) => (
+          {nav.map((n) => (
             <a
               key={n.id}
               href={`#${n.id}`}
@@ -145,7 +253,7 @@ export function SiteHeader({ dataUpdatedAt, isRefreshing, isLive = true, onRefre
 
       {/* Mobile section tabs: always reachable with the thumb, current section highlighted */}
       <nav className="mx-auto flex max-w-6xl gap-2 px-5 pb-2.5 sm:hidden" aria-label="Secciones">
-        {NAV.map(({ id, label, icon: Icon }) => (
+        {nav.map(({ id, label, icon: Icon }) => (
           <a
             key={id}
             href={`#${id}`}
@@ -191,7 +299,7 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 text-sm text-ink-2 sm:px-8 md:grid-cols-[1.2fr_1fr_1fr]">
         <div>
           <Wordmark />
-          <p className="mt-4 max-w-xs leading-relaxed text-ink-3">Un parte de olas independiente y gratuito para Gran Canaria.</p>
+          <p className="mt-4 max-w-xs leading-relaxed text-ink-3">Un parte de olas independiente y gratuito para Canarias.</p>
           <a
             href="/wavez-metodologia.pdf"
             target="_blank"

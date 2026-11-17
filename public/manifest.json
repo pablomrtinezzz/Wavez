@@ -1,7 +1,7 @@
 {
-  "name": "Wavez · El parte de olas de Gran Canaria",
+  "name": "Wavez · El parte de olas de Canarias",
   "short_name": "Wavez",
-  "description": "Condiciones de surf hora a hora en 20 spots de Gran Canaria",
+  "description": "Condiciones de surf hora a hora en los spots de seis islas Canarias",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F6F4EF",

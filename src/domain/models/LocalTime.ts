@@ -1,5 +1,5 @@
 /**
- * Wall-clock helpers for Gran Canaria.
+ * Wall-clock helpers for the Canary Islands (one timezone for every island).
  *
  * Open-Meteo returns hourly timestamps in local time without an offset
  * ("2026-11-15T07:00"). Parsing those with `new Date()` interprets them in the
@@ -25,7 +25,7 @@ const formatter = new Intl.DateTimeFormat('en-CA', {
   hourCycle: 'h23',
 });
 
-/** Current date and hour in Gran Canaria. */
+/** Current date and hour in the Canary Islands. */
 export function canaryNow(at: Date = new Date()): LocalMoment {
   const parts = Object.fromEntries(formatter.formatToParts(at).map((p) => [p.type, p.value]));
   return {

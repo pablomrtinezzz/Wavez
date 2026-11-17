@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { isDirectionInRange } from '@/domain/models/MarineConditions';
 import { DataDisclaimer, DirectionArrow, Figure, ScoreBadge } from '@/presentation/components/ui/primitives';
-import { QUALITY, describeWind, formatHour, formatLongDate, formatTide } from '@/presentation/lib/format';
+import { ISLAND_NAME, QUALITY, describeWind, formatHour, formatLongDate, formatTide } from '@/presentation/lib/format';
 import { TimeSelection } from './TimeControl';
 
 interface HeroProps {
@@ -14,10 +14,19 @@ interface HeroProps {
   today: string;
   currentHour: number;
   onSelectSpot: (spotId: string) => void;
+  /** One island, or the whole archipelago (adds the island to the spot's name). */
+  scope?: 'island' | 'canarias';
 }
 
-function headline(selection: TimeSelection, today: string, currentHour: number, isFlat: boolean): string {
-  if (selection.isLive) return isFlat ? 'Hoy la isla está casi plato. Lo más aprovechable' : 'Ahora mismo, la mejor ola está en';
+function headline(selection: TimeSelection, today: string, currentHour: number, isFlat: boolean, scope: 'island' | 'canarias'): string {
+  const where = scope === 'canarias' ? 'Canarias' : 'la isla';
+  if (selection.isLive) {
+    return isFlat
+      ? `Hoy ${where} está casi plato. Lo más aprovechable`
+      : scope === 'canarias'
+        ? 'Ahora mismo, la mejor ola de Canarias está en'
+        : 'Ahora mismo, la mejor ola está en';
+  }
   const when =
     selection.dateStr === today ? `Hoy a las ${formatHour(selection.hour)}` : `El ${formatLongDate(selection.dateStr)} a las ${formatHour(selection.hour)}`;
   const isPast = selection.dateStr < today || (selection.dateStr === today && selection.hour < currentHour);
@@ -25,7 +34,7 @@ function headline(selection: TimeSelection, today: string, currentHour: number, 
   return isFlat ? `${when}, poca cosa. Lo más aprovechable` : `${when}, lo mejor ${tense}`;
 }
 
-export function Hero({ summaries, selection, today, currentHour, onSelectSpot }: HeroProps) {
+export function Hero({ summaries, selection, today, currentHour, onSelectSpot, scope = 'island' }: HeroProps) {
   const ranked = [...summaries].sort((a, b) => b.score.overallScore - a.score.overallScore);
   const top = ranked[0];
   if (!top) return null;
@@ -59,7 +68,7 @@ export function Hero({ summaries, selection, today, currentHour, onSelectSpot }:
         </svg>
       </div>
 
-      <p className="pr-20 text-base text-sand/75 sm:pr-32 sm:text-lg">{headline(selection, today, currentHour, isFlat)}</p>
+      <p className="pr-20 text-base text-sand/75 sm:pr-32 sm:text-lg">{headline(selection, today, currentHour, isFlat, scope)}</p>
       <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-4 lg:pr-32">
         <h2 id="hero-title" className="display text-[clamp(2.75rem,8vw,6rem)] text-sand">
           <button onClick={() => onSelectSpot(spot.id)} className="text-left transition-opacity hover:opacity-80">
@@ -68,6 +77,11 @@ export function Hero({ summaries, selection, today, currentHour, onSelectSpot }:
         </h2>
         <ScoreBadge score={score.overallScore} quality={score.quality} size="lg" className="mb-2 shadow-lg shadow-black/20" />
       </div>
+      {scope === 'canarias' && (
+        <p className="mt-2 text-sm uppercase tracking-[0.14em] text-sun">
+          {ISLAND_NAME[spot.island]} · {spot.location.municipality}
+        </p>
+      )}
       <p className="mt-5 max-w-2xl text-base leading-relaxed text-sand/80 sm:text-lg">
         <span className="font-medium text-sand">{QUALITY[score.quality].label}.</span>{' '}
         {score.pros.slice(0, 2).join('. ')}

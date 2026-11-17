@@ -4,19 +4,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Minus, Plus, Maximize2, Minimize2, LocateFixed, X } from 'lucide-react';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { ConditionQuality } from '@/domain/models/SpotScore';
-import { ZoneId } from '@/domain/models/Spot';
-import { QUALITY, ZONES, formatScore } from '@/presentation/lib/format';
+import { IslandId } from '@/domain/models/Island';
+import { ISLAND_NAME, QUALITY, formatScore } from '@/presentation/lib/format';
 import { QualityDot, ScoreBadge } from '@/presentation/components/ui/primitives';
 import { cn } from '@/presentation/lib/utils';
-import { GRAN_CANARIA_COAST } from './granCanariaCoast';
+import { ISLAND_COASTS, boundsOf, labelPointOf } from './islandGeometry';
 
-const BOUNDS = { minLat: 27.71, maxLat: 28.2, minLng: -15.85, maxLng: -15.33 };
-const LNG_SCALE = Math.cos((28 * Math.PI) / 180); // keep the island's real proportions
+/** Map units per degree of latitude. */
 const SCALE = 1000;
-const W = (BOUNDS.maxLng - BOUNDS.minLng) * LNG_SCALE * SCALE;
-const H = (BOUNDS.maxLat - BOUNDS.minLat) * SCALE;
-const PAD = 20;
-const FULL: View = { x: -PAD, y: -PAD, w: W + PAD * 2, h: H + PAD * 2 };
 /** Land and sea colours, distinct from the page background so the island never blends in. */
 const LAND = '#e9dfc7';
 const COAST = '#8fb3c2';
@@ -31,29 +26,50 @@ interface View {
   h: number;
 }
 
-function project(lat: number, lng: number) {
-  return { x: (lng - BOUNDS.minLng) * LNG_SCALE * SCALE, y: (BOUNDS.maxLat - lat) * SCALE };
+/** Projection, outlines and full view for a set of islands. */
+function buildGeometry(islands: IslandId[]) {
+  const rings = islands.flatMap((id) => ISLAND_COASTS[id]);
+  const b = boundsOf(rings);
+  // Keep real proportions at this latitude
+  const lngScale = Math.cos((((b.minLat + b.maxLat) / 2) * Math.PI) / 180);
+  const project = (lat: number, lng: number) => ({ x: (lng - b.minLng) * lngScale * SCALE, y: (b.maxLat - lat) * SCALE });
+  const w = (b.maxLng - b.minLng) * lngScale * SCALE;
+  const h = (b.maxLat - b.minLat) * SCALE;
+  const pad = Math.max(w, h) * 0.04;
+  const full: View = { x: -pad, y: -pad, w: w + pad * 2, h: h + pad * 2 };
+  const coastPath = rings
+    .map(
+      (ring) =>
+        ring
+          .map(([lat, lng], i) => {
+            const { x, y } = project(lat, lng);
+            return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
+          })
+          .join(' ') + ' Z'
+    )
+    .join(' ');
+  // One island: its name sits in the middle. Several: under each island, clear of the spots on its coast
+  const labels = islands.map((id) => {
+    const [lat, lng] = labelPointOf(id);
+    const below = boundsOf(ISLAND_COASTS[id]).minLat - 0.05;
+    return { id, text: ISLAND_NAME[id].toUpperCase(), ...project(islands.length > 1 ? below : lat, lng) };
+  });
+  return { project, full, coastPath, labels };
 }
 
-const COAST_PATH =
-  GRAN_CANARIA_COAST.map(([lat, lng], i) => {
-    const { x, y } = project(lat, lng);
-    return `${i ? 'L' : 'M'}${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ') + ' Z';
-
-/** Keeps the map's aspect ratio and stays inside the island bounds. */
-function clampView(v: View): View {
-  const aspect = FULL.h / FULL.w;
-  const w = Math.min(FULL.w, Math.max(MIN_W, v.w));
+/** Keeps the map's aspect ratio and stays inside the map bounds. */
+function clampView(v: View, full: View): View {
+  const aspect = full.h / full.w;
+  const w = Math.min(full.w, Math.max(MIN_W, v.w));
   const h = w * aspect;
   const cx = v.x + v.w / 2;
   const cy = v.y + v.h / 2;
-  const x = Math.min(FULL.x + FULL.w - w, Math.max(FULL.x, cx - w / 2));
-  const y = Math.min(FULL.y + FULL.h - h, Math.max(FULL.y, cy - h / 2));
+  const x = Math.min(full.x + full.w - w, Math.max(full.x, cx - w / 2));
+  const y = Math.min(full.y + full.h - h, Math.max(full.y, cy - h / 2));
   return { x, y, w, h };
 }
 
-function fitPoints(points: { x: number; y: number }[]): View {
+function fitPoints(points: { x: number; y: number }[], full: View): View {
   const xs = points.map((p) => p.x);
   const ys = points.map((p) => p.y);
   const margin = 25;
@@ -61,20 +77,38 @@ function fitPoints(points: { x: number; y: number }[]): View {
   const maxX = Math.max(...xs) + margin;
   const minY = Math.min(...ys) - margin;
   const maxY = Math.max(...ys) + margin;
-  const aspect = FULL.h / FULL.w;
+  const aspect = full.h / full.w;
   const w = Math.max(maxX - minX, (maxY - minY) / aspect, MIN_W * 2);
-  return clampView({ x: (minX + maxX) / 2 - w / 2, y: (minY + maxY) / 2 - (w * aspect) / 2, w, h: w * aspect });
+  return clampView({ x: (minX + maxX) / 2 - w / 2, y: (minY + maxY) / 2 - (w * aspect) / 2, w, h: w * aspect }, full);
+}
+
+export interface MapGroup {
+  id: string;
+  label: string;
 }
 
 interface IslandMapProps {
   summaries: SpotSummaryDTO[];
   onSelectSpot: (spotId: string) => void;
+  /** Islands whose outline is drawn (one island, or the whole archipelago). */
+  islands: IslandId[];
+  /** Zoom shortcuts: the island's zones, or the islands themselves. */
+  groups: MapGroup[];
+  groupBy: 'zone' | 'island';
+  /** Label of the "whole map" shortcut. */
+  allLabel: string;
+  ariaLabel: string;
 }
 
-export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
+export function IslandMap({ summaries, onSelectSpot, islands, groups, groupBy, allLabel, ariaLabel }: IslandMapProps) {
+  const islandsKey = islands.join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- recompute only when the set of islands changes
+  const geo = useMemo(() => buildGeometry(islands), [islandsKey]);
+  const FULL = geo.full;
+  const multiIsland = islands.length > 1;
   const [focusId, setFocusId] = useState<string | null>(null);
   const [view, setView] = useState<View>(FULL);
-  const [activeZone, setActiveZone] = useState<ZoneId | null>(null);
+  const [activeZone, setActiveZone] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const animation = useRef<number | null>(null);
@@ -85,8 +119,8 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
   // Draw better spots last so they sit on top where markers overlap
   const ordered = useMemo(() => [...summaries].sort((a, b) => a.score.overallScore - b.score.overallScore), [summaries]);
   const positions = useMemo(
-    () => new Map(summaries.map((s) => [s.spot.id, project(s.spot.location.lat, s.spot.location.lng)])),
-    [summaries]
+    () => new Map(summaries.map((s) => [s.spot.id, geo.project(s.spot.location.lat, s.spot.location.lng)])),
+    [summaries, geo]
   );
 
   /** Map units per screen pixel, so markers keep a constant on-screen size. */
@@ -134,10 +168,10 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
         const oy = origin?.y ?? v.y + v.h / 2;
         const w = v.w * factor;
         const h = v.h * factor;
-        return clampView({ x: ox - ((ox - v.x) / v.w) * w, y: oy - ((oy - v.y) / v.h) * h, w, h });
+        return clampView({ x: ox - ((ox - v.x) / v.w) * w, y: oy - ((oy - v.y) / v.h) * h, w, h }, FULL);
       });
     },
-    []
+    [FULL]
   );
 
   /** Screen → map coordinates, correct even when the SVG is letterboxed (expanded view). */
@@ -194,7 +228,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
         (e.currentTarget as Element).setPointerCapture(e.pointerId);
       }
       if (dragged.current) {
-        setView((v) => clampView({ ...v, x: v.x - dx * unit, y: v.y - dy * unit }));
+        setView((v) => clampView({ ...v, x: v.x - dx * unit, y: v.y - dy * unit }, FULL));
         setActiveZone(null);
       }
     } else if (pointers.current.size === 2) {
@@ -214,11 +248,13 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
     pointers.current.delete(e.pointerId);
   };
 
-  const showZone = (zone: ZoneId | null) => {
-    setActiveZone(zone);
-    if (!zone) return animateTo(FULL);
-    const pts = summaries.filter((s) => s.spot.zone === zone).map((s) => positions.get(s.spot.id)!);
-    if (pts.length) animateTo(fitPoints(pts));
+  const showZone = (group: string | null) => {
+    setActiveZone(group);
+    if (!group) return animateTo(FULL);
+    const pts = summaries
+      .filter((s) => (groupBy === 'zone' ? s.spot.zone : s.spot.island) === group)
+      .map((s) => positions.get(s.spot.id)!);
+    if (pts.length) animateTo(fitPoints(pts, FULL));
   };
 
   const selectSpot = (id: string) => {
@@ -230,7 +266,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center">
       <div>
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <ZoneChips active={activeZone} onSelect={showZone} />
+          <ZoneChips active={activeZone} onSelect={showZone} groups={groups} allLabel={allLabel} />
         </div>
 
         <div
@@ -246,7 +282,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
           {expanded && (
             <div className="flex items-center justify-between gap-3 border-b border-[#bcd3dd] bg-sand/90 px-4 py-3 backdrop-blur" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}>
               <div className="fade-x flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-none [&>button]:shrink-0 [&>button]:whitespace-nowrap">
-                <ZoneChips active={activeZone} onSelect={showZone} />
+                <ZoneChips active={activeZone} onSelect={showZone} groups={groups} allLabel={allLabel} />
               </div>
               <button
                 onClick={() => setExpanded(false)}
@@ -263,26 +299,31 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
             className={cn('block touch-none select-none', expanded ? 'min-h-0 w-full flex-1' : 'h-auto w-full')}
             style={{ aspectRatio: expanded ? undefined : `${FULL.w} / ${FULL.h}`, cursor: zoomedIn ? 'grab' : 'default' }}
             role="group"
-            aria-label="Mapa de spots de Gran Canaria. Usa los botones de zona o de zoom para acercarte."
+            aria-label={ariaLabel}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={onPointerUp}
           >
-            <path d={COAST_PATH} fill="none" stroke="#ffffff" strokeWidth={10 * unit} strokeLinejoin="round" opacity="0.55" />
-            <path d={COAST_PATH} fill={LAND} stroke={COAST} strokeWidth={1.4 * unit} strokeLinejoin="round" />
-            {!zoomedIn && (
-              <text
-                x={project(27.96, -15.6).x}
-                y={project(27.96, -15.6).y}
-                textAnchor="middle"
-                fontSize={12 * unit}
-                letterSpacing={3 * unit}
-                fill="var(--color-ink-3)"
-              >
-                GRAN CANARIA
-              </text>
-            )}
+            <path d={geo.coastPath} fill="none" stroke="#ffffff" strokeWidth={10 * unit} strokeLinejoin="round" opacity="0.55" />
+            <path d={geo.coastPath} fill={LAND} stroke={COAST} strokeWidth={1.4 * unit} strokeLinejoin="round" />
+            {!zoomedIn &&
+              geo.labels.map((l) => (
+                <text
+                  key={l.id}
+                  x={l.x}
+                  y={l.y}
+                  textAnchor="middle"
+                  fontSize={(multiIsland ? 10 : 12) * unit}
+                  letterSpacing={(multiIsland ? 2 : 3) * unit}
+                  fill="var(--color-ink-3)"
+                  stroke={LAND}
+                  strokeWidth={3 * unit}
+                  paintOrder="stroke"
+                >
+                  {l.text}
+                </text>
+              ))}
 
             {ordered.map((s) => {
               const { x, y } = positions.get(s.spot.id)!;
@@ -339,7 +380,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
             <MapButton label="Alejar" onClick={() => zoomBy(1 / 0.6)}>
               <Minus className="size-4" />
             </MapButton>
-            <MapButton label="Ver toda la isla" onClick={() => showZone(null)}>
+            <MapButton label={allLabel} onClick={() => showZone(null)}>
               <LocateFixed className="size-4" />
             </MapButton>
             <MapButton label={expanded ? 'Salir de pantalla completa' : 'Ampliar mapa a pantalla completa'} onClick={() => setExpanded((e) => !e)}>
@@ -354,7 +395,7 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
       </div>
       {focused && (
         <div className="border-t border-line pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0" aria-live="polite">
-          <p className="eyebrow">{focused.spot.location.municipality}</p>
+          <p className="eyebrow">{multiIsland ? `${ISLAND_NAME[focused.spot.island]} · ` : ''}{focused.spot.location.municipality}</p>
           <h3 className="display mt-2 text-3xl">{focused.spot.name}</h3>
           <p className="mt-4 flex items-center gap-3 text-sm text-ink">
             <ScoreBadge score={focused.score.overallScore} quality={focused.score.quality} />
@@ -377,10 +418,20 @@ export function IslandMap({ summaries, onSelectSpot }: IslandMapProps) {
   );
 }
 
-function ZoneChips({ active, onSelect }: { active: ZoneId | null; onSelect: (zone: ZoneId | null) => void }) {
+function ZoneChips({
+  active,
+  onSelect,
+  groups,
+  allLabel,
+}: {
+  active: string | null;
+  onSelect: (group: string | null) => void;
+  groups: MapGroup[];
+  allLabel: string;
+}) {
   return (
     <>
-      {[{ id: null, label: 'Toda la isla' } as const, ...ZONES].map((z) => (
+      {[{ id: null, label: allLabel }, ...groups].map((z) => (
         <button
           key={z.label}
           onClick={() => onSelect(z.id)}

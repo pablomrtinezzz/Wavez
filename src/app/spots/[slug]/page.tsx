@@ -9,15 +9,23 @@ import { BrandMark, SiteFooter } from '@/presentation/components/site/SiteChrome
 import {
   BREAK_LABEL,
   SKILL_LABEL,
+  ISLAND_NAME,
   ZONE_LABEL,
   capitalize,
   degreesToCompassRange,
 } from '@/presentation/lib/format';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { jsonLdScript } from '@/presentation/lib/jsonLd';
 
 const climatology = new StaticClimatologyRepository();
 
 const CROWD_LABEL = { low: 'Poca gente', medium: 'Gente moderada', high: 'Mucha gente', extreme: 'Masificado' } as const;
+
+/**
+ * Unknown values must answer a real 404, which needs the slug checked before
+ * anything streams: the route blocks on it (every valid value is prerendered).
+ */
+export const instant = false;
 
 export function generateStaticParams() {
   return ALL_SPOTS.map((s) => ({ slug: s.slug }));
@@ -29,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!spot) return {};
   const shortName = spot.name.split(' (')[0];
   const title = `Surf en ${shortName}: previsión, olas y webcam`;
-  const description = `${spot.description} Previsión de olas hora a hora, viento, marea${spot.webcam ? ', webcam en directo' : ''} y mejor época para surfear ${shortName} (${spot.location.municipality}, Gran Canaria).`;
+  const description = `${spot.description} Previsión de olas hora a hora, viento, marea${spot.webcam ? ', webcam en directo' : ''} y mejor época para surfear ${shortName} (${spot.location.municipality}, ${ISLAND_NAME[spot.island]}).`;
   return {
     title,
     description,
@@ -52,27 +60,27 @@ export default async function SpotPage({ params }: { params: Promise<{ slug: str
     name: spot.name,
     description: spot.description,
     geo: { '@type': 'GeoCoordinates', latitude: spot.location.lat, longitude: spot.location.lng },
-    address: { '@type': 'PostalAddress', addressLocality: spot.location.municipality, addressRegion: 'Gran Canaria', addressCountry: 'ES' },
+    address: { '@type': 'PostalAddress', addressLocality: spot.location.municipality, addressRegion: ISLAND_NAME[spot.island], addressCountry: 'ES' },
   };
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <header className="border-b border-line">
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-5 sm:px-8">
           <Link href="/" className="inline-flex items-center gap-2 text-ink" aria-label="Wavez, inicio">
             <BrandMark className="size-7" />
             <span className="display text-2xl">Wavez</span>
           </Link>
-          <Link href="/#guia" className="text-sm text-ink-2 hover:text-ink">
-            Todos los spots
+          <Link href={`/${spot.island}#guia`} className="text-sm text-ink-2 hover:text-ink">
+            Spots de {ISLAND_NAME[spot.island]}
           </Link>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-5 pb-10 pt-12 sm:px-8 sm:pt-16">
         <p className="eyebrow !text-ocean">
-          {[...new Set([ZONE_LABEL[spot.zone], spot.location.municipality, 'Gran Canaria'])].join(' · ')}
+          {[...new Set([ZONE_LABEL[spot.zone], spot.location.municipality, ISLAND_NAME[spot.island]])].join(' · ')}
         </p>
         <h1 className="display mt-3 text-5xl sm:text-7xl">Surf en {spot.name}</h1>
         <p className="mt-4 text-ink-3">
@@ -82,7 +90,7 @@ export default async function SpotPage({ params }: { params: Promise<{ slug: str
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-2">{spot.description}</p>
 
         <Link
-          href={`/?spot=${spot.id}`}
+          href={`/${spot.island}?spot=${spot.id}`}
           className="mt-8 inline-flex items-center gap-2 rounded-full bg-ocean px-5 py-3 text-sm font-medium text-sand transition hover:bg-ocean-deep"
         >
           Ver condiciones ahora, previsión hora a hora{spot.webcam ? ' y webcam' : ''} <ArrowRight className="size-4" />

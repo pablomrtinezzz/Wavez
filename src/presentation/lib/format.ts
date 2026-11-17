@@ -1,6 +1,6 @@
 import { ConditionQuality } from '@/domain/models/SpotScore';
 import { BreakType, SkillLevel } from '@/domain/models/Spot';
-import { ALL_ZONES, IslandId, ZoneId, getIsland } from '@/domain/models/Island';
+import { ALL_ZONES, ISLANDS, IslandId, ZoneId, getIsland } from '@/domain/models/Island';
 import { TideState, TIDE_PHASE_LABEL, TIDE_TREND_LABEL } from '@/domain/models/Tide';
 import { degreesToCompass } from '@/domain/models/MarineConditions';
 
@@ -21,9 +21,6 @@ export const QUALITY: Record<
 
 export const QUALITY_ORDER: ConditionQuality[] = ['firing', 'good', 'fair', 'poor', 'flat'];
 
-/** Gran Canaria's zones (the home page still covers this island only). */
-export const ZONES = getIsland('gran-canaria').zones;
-
 export const ZONE_LABEL: Record<ZoneId, string> = Object.fromEntries(
   ALL_ZONES.map((z) => [z.id, z.label])
 ) as Record<ZoneId, string>;
@@ -31,6 +28,10 @@ export const ZONE_LABEL: Record<ZoneId, string> = Object.fromEntries(
 export function zonesOf(island: IslandId) {
   return getIsland(island).zones;
 }
+
+export const ISLAND_NAME: Record<IslandId, string> = Object.fromEntries(
+  ISLANDS.map((i) => [i.id, i.name])
+) as Record<IslandId, string>;
 
 export const BREAK_LABEL: Record<BreakType, string> = {
   'beach-break': 'Beach break',

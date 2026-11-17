@@ -16,6 +16,7 @@ import {
   BREAK_LABEL,
   QUALITY,
   SKILL_LABEL,
+  ISLAND_NAME,
   ZONE_LABEL,
   describeWind,
   formatLocalClock,
@@ -78,9 +79,11 @@ export function SpotDrawer(props: SpotDrawerProps) {
 function SpotDrawerPanel({ spotId, initialDate, today, currentHour, onClose, onReport, refreshKey = 0 }: SpotDrawerProps & { spotId: string }) {
   const [date, setDate] = useState(initialDate);
   const closeRef = useRef<HTMLButtonElement>(null);
-  const detail = useResource<SpotDetailDTO>(`/api/spots/${spotId}${refreshKey ? `?r=${refreshKey}` : ''}`);
-  const timeline = useResource<SpotHourlyEvolutionDTO>(`/api/spots/${spotId}/timeline?date=${date}`);
-  const climate = useResource<SpotClimatology>(`/api/spots/${spotId}/climatology`);
+  // The id comes from the URL: encode it so it can never change the request path
+  const base = `/api/spots/${encodeURIComponent(spotId)}`;
+  const detail = useResource<SpotDetailDTO>(`${base}${refreshKey ? `?r=${refreshKey}` : ''}`);
+  const timeline = useResource<SpotHourlyEvolutionDTO>(`${base}/timeline?date=${encodeURIComponent(date)}`);
+  const climate = useResource<SpotClimatology>(`${base}/climatology`);
 
   useEffect(() => {
     closeRef.current?.focus();
@@ -104,7 +107,7 @@ function SpotDrawerPanel({ spotId, initialDate, today, currentHour, onClose, onR
 
       <div className="relative flex h-full w-full max-w-3xl flex-col overflow-y-auto bg-sand shadow-2xl animate-slide-in">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-sand/90 px-5 py-3 backdrop-blur sm:px-10">
-          <span className="eyebrow">{d ? [...new Set([ZONE_LABEL[d.spot.zone], d.spot.location.municipality])].join(' · ') : 'Cargando'}</span>
+          <span className="eyebrow">{d ? [...new Set([ISLAND_NAME[d.spot.island], ZONE_LABEL[d.spot.zone], d.spot.location.municipality])].join(' · ') : 'Cargando'}</span>
           <button
             ref={closeRef}
             onClick={onClose}
