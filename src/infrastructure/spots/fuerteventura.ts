@@ -96,13 +96,13 @@ export const FUERTEVENTURA_SPOTS = defineSpots('fuerteventura', [
   {
     id: 'el-hierro-fuerteventura',
     slug: 'el-hierro-fuerteventura',
-    name: 'El Hierro (The Bubble)',
+    name: 'The Bubble (El Hierro)',
     zone: 'fv-north-shore',
     location: { lat: 28.7403, lng: -13.9526, municipality: 'La Oliva' },
     marinePoint: offshore(28.7403, -13.9526, 350),
     breakType: 'reef-break',
     skillLevel: 'expert',
-    description: 'El pico más famoso del North Shore: izquierda potente y hueca y derecha tubera sobre reef volcánico. Riesgo de lesión alto.',
+    description: 'Conocida como El Hierro, el pico más famoso del North Shore: izquierda potente y hueca y derecha tubera sobre reef volcánico. Riesgo de lesión alto.',
     idealConditions: {
       minSwellHeightM: 1.0,
       maxSwellHeightM: 3.5,
