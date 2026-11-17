@@ -363,8 +363,8 @@ export function SiteFooter() {
             y{' '}
             <a className="underline underline-offset-4 hover:text-ink" href="https://www.skylinewebcams.com/" target="_blank" rel="noopener noreferrer">
               SkylineWebcams
-            </a>
-            , propiedad de sus autores.
+            </a>{' '}
+            y directos de YouTube, propiedad de sus autores.
           </p>
         </div>
       </div>

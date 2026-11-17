@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>El parte de olas de Canarias.</strong><br>
-  66 spots en las 7 islas · oleaje, viento, marea y 31 webcams, hora a hora · gratis y abierto
+  66 spots en las 7 islas · oleaje, viento, marea y 37 webcams, hora a hora · gratis y abierto
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@ Para cada spot de las siete islas combina modelos oceánicos y meteorológicos a
 - **Línea temporal de 15 días** en hora canaria, con atajos ("mañana temprano", "este sábado") y reproducción hora a hora del día.
 - **Informe por spot** enlazable (`/gran-canaria?spot=la-cicer`): ahora, webcam, por qué esa nota, el día hora a hora, temporada y ficha.
 - **Marea, temperatura del agua y luz real** (orto/ocaso) para calcular la mejor ventana.
-- **31 webcams**: 14 de In2theBeach que se ven dentro de Wavez (cargadas bajo demanda y de una en una) y 17 de SkylineWebcams, que no permite insertarlas y se abren en su web. Cada cámara indica si enfoca el spot o una playa cercana.
+- **37 webcams**: 17 se ven dentro de Wavez (14 de In2theBeach y 3 directos de YouTube cuyo dueño permite insertarlos, cargadas bajo demanda y de una en una); las otras 20 (SkylineWebcams y directos con la inserción desactivada) se abren en la web de su autor. Cada cámara indica si enfoca el spot o una playa cercana, y `npm run check:webcams` avisa de las que dejan de emitir.
 - **Fotos de la comunidad verificadas**: solo cámara en vivo y con la ubicación del móvil dentro del spot.
 - **SEO**: contenido renderizado en servidor, páginas estáticas por isla y por spot (`/spots/<spot>`), sitemap, Open Graph y datos estructurados.
 
@@ -120,6 +120,6 @@ Los spots están en `src/infrastructure/spots/<isla>.ts`; las islas y sus zonas,
 
 - Oleaje, viento, marea y temperatura: [Open-Meteo](https://open-meteo.com/) (CC BY 4.0).
 - Costa de las islas: © [OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL).
-- Webcams: [In2theBeach](https://in2thebeach.es/) y [SkylineWebcams](https://www.skylinewebcams.com/), propiedad de sus autores.
+- Webcams: [In2theBeach](https://in2thebeach.es/), [SkylineWebcams](https://www.skylinewebcams.com/) y los canales de YouTube enlazados en cada cámara, propiedad de sus autores.
 
 > Wavez es orientativo: muestra datos de modelos, no observaciones. Las condiciones reales pueden cambiar en el spot; compruébalas siempre al llegar.

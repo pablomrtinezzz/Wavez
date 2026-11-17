@@ -66,7 +66,7 @@ export function CanaryWebcams({ summaries, onSelectSpot }: { summaries: SpotSumm
         </div>
       )}
       <p className="mt-8 text-xs text-ink-3">
-        {live} cámaras se ven aquí mismo gracias a In2theBeach; el resto pertenecen a SkylineWebcams, que no permite verlas fuera de su web, y se abren allí.
+        {live} cámaras se ven aquí mismo gracias a In2theBeach y a canales de YouTube que lo permiten; el resto, sobre todo de SkylineWebcams, no se pueden ver fuera de la web de su autor y se abren allí.
       </p>
     </div>
   );
