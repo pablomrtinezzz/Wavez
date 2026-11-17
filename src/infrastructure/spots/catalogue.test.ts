@@ -79,4 +79,30 @@ describe('spot catalogue', () => {
       assert.ok(d < 30, `${s.id} marine point is ${d.toFixed(1)} km away`);
     }
   });
+
+  test('swell and wind windows match the way the spot faces', () => {
+    // The ocean model point is offshore in the direction the spot faces: the
+    // swell window must include that direction and the favourable wind must
+    // include the land breeze, which blows from the opposite side
+    const bearing = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+      const φ1 = (a.lat * Math.PI) / 180;
+      const φ2 = (b.lat * Math.PI) / 180;
+      const Δλ = ((b.lng - a.lng) * Math.PI) / 180;
+      const y = Math.sin(Δλ) * Math.cos(φ2);
+      const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+      return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+    };
+    const outside = (deg: number, w: { min: number; max: number }) => {
+      const inside = w.min <= w.max ? deg >= w.min && deg <= w.max : deg >= w.min || deg <= w.max;
+      if (inside) return 0;
+      const d = (a: number, b: number) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+      return Math.min(d(deg, w.min), d(deg, w.max));
+    };
+    for (const s of ALL_SPOTS) {
+      if (!s.marinePoint) continue;
+      const facing = bearing(s.location, s.marinePoint);
+      assert.ok(outside(facing, s.idealConditions.optimalSwellDegrees) <= 45, `${s.id} faces ${facing.toFixed(0)}° but its swell window is elsewhere`);
+      assert.ok(outside((facing + 180) % 360, s.idealConditions.favorableWindDegrees) <= 45, `${s.id}: favourable wind is not the land breeze`);
+    }
+  });
 });

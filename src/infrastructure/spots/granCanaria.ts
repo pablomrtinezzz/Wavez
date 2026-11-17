@@ -1,4 +1,4 @@
-import { defineSpots } from './defineSpots';
+import { defineSpots, offshore } from './defineSpots';
 
 /** Gran Canaria: 20 spots in four coastal zones. */
 export const GRAN_CANARIA_SPOTS = defineSpots('gran-canaria', [
@@ -337,6 +337,8 @@ export const GRAN_CANARIA_SPOTS = defineSpots('gran-canaria', [
     name: 'Arguineguín / El Pajar',
     zone: 'sur-sureste',
     location: { lat: 27.756, lng: -15.698, municipality: 'Mogán' },
+    // The nearest model cell lies inland or on another coast: read the open sea the spot faces
+    marinePoint: offshore(27.756, -15.698, 225),
     breakType: 'point-break',
     skillLevel: 'intermediate',
     description: 'Derecha noble de fondo de piedra y arena cuando entran borrascas de suroeste en invierno.',
@@ -356,6 +358,8 @@ export const GRAN_CANARIA_SPOTS = defineSpots('gran-canaria', [
     name: 'Mosca Point (Pozo Izquierdo)',
     zone: 'sur-sureste',
     location: { lat: 27.818, lng: -15.422, municipality: 'Santa Lucía de Tirajana' },
+    // The nearest model cell lies inland or on another coast: read the open sea the spot faces
+    marinePoint: offshore(27.818, -15.422, 95),
     breakType: 'reef-break',
     skillLevel: 'advanced',
     description: 'Derecha rápida y potente sobre arrecife de callaos. Funciona con viento lateral/offshore y swell de este.',
@@ -375,6 +379,8 @@ export const GRAN_CANARIA_SPOTS = defineSpots('gran-canaria', [
     name: 'Playa del Inglés',
     zone: 'sur-sureste',
     location: { lat: 27.753, lng: -15.568, municipality: 'San Bartolomé de Tirajana' },
+    // The nearest model cell lies inland or on another coast: read the open sea the spot faces
+    marinePoint: offshore(27.753, -15.568, 180),
     breakType: 'beach-break',
     skillLevel: 'all-levels',
     description: 'Picos de arena sencillos y divertidos cuando entra mar de fondo del sur.',
@@ -394,6 +400,8 @@ export const GRAN_CANARIA_SPOTS = defineSpots('gran-canaria', [
     name: 'Bahía Feliz / Castillo del Romeral',
     zone: 'sur-sureste',
     location: { lat: 27.785, lng: -15.515, municipality: 'San Bartolomé de Tirajana' },
+    // The nearest model cell lies inland or on another coast: read the open sea the spot faces
+    marinePoint: offshore(27.785, -15.515, 110),
     breakType: 'reef-break',
     skillLevel: 'intermediate',
     description: 'Olas protegidas sobre callaos cuando el este/sureste arrecia.',
