@@ -350,7 +350,7 @@ export function SiteFooter() {
             </li>
             <li>Energía: índice propio a partir de altura y periodo (40·H²·T).</li>
             <li>La marea es un modelo global, no apto para navegación.</li>
-            <li>Costa de la isla: © OpenStreetMap (ODbL).</li>
+            <li>Costas de las islas: © OpenStreetMap (ODbL).</li>
           </ul>
         </div>
         <div>
@@ -359,6 +359,10 @@ export function SiteFooter() {
             Emisiones de{' '}
             <a className="underline underline-offset-4 hover:text-ink" href="https://in2thebeach.es/" target="_blank" rel="noopener noreferrer">
               In2theBeach
+            </a>{' '}
+            y{' '}
+            <a className="underline underline-offset-4 hover:text-ink" href="https://www.skylinewebcams.com/" target="_blank" rel="noopener noreferrer">
+              SkylineWebcams
             </a>
             , propiedad de sus autores.
           </p>

@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>El parte de olas de Canarias.</strong><br>
-  46 spots en 6 islas · oleaje, viento, marea y webcams en directo, hora a hora · gratis y abierto
+  66 spots en las 7 islas · oleaje, viento, marea y 31 webcams, hora a hora · gratis y abierto
 </p>
 
 <p align="center">
@@ -21,7 +21,7 @@
 
 Wavez responde a una pregunta: **¿dónde y cuándo merece la pena surfear hoy en Canarias?**
 
-Para cada spot de Gran Canaria, Tenerife, Lanzarote, Fuerteventura, La Palma y La Gomera combina modelos oceánicos y meteorológicos abiertos con la ficha del spot (qué tamaño aguanta, qué swell le entra, qué viento es terral, qué marea prefiere) y lo resume en una **nota de 0 a 10** que explica sus pros y contras. Se puede mirar cualquier hora de los últimos 7 días y de los próximos 6, ver la mejor ventana del día, la temporada de cada pico y sus webcams en directo.
+Para cada spot de las siete islas combina modelos oceánicos y meteorológicos abiertos con la ficha del spot (qué tamaño aguanta, qué swell le entra, qué viento es terral, qué marea prefiere) y lo resume en una **nota de 0 a 10** que explica sus pros y contras. Se puede mirar cualquier hora de los últimos 7 días y de los próximos 6, ver la mejor ventana del día, la temporada de cada pico y sus webcams en directo.
 
 | | |
 |---|---|
@@ -32,12 +32,13 @@ Para cada spot de Gran Canaria, Tenerife, Lanzarote, Fuerteventura, La Palma y L
 
 ## Funcionalidades
 
-- **Toda Canarias y una página por isla**: la portada muestra la mejor ola del archipiélago, cómo está cada isla, un mapa con todos los spots y un ranking; cada isla (`/tenerife`, `/lanzarote`…) tiene sus zonas, su mapa y sus webcams.
+- **Toda Canarias y una página por isla**: la portada abre con el archipiélago dibujado en su posición real, cada isla teñida con el color de su mejor ola; se elige isla tocándola. Cada isla (`/tenerife`, `/lanzarote`…) muestra qué costa funciona, todos sus spots, su mapa y sus webcams.
+- **Hoy para ti**: el mejor spot ahora para quien aprende, para nivel intermedio, para avanzados y el de menos viento, solo entre spots pensados para ese nivel.
 - **Nota 0–10 explicada**: oleaje y dirección (40), viento (35), periodo (25) y ajuste por marea. Un mar plato nunca puntúa como bueno.
 - **Línea temporal de 15 días** en hora canaria, con atajos ("mañana temprano", "este sábado") y reproducción hora a hora del día.
 - **Informe por spot** enlazable (`/gran-canaria?spot=la-cicer`): ahora, webcam, por qué esa nota, el día hora a hora, temporada y ficha.
 - **Marea, temperatura del agua y luz real** (orto/ocaso) para calcular la mejor ventana.
-- **10 webcams de In2theBeach**, cargadas bajo demanda y de una en una.
+- **31 webcams**: 14 de In2theBeach que se ven dentro de Wavez (cargadas bajo demanda y de una en una) y 17 de SkylineWebcams, que no permite insertarlas y se abren en su web. Cada cámara indica si enfoca el spot o una playa cercana.
 - **Fotos de la comunidad verificadas**: solo cámara en vivo y con la ubicación del móvil dentro del spot.
 - **SEO**: contenido renderizado en servidor, páginas estáticas por isla y por spot (`/spots/<spot>`), sitemap, Open Graph y datos estructurados.
 
@@ -113,12 +114,12 @@ La instantánea se puede generar a mano con `npx tsx scripts/refresh-marine-snap
 
 ### Añadir un spot o una isla
 
-Los spots están en `src/infrastructure/spots/<isla>.ts`; las islas y sus zonas, en `src/domain/models/Island.ts`. Para una isla nueva hay que añadir su caja en `scripts/build-coasts.ts`, generar la costa y registrarla en `islandGeometry.ts`. `npm test` comprueba que todo encaja.
+Los spots están en `src/infrastructure/spots/<isla>.ts`; las islas y sus zonas, en `src/domain/models/Island.ts`; las webcams, en `src/infrastructure/webcams.ts`. Para una isla nueva hay que añadir su caja en `scripts/build-coasts.ts`, generar la costa y registrarla en `islandGeometry.ts`. `npm test` comprueba que todo encaja.
 
 ## Datos y créditos
 
 - Oleaje, viento, marea y temperatura: [Open-Meteo](https://open-meteo.com/) (CC BY 4.0).
 - Costa de las islas: © [OpenStreetMap](https://www.openstreetmap.org/copyright) (ODbL).
-- Webcams: [In2theBeach](https://in2thebeach.es/), propiedad de sus autores.
+- Webcams: [In2theBeach](https://in2thebeach.es/) y [SkylineWebcams](https://www.skylinewebcams.com/), propiedad de sus autores.
 
 > Wavez es orientativo: muestra datos de modelos, no observaciones. Las condiciones reales pueden cambiar en el spot; compruébalas siempre al llegar.
