@@ -6,7 +6,9 @@
  * - In2theBeach players: the HLS playlist behind the player must advance.
  * - YouTube embeds and links: the video must be live now (and embeddable,
  *   when Wavez plays it inside the page).
- * - Other links: the page must answer.
+ * - Other links: the page, and the live still when there is one, must answer.
+ *
+ * It cannot tell where a camera points: look at new cameras before adding them.
  */
 import { WEBCAMS } from '@/infrastructure/webcams';
 import { Webcam } from '@/domain/models/Webcam';
@@ -49,6 +51,10 @@ async function checkYouTube(w: Webcam): Promise<string | null> {
 async function check(w: Webcam): Promise<string | null> {
   try {
     if (w.source.kind === 'embed' && w.source.embedUrl.includes('in2thebeach.es')) return await checkIn2theBeach(w as never);
+    if (w.source.kind === 'link' && w.source.snapshotUrl) {
+      const still = await fetch(w.source.snapshotUrl, { headers: UA, signal: AbortSignal.timeout(15_000) });
+      if (!still.ok || !still.headers.get('content-type')?.startsWith('image/')) return 'the live still is missing';
+    }
     if (w.source.pageUrl.includes('youtube.com/watch')) return await checkYouTube(w);
     await text(w.source.pageUrl);
     return null;

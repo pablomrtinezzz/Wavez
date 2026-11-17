@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useId } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { ExternalLink, Play, Video } from 'lucide-react';
 import { Webcam, relationTo } from '@/domain/models/Webcam';
 import { isApprovedWebcamUrl, cn } from '@/presentation/lib/utils';
@@ -25,6 +25,51 @@ function SeaPoster({ children }: { children: React.ReactNode }) {
       </svg>
       {children}
     </div>
+  );
+}
+
+/** How often a provider's still picture is reloaded while it is on screen. */
+const STILL_REFRESH_MS = 60_000;
+
+/**
+ * A provider's live still, reloaded every minute while visible. The plain
+ * <img> keeps it a direct request to the provider, as their embed code does.
+ */
+function LiveStill({ src, alt }: { src: string; alt: string }) {
+  const ref = useRef<HTMLImageElement>(null);
+  const [stamp, setStamp] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !timer) timer = setInterval(() => setStamp(Date.now()), STILL_REFRESH_MS);
+      if (!entry.isIntersecting && timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    });
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      if (timer) clearInterval(timer);
+    };
+  }, []);
+
+  if (failed) return <SeaPoster>{null}</SeaPoster>;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- third-party live still, not an optimisable asset
+    <img
+      ref={ref}
+      src={stamp ? `${src}?t=${stamp}` : src}
+      alt={alt}
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setFailed(true)}
+      className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+    />
   );
 }
 
@@ -96,20 +141,21 @@ export function WebcamEmbed({ webcam, spotId, autoLoad = false, className }: Web
             target="_blank"
             rel="noopener noreferrer"
             className="group absolute inset-0 text-sand"
-            aria-label={`Abrir la webcam de ${webcam.name} en ${source.provider} (se abre en otra pestaña)`}
+            aria-label={`Ver en directo la webcam de ${webcam.name} en ${source.provider} (se abre en otra pestaña)`}
           >
-            <SeaPoster>
-              <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-ink/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] backdrop-blur">
-                <Video className="size-3" aria-hidden />
-                {source.provider}
-              </span>
-              <span className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-                <span className="flex size-12 items-center justify-center rounded-full border border-sand/40 bg-ink/20 backdrop-blur-sm transition group-hover:scale-105 group-hover:border-sand">
-                  <ExternalLink className="size-5" />
-                </span>
-                <span className="text-sm text-sand/80">Ver en directo en {source.provider}</span>
-              </span>
-            </SeaPoster>
+            {source.kind === 'link' && source.snapshotUrl ? (
+              <LiveStill src={source.snapshotUrl} alt={`Imagen reciente de la webcam de ${webcam.name}`} />
+            ) : (
+              <SeaPoster>{null}</SeaPoster>
+            )}
+            <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-ink/60 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] backdrop-blur">
+              <Video className="size-3" aria-hidden />
+              {source.kind === 'link' && source.snapshotUrl ? 'Foto en directo' : source.provider}
+            </span>
+            <span className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-gradient-to-t from-ink/85 via-ink/50 to-transparent px-3 pb-2.5 pt-8 text-sm">
+              <span className="truncate">Ver el vídeo en {source.provider.split(' · ')[0]}</span>
+              <ExternalLink className="size-4 shrink-0 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+            </span>
           </a>
         )}
       </div>

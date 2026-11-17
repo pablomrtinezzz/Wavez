@@ -4,8 +4,12 @@ import { IslandId } from './Island';
 export type WebcamSource =
   /** Player that the provider lets other sites embed (loaded on demand). */
   | { kind: 'embed'; provider: string; embedUrl: string; pageUrl: string }
-  /** Provider that does not allow embedding: Wavez links to its page. */
-  | { kind: 'link'; provider: string; pageUrl: string };
+  /**
+   * Provider that does not allow embedding the video: Wavez links to its page.
+   * `snapshotUrl` is a still the provider publishes for other sites (refreshed
+   * every minute or so), shown as the card's picture.
+   */
+  | { kind: 'link'; provider: string; pageUrl: string; snapshotUrl?: string };
 
 export interface Webcam {
   id: string;

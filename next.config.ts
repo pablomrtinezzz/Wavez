@@ -7,14 +7,15 @@ const isDev = process.env.NODE_ENV === "development";
  * inline scripts stay allowed (Next.js bootstraps with them) but every
  * external origin is listed explicitly.
  * - frame-src: webcam players from In2theBeach and YouTube (privacy-enhanced)
- * - img-src: community photos live in Supabase Storage
+ * - img-src: community photos (Supabase Storage) and webcam stills
+ *   (SkylineWebcams' embed pictures, YouTube live thumbnails)
  * - Vercel Analytics is served from the site's own origin in production
  */
 const csp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co",
+  "img-src 'self' data: blob: https://*.supabase.co https://embed.skylinewebcams.com https://i.ytimg.com",
   "font-src 'self'",
   `connect-src 'self'${isDev ? " ws: https://va.vercel-scripts.com" : ""}`,
   "frame-src https://in2thebeach.es https://www.youtube-nocookie.com",

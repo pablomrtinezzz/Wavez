@@ -20,6 +20,9 @@ describe('webcam catalogue', () => {
     for (const w of WEBCAMS) {
       if (w.source.kind === 'embed') assert.ok(isApprovedWebcamUrl(w.source.embedUrl), w.id);
       assert.match(w.source.pageUrl, /^https:\/\//, w.id);
+      if (w.source.kind === 'link' && w.source.snapshotUrl) {
+        assert.ok(['embed.skylinewebcams.com', 'i.ytimg.com'].includes(new URL(w.source.snapshotUrl).hostname), `${w.id} snapshot host`);
+      }
     }
   });
 
