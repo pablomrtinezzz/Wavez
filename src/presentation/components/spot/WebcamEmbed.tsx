@@ -50,7 +50,6 @@ export function WebcamEmbed({ webcam, spotName, autoLoad = false, className }: W
               title={`Webcam en directo de ${spotName}`}
               className="absolute inset-0 size-full border-0"
               allow="autoplay; encrypted-media; fullscreen"
-              allowFullScreen
               sandbox="allow-scripts allow-same-origin allow-popups"
               referrerPolicy="no-referrer-when-downgrade"
             />
