@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>El parte de olas de Canarias.</strong><br>
-  66 spots en las 7 islas · oleaje, viento, marea y 37 webcams, hora a hora · gratis y abierto
+  66 spots en las 7 islas · oleaje, viento, marea y 34 webcams, hora a hora · gratis y abierto
 </p>
 
 <p align="center">
@@ -38,7 +38,7 @@ Para cada spot de las siete islas combina modelos oceánicos y meteorológicos a
 - **Línea temporal de 15 días** en hora canaria, con atajos ("mañana temprano", "este sábado") y reproducción hora a hora del día.
 - **Informe por spot** enlazable (`/gran-canaria?spot=la-cicer`): ahora, webcam, por qué esa nota, el día hora a hora, temporada y ficha.
 - **Marea, temperatura del agua y luz real** (orto/ocaso) para calcular la mejor ventana.
-- **37 webcams**: 17 se ven dentro de Wavez (14 de In2theBeach y 3 directos de YouTube cuyo dueño permite insertarlos, cargadas bajo demanda y de una en una); las otras 20 (SkylineWebcams y directos con la inserción desactivada) se abren en la web de su autor. Cada cámara indica si enfoca el spot o una playa cercana, y `npm run check:webcams` avisa de las que dejan de emitir.
+- **34 webcams**: 15 se ven dentro de Wavez (14 de In2theBeach y un directo de YouTube cuyo dueño permite insertarlo, cargadas bajo demanda y de una en una). Las otras 19 (SkylineWebcams y directos con la inserción desactivada) muestran su foto en directo, renovada cada minuto, y abren el vídeo en la web de su autor. Cada cámara indica si enfoca el spot o una playa cercana, y `npm run check:webcams` avisa de las que dejan de emitir.
 - **Fotos de la comunidad verificadas**: solo cámara en vivo y con la ubicación del móvil dentro del spot.
 - **SEO**: contenido renderizado en servidor, páginas estáticas por isla y por spot (`/spots/<spot>`), sitemap, Open Graph y datos estructurados.
 
