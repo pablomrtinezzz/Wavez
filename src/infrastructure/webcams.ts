@@ -7,14 +7,33 @@ import { Webcam, relationTo } from '@/domain/models/Webcam';
  * - In2theBeach lets other sites embed its players: those play inside Wavez.
  *   Only cameras whose stream was live are listed (several of its cameras,
  *   and every YouTube-based one, were off).
+ * - YouTube live streams play inside Wavez only when their owner allows
+ *   embedding (in privacy-enhanced mode); the others are linked.
  * - SkylineWebcams forbids embedding (X-Frame-Options), so Wavez links to
  *   each camera's page instead.
+ *
+ * `npm run check:webcams` reports cameras that stopped streaming.
  */
 const i2b = (id: number, slug: string) => ({
   kind: 'embed' as const,
   provider: 'In2theBeach',
   embedUrl: `https://in2thebeach.es/callbacks/camviewer_ext2.php?id=${id}`,
   pageUrl: `https://in2thebeach.es/webcam/${id}/${slug}/`,
+});
+
+/** A YouTube live stream whose owner allows embedding. */
+const youtube = (videoId: string, channel: string) => ({
+  kind: 'embed' as const,
+  provider: `${channel} · YouTube`,
+  embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&playsinline=1&rel=0`,
+  pageUrl: `https://www.youtube.com/watch?v=${videoId}`,
+});
+
+/** A YouTube live stream whose owner does not allow embedding. */
+const youtubeLink = (videoId: string, channel: string) => ({
+  kind: 'link' as const,
+  provider: `${channel} · YouTube`,
+  pageUrl: `https://www.youtube.com/watch?v=${videoId}`,
 });
 
 const skyline = (path: string) => ({
@@ -40,6 +59,7 @@ export const WEBCAMS: Webcam[] = [
   { id: 'el-veril', name: 'Playa del Veril', island: 'gran-canaria', source: i2b(47, 'playa-del-veril'), spotsInView: [], spotsNearby: ['playa-del-ingles'] },
   { id: 'aguila', name: 'Playa del Águila', island: 'gran-canaria', source: i2b(92, 'aguila-playa'), spotsInView: [], spotsNearby: ['bahia-feliz'] },
   { id: 'arguineguin', name: 'Arguineguín', island: 'gran-canaria', source: i2b(61, 'arguineguin'), spotsInView: ['arguineguin'], spotsNearby: [] },
+  { id: 'pozo-izquierdo', name: 'Pozo Izquierdo (PozoWinds)', island: 'gran-canaria', source: youtube('PN6BN5fqw18', 'PozoWinds'), spotsInView: ['mosca-point'], spotsNearby: [] },
   { id: 'el-pajar', name: 'El Pajar', island: 'gran-canaria', source: i2b(71, 'el-pajar-santa-agueda-arguineguin'), spotsInView: [], spotsNearby: ['arguineguin'] },
 
   // ==========================================
@@ -60,17 +80,22 @@ export const WEBCAMS: Webcam[] = [
   // ==========================================
   { id: 'famara', name: 'Playa de Famara', island: 'lanzarote', source: i2b(42, 'playa-de-famara'), spotsInView: ['famara'], spotsNearby: ['caleta-de-famara', 'ghost-town'] },
   { id: 'famara-red-star', name: 'Famara (Red Star Surf)', island: 'lanzarote', source: i2b(82, 'playa-de-famara-redstar'), spotsInView: ['famara'], spotsNearby: ['san-juan', 'caleta-de-famara'] },
+  { id: 'costa-teguise', name: 'Costa Teguise (Beach Bar)', island: 'lanzarote', source: youtube('GE1WiiUlVvU', 'Beach Bar Lanzarote'), spotsInView: ['las-cucharas'], spotsNearby: [] },
   { id: 'las-cucharas', name: 'Las Cucharas (Costa Teguise)', island: 'lanzarote', source: skyline('las-palmas/playa-las-cucharas'), spotsInView: ['las-cucharas'], spotsNearby: [] },
 
   // ==========================================
   // FUERTEVENTURA
   // ==========================================
   { id: 'grandes-playas', name: 'Grandes Playas de Corralejo', island: 'fuerteventura', source: skyline('corralejo/grandes-playas-corralejo'), spotsInView: ['flag-beach'], spotsNearby: [] },
+  { id: 'corralejo-bay', name: 'Bahía de Corralejo y Lobos', island: 'fuerteventura', source: youtubeLink('C1jR1DsIPFs', 'Fuerteventura Playas'), spotsInView: [], spotsNearby: ['lobos', 'shooting-gallery', 'generoso'] },
   { id: 'corralejo', name: 'Corralejo', island: 'fuerteventura', source: skyline('corralejo/fuerteventura-corralejo'), spotsInView: [], spotsNearby: ['shooting-gallery', 'generoso'] },
 
   // ==========================================
   // LA PALMA, LA GOMERA, EL HIERRO
   // ==========================================
+  { id: 'valle-de-aridane', name: 'Valle de Aridane (panorámica)', island: 'la-palma', source: youtube('UvW59BEOoFY', 'webcam-lapalma.de'), spotsInView: [], spotsNearby: ['puerto-naos'] },
+  { id: 'puerto-naos', name: 'Playa de Puerto Naos', island: 'la-palma', source: { kind: 'link', provider: 'La Palma Rent a Car', pageUrl: 'https://lapalmarentacar.com/webcam/puerto_naos' }, spotsInView: ['puerto-naos'], spotsNearby: [] },
+  { id: 'los-cancajos', name: 'Playa de Los Cancajos', island: 'la-palma', source: youtubeLink('TzZbvIDIpy0', 'Turismo Breña Baja'), spotsInView: [], spotsNearby: [] },
   { id: 'charco-verde', name: 'Charco Verde', island: 'la-palma', source: skyline('santa-cruz-de-tenerife/los-llanos-de-aridane-charco-verde'), spotsInView: [], spotsNearby: ['puerto-naos'] },
   { id: 'playa-de-santiago', name: 'Playa de Santiago', island: 'la-gomera', source: skyline('santa-cruz-de-tenerife/la-gomera'), spotsInView: [], spotsNearby: [] },
   { id: 'la-estaca', name: 'Puerto de La Estaca', island: 'el-hierro', source: skyline('santa-cruz-de-tenerife/el-hierro-timijiraque'), spotsInView: [], spotsNearby: ['timijiraque'] },

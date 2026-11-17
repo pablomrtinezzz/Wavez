@@ -59,8 +59,8 @@ export function WebcamEmbed({ webcam, spotId, autoLoad = false, className }: Web
                 src={embedUrl}
                 title={`Webcam en directo: ${webcam.name}`}
                 className="absolute inset-0 size-full border-0"
-                allow="autoplay; encrypted-media; fullscreen"
-                sandbox="allow-scripts allow-same-origin allow-popups"
+                allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
                 referrerPolicy="no-referrer-when-downgrade"
               />
               <button

@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const APPROVED_WEBCAM_HOSTS = new Set(['in2thebeach.es', 'www.in2thebeach.es']);
+const APPROVED_WEBCAM_HOSTS = new Set(['in2thebeach.es', 'www.in2thebeach.es', 'www.youtube-nocookie.com']);
 
 /** Only embed webcams over HTTPS from approved providers. */
 export function isApprovedWebcamUrl(url: string): boolean {
