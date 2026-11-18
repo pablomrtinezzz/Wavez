@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
@@ -17,6 +18,7 @@ import {
 } from '@/presentation/lib/format';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
 import { jsonLdScript } from '@/presentation/lib/jsonLd';
+import { SpotOutlookSection } from '@/presentation/components/spot/SpotOutlook';
 
 const climatology = new StaticClimatologyRepository();
 
@@ -97,6 +99,10 @@ export default async function SpotPage({ params }: { params: Promise<{ slug: str
         >
           Ver condiciones ahora, previsión hora a hora{webcamsOfSpot(spot.id).length ? ' y webcam' : ''} <ArrowRight className="size-4" />
         </Link>
+
+        <Suspense fallback={<div className="mt-16 h-64 rounded-lg bg-line/40 animate-pulse-soft" aria-hidden />}>
+          <SpotOutlookSection spotId={spot.id} name={shortName} locale="es" />
+        </Suspense>
 
         <section className="mt-16" aria-labelledby="ideal">
           <h2 id="ideal" className="border-b border-line pb-3 text-xl font-medium">

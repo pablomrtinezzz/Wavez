@@ -64,6 +64,11 @@ export class GetSpotHourlyEvolutionUseCase {
     private marineService: MarineWeatherService
   ) {}
 
+  /** When the marine data being served was downloaded from the provider (ISO), if known. */
+  public dataUpdatedAt(): Promise<string | null> {
+    return this.marineService.getDataUpdatedAt();
+  }
+
   public async execute(spotId: string, dateStr: string): Promise<SpotHourlyEvolutionDTO | null> {
     const spot = await this.spotRepo.getSpotById(spotId);
     if (!spot) return null;
