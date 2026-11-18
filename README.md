@@ -40,7 +40,7 @@ Para cada spot de las siete islas combina modelos oceánicos y meteorológicos a
 - **Marea, temperatura del agua y luz real** (orto/ocaso) para calcular la mejor ventana.
 - **34 webcams**: 15 se ven dentro de Wavez (14 de In2theBeach y un directo de YouTube cuyo dueño permite insertarlo, cargadas bajo demanda y de una en una). Las otras 19 (SkylineWebcams y directos con la inserción desactivada) muestran su foto en directo, renovada cada minuto, y abren el vídeo en la web de su autor. Cada cámara indica si enfoca el spot o una playa cercana, y `npm run check:webcams` avisa de las que dejan de emitir.
 - **Fotos de la comunidad verificadas**: solo cámara en vivo y con la ubicación del móvil dentro del spot.
-- **SEO**: contenido renderizado en servidor, páginas estáticas por isla y por spot (`/spots/<spot>`), sitemap, Open Graph y datos estructurados.
+- **SEO**: contenido renderizado en servidor; páginas por isla y por spot (`/spots/<spot>`) con la previsión de tres días en el HTML, regenerada cada hora; páginas de webcams (`/webcams`, `/<isla>/webcams`); versión en inglés de la portada, las islas y los spots (`/en/...`) con hreflang; sitemap bilingüe, Open Graph y datos estructurados (migas de pan, listas, lugares).
 
 ## Decisiones técnicas
 
@@ -79,7 +79,7 @@ src/
 ├── application/     # Casos de uso y composition root (container.ts)
 ├── infrastructure/  # Open-Meteo (directo e instantánea), catálogo de spots por isla, rate limiting
 ├── presentation/    # Componentes de la web, gráficas SVG propias, formato
-└── app/             # Rutas de Next.js: portada, /[island], /spots/[slug], API, sitemap, robots, OG
+└── app/             # Rutas de Next.js: portada, /[island], /spots/[slug], webcams, /en, API, sitemap, robots, OG
 scripts/             # Instantánea de datos (GitHub Action) y generación de costas desde OpenStreetMap
 docs/metodologia/    # Fuente HTML del informe PDF
 ```
@@ -114,7 +114,7 @@ La instantánea se puede generar a mano con `npx tsx scripts/refresh-marine-snap
 
 ### Añadir un spot o una isla
 
-Los spots están en `src/infrastructure/spots/<isla>.ts`; las islas y sus zonas, en `src/domain/models/Island.ts`; las webcams, en `src/infrastructure/webcams.ts`. Para una isla nueva hay que añadir su caja en `scripts/build-coasts.ts`, generar la costa y registrarla en `islandGeometry.ts`. `npm test` comprueba que todo encaja.
+Los spots están en `src/infrastructure/spots/<isla>.ts`; las islas y sus zonas, en `src/domain/models/Island.ts`; las webcams, en `src/infrastructure/webcams.ts`. Cada spot e isla nuevos necesitan también su texto en inglés en `src/infrastructure/content/en.ts`. Para una isla nueva hay que añadir su caja en `scripts/build-coasts.ts`, generar la costa y registrarla en `islandGeometry.ts`. `npm test` comprueba que todo encaja.
 
 ## Datos y créditos
 
