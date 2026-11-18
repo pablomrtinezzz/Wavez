@@ -7,7 +7,8 @@ import { ALL_SPOTS } from '@/infrastructure/spots';
 import { webcamsOfSpot } from '@/infrastructure/webcams';
 import { StaticClimatologyRepository } from '@/infrastructure/repositories/StaticClimatologyRepository';
 import { TIDE_PHASE_LABEL } from '@/domain/models/Tide';
-import { BrandMark, SiteFooter } from '@/presentation/components/site/SiteChrome';
+import { SiteFooter } from '@/presentation/components/site/SiteChrome';
+import { StaticHeader } from '@/presentation/components/site/StaticHeader';
 import {
   BREAK_LABEL,
   SKILL_LABEL,
@@ -70,17 +71,12 @@ export default async function SpotPage({ params }: { params: Promise<{ slug: str
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
-      <header className="border-b border-line">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-5 sm:px-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-ink" aria-label="Wavez, inicio">
-            <BrandMark className="size-7" />
-            <span className="display text-2xl">Wavez</span>
-          </Link>
-          <Link href={`/${spot.island}#guia`} className="text-sm text-ink-2 hover:text-ink">
-            Spots de {ISLAND_NAME[spot.island]}
-          </Link>
-        </div>
-      </header>
+      <StaticHeader
+        links={[
+          ...(webcamsOfSpot(spot.id).length ? [{ href: `/${spot.island}/webcams`, label: 'Webcams' }] : []),
+          { href: `/${spot.island}#guia`, label: `Spots de ${ISLAND_NAME[spot.island]}` },
+        ]}
+      />
 
       <main className="mx-auto max-w-4xl px-5 pb-10 pt-12 sm:px-8 sm:pt-16">
         <p className="eyebrow !text-ocean">

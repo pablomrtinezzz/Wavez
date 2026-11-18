@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Spot } from '@/domain/models/Spot';
 import { IslandId, getIsland } from '@/domain/models/Island';
 import { webcamsOfIsland } from '@/infrastructure/webcams';
@@ -115,6 +116,11 @@ export function IslandHome({ island, spotIds, guide }: { island: IslandId; spotI
                 intro={`${webcams.length} ${webcams.length === 1 ? 'cámara' : 'cámaras'} para mirar el mar antes de salir. Las de In2theBeach se ven aquí; las demás se abren en la web de su autor.`}
               >
                 <WebcamGallery webcams={webcams} summaries={summaries} onSelectSpot={drawer.open} />
+                <p className="mt-8 text-sm">
+                  <Link href={`/${island}/webcams`} className="text-ocean underline decoration-sun underline-offset-4 hover:text-ink">
+                    Página de webcams de {info.name}
+                  </Link>
+                </p>
               </PageSection>
             )}
           </>

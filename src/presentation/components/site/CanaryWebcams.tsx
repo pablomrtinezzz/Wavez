@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { SpotSummaryDTO } from '@/application/dtos/SpotSummaryDTO';
 import { ISLANDS, IslandId } from '@/domain/models/Island';
 import { WEBCAMS } from '@/infrastructure/webcams';
@@ -65,7 +66,12 @@ export function CanaryWebcams({ summaries, onSelectSpot }: { summaries: SpotSumm
           </button>
         </div>
       )}
-      <p className="mt-8 text-xs text-ink-3">
+      <p className="mt-8 text-sm">
+        <Link href="/webcams" className="text-ocean underline decoration-sun underline-offset-4 hover:text-ink">
+          Todas las webcams de Canarias, isla por isla
+        </Link>
+      </p>
+      <p className="mt-4 text-xs text-ink-3">
         {live} cámaras se ven aquí mismo gracias a In2theBeach y a canales de YouTube que lo permiten; el resto, sobre todo de SkylineWebcams, no se pueden ver fuera de la web de su autor y se abren allí.
       </p>
     </div>

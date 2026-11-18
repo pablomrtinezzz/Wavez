@@ -366,6 +366,9 @@ export function SiteFooter() {
             </a>{' '}
             y directos de YouTube, propiedad de sus autores.
           </p>
+          <Link href="/webcams" className="mt-3 inline-block underline underline-offset-4 hover:text-ink">
+            Todas las webcams de Canarias
+          </Link>
         </div>
       </div>
     </footer>
