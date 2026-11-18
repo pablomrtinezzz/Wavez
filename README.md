@@ -8,8 +8,8 @@
 </p>
 
 <p align="center">
-  <a href="https://wavez-pi.vercel.app"><strong>🌊 Abrir Wavez</strong></a> ·
-  <a href="https://wavez-pi.vercel.app/wavez-metodologia.pdf">📄 Metodología (PDF)</a> ·
+  <a href="https://wavezgc.vercel.app"><strong>🌊 Abrir Wavez</strong></a> ·
+  <a href="https://wavezgc.vercel.app/wavez-metodologia.pdf">📄 Metodología (PDF)</a> ·
   <a href="#decisiones-técnicas">⚙️ Decisiones técnicas</a>
 </p>
 
@@ -44,7 +44,7 @@ Para cada spot de las siete islas combina modelos oceánicos y meteorológicos a
 
 ## Decisiones técnicas
 
-Lo más interesante del proyecto no es la interfaz, sino los problemas de datos que hubo que resolver. El [informe de metodología](https://wavez-pi.vercel.app/wavez-metodologia.pdf) los explica en detalle con las fórmulas; aquí va el resumen:
+Lo más interesante del proyecto no es la interfaz, sino los problemas de datos que hubo que resolver. El [informe de metodología](https://wavezgc.vercel.app/wavez-metodologia.pdf) los explica en detalle con las fórmulas; aquí va el resumen:
 
 - **Leer el mar en el lado correcto de la isla.** Open-Meteo devuelve la celda oceánica válida más cercana, y las celdas costeras están enmascaradas. Para Las Canteras eso era una celda ~15 km al **este** de Las Palmas, en la otra cara de La Isleta. Cada spot puede declarar un *punto marino* en mar abierto frente a su ventana de swell; el viento se sigue leyendo en la playa.
 - **Nunca inventar datos.** Los valores nulos del modelo se descartaban con valores por defecto (1 m, 10 s…). Ahora esas horas se omiten y el spot se marca "sin datos".
