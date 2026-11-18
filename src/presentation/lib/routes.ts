@@ -1,13 +1,15 @@
 import { IslandId, isIslandId } from '@/domain/models/Island';
 import { ALL_SPOTS } from '@/infrastructure/spots';
+import { Locale } from './locale';
 
 const SPOT_SLUGS = new Set(ALL_SPOTS.map((s) => s.slug));
 
-/** Path of each page. */
+/** Path of each page in each language. English pages live under /en. */
 export const paths = {
-  home: () => '/',
-  island: (island: IslandId) => `/${island}`,
-  spot: (slug: string) => `/spots/${slug}`,
+  home: (locale: Locale = 'es') => (locale === 'en' ? '/en' : '/'),
+  island: (island: IslandId, locale: Locale = 'es') => `${locale === 'en' ? '/en' : ''}/${island}`,
+  spot: (slug: string, locale: Locale = 'es') => `${locale === 'en' ? '/en' : ''}/spots/${slug}`,
+  /** Webcam pages are Spanish only. */
   webcams: (island?: IslandId) => (island ? `/${island}/webcams` : '/webcams'),
 };
 
@@ -19,9 +21,25 @@ export const paths = {
  * no route at all are left to Next.js, which already answers 404.
  */
 export function isUnknownPagePath(pathname: string): boolean {
-  const segments = pathname.split('/').filter(Boolean);
+  let segments = pathname.split('/').filter(Boolean);
+  if (segments[0] === 'en') {
+    segments = segments.slice(1);
+    if (segments.length === 0) return false;
+    // English pages: islands and spots, no webcam pages
+    if (segments.length === 1) return !isIslandId(segments[0]);
+    if (segments.length === 2 && segments[0] === 'spots') return !SPOT_SLUGS.has(segments[1]);
+    return false;
+  }
   if (segments.length === 1) return segments[0] !== 'webcams' && !isIslandId(segments[0]);
   if (segments.length === 2 && segments[0] === 'spots') return !SPOT_SLUGS.has(segments[1]);
   if (segments.length === 2 && segments[1] === 'webcams') return !isIslandId(segments[0]);
   return false;
+}
+
+/**
+ * hreflang links for a page published in both languages. Spanish is the
+ * default: the live app behind every page is Spanish.
+ */
+export function languageAlternates(es: string, en: string) {
+  return { es, en, 'x-default': es };
 }

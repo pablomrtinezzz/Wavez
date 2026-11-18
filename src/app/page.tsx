@@ -4,6 +4,12 @@ import { ALL_SPOTS } from '@/infrastructure/spots';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/presentation/lib/site';
 import { ISLANDS } from '@/domain/models/Island';
 import { itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
+import { languageAlternates, paths } from '@/presentation/lib/routes';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  alternates: { canonical: paths.home(), languages: languageAlternates(paths.home(), paths.home('en')) },
+};
 
 const jsonLd = {
   '@context': 'https://schema.org',

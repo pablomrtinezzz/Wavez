@@ -7,6 +7,7 @@ import { IslandHome } from '@/presentation/components/site/IslandHome';
 import { SpotGuide } from '@/presentation/components/site/SpotGuide';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
 import { breadcrumbList, itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
+import { languageAlternates, paths } from '@/presentation/lib/routes';
 
 /**
  * Unknown values must answer a real 404, which needs the island checked before
@@ -32,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ island: s
   return {
     title,
     description,
-    alternates: { canonical: `/${island}` },
+    alternates: { canonical: paths.island(island), languages: languageAlternates(paths.island(island), paths.island(island, 'en')) },
     openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}/${island}`, type: 'website' },
   };
 }

@@ -2,6 +2,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { ISLANDS, islandOfZone } from '@/domain/models/Island';
 import { ALL_SPOTS } from './index';
+import { ISLAND_SUMMARY_EN, SPOT_DESCRIPTION_EN, ZONE_LABEL_EN } from '../content/en';
 import { ISLAND_COASTS } from '@/presentation/components/site/islandGeometry';
 
 type Pt = [number, number];
@@ -105,4 +106,15 @@ describe('spot catalogue', () => {
       assert.ok(outside((facing + 180) % 360, s.idealConditions.favorableWindDegrees) <= 45, `${s.id}: favourable wind is not the land breeze`);
     }
   });
+});
+
+test('every island, zone and spot has its English copy for the /en pages', () => {
+  for (const island of ISLANDS) {
+    assert.ok(ISLAND_SUMMARY_EN[island.id], island.id);
+    for (const zone of island.zones) assert.ok(ZONE_LABEL_EN[zone.id], zone.id);
+  }
+  for (const spot of ALL_SPOTS) assert.ok(SPOT_DESCRIPTION_EN[spot.id], spot.id);
+  // No leftovers from removed spots
+  const ids = new Set(ALL_SPOTS.map((s) => s.id));
+  for (const id of Object.keys(SPOT_DESCRIPTION_EN)) assert.ok(ids.has(id), `unknown spot ${id}`);
 });

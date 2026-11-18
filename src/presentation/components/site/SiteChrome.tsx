@@ -321,7 +321,10 @@ export function SiteFooter() {
             </a>
           </p>
           <p className="mt-2 text-ink-3">
-            Código abierto en{' '}
+            <Link href="/en" hrefLang="en" lang="en" className="underline underline-offset-4 hover:text-ink">
+              English
+            </Link>{' '}
+            · Código abierto en{' '}
             <a className="underline underline-offset-4 hover:text-ink" href={REPO_URL} target="_blank" rel="noopener noreferrer">
               GitHub
             </a>

@@ -1,0 +1,117 @@
+import { IslandId, ZoneId } from '@/domain/models/Island';
+
+/**
+ * English copy of the catalogue for the /en pages. The Spanish text in the
+ * spot and island files is the source: update both when a description
+ * changes. catalogue tests check that nothing is missing.
+ */
+export const ISLAND_SUMMARY_EN: Record<IslandId, string> = {
+  'gran-canaria': 'Urban surf at Las Canteras, powerful reefs on the north coast and east-swell waves in Telde.',
+  tenerife: 'Volcanic lefts at Las Américas in winter, heavy reefs in the north and wild Anaga.',
+  lanzarote: 'Famara beach for every level and the La Santa reefs for experts.',
+  fuerteventura: 'The reefs of the North Shore, the Lobos right and the open beaches of the west coast.',
+  'la-palma': 'Few waves and hardly anyone in the water: Nogales under the eastern cliffs and the black coves of the west.',
+  'la-gomera': 'Boulder-beach waves on the wild north coast and Valle Gran Rey when a west swell arrives.',
+  'el-hierro': 'The island with the least surf: the Tecorón right in the south and boulder coves in the east.',
+};
+
+export const ZONE_LABEL_EN: Record<ZoneId, string> = {
+  'las-palmas': 'Las Palmas',
+  'costa-norte': 'North',
+  'telde-este': 'East',
+  'sur-sureste': 'South',
+  'tf-norte': 'North',
+  'tf-anaga': 'Anaga',
+  'tf-sur-oeste': 'South and west',
+  'tf-este': 'East',
+  'lz-famara': 'Famara',
+  'lz-la-santa': 'La Santa',
+  'lz-norte': 'Órzola',
+  'lz-este': 'East coast',
+  'fv-corralejo': 'Corralejo and Lobos',
+  'fv-north-shore': 'North Shore',
+  'fv-oeste': 'West coast',
+  'fv-este': 'East coast',
+  'lp-este': 'East',
+  'lp-oeste': 'West',
+  'lg-norte': 'North',
+  'lg-oeste': 'Valle Gran Rey',
+  'eh-sur': 'South',
+  'eh-este': 'East',
+};
+
+export const SPOT_DESCRIPTION_EN: Record<string, string> = {
+  // Gran Canaria
+  'la-cicer': 'The birthplace of urban surfing in the Canaries. Several peaks over sand (El Bufo, Los Muellitos, Piti).',
+  'el-confital': 'A legendary, world-class barrelling right over shallow, flat volcanic rock.',
+  'el-lloret': 'A long, powerful right over a boulder bottom. It holds a lot of size when a big swell arrives.',
+  'la-barra': 'A natural reef that breaks with powerful north swells and the right tide.',
+  'los-muellitos': 'The southern end of La Cícer, next to the Alfredo Kraus Auditorium. A good shelter when the wind blows from the south.',
+  'el-fronton': 'The most radical wave in the Canaries. A huge left and right barrel over dry volcanic rock.',
+  'el-agujero': 'Quality breaks for surfing and bodyboarding, with peaks over rock shelves and natural pools.',
+  'san-felipe': 'The most consistent and forgiving spot on the north coast. Sand and boulder bottom, a wave for manoeuvres.',
+  'el-altillo': 'A left and a right over volcanic rock, fast and with a good section for manoeuvres.',
+  quintanilla: 'Several technical peaks over a rock shelf. Excellent quality in winter.',
+  'playa-del-hombre': 'The reference spot in Telde. Several fast, consistent peaks over sand.',
+  'ojos-de-garza': 'A sheltered bay with a long right that works with east swells or a cross north swell.',
+  'la-garita': 'Peaks over rock and sand. A powerful shorebreak wave in east swells.',
+  'playa-de-silva': 'Peaks over boulders and sand, a lifesaver when a big north swell comes in sideways.',
+  melenara: 'Gentle, sheltered waves when the rare east or south-east swells arrive.',
+  'maspalomas-punta': 'A legendary point-break right over sand, switched on by south storms or south-west Atlantic lows.',
+  arguineguin: 'A long right over rock and sand when south-west lows arrive in winter.',
+  'mosca-point': 'A fast, powerful right over a boulder reef. Works with cross-offshore wind and an east swell.',
+  'playa-del-ingles': 'Simple, fun peaks over sand when a south ground swell arrives.',
+  'bahia-feliz': 'Sheltered waves over boulders when the east and south-east wind picks up.',
+  // Tenerife
+  martianez: 'Rights and lefts over rock in front of the Puerto de la Cruz promenade. It lights up with north ground swell in winter.',
+  'el-socorro': 'A black-sand beach with lefts and rights along 600 m. Strong currents when the swell is big.',
+  bajamar: 'A rock point next to the natural pools, with rights and lefts. One of the most consistent peaks on the north coast.',
+  'punta-del-hidalgo': 'An exposed reef at the northern tip of the island that holds big north-west swells. Rock bottom and little shelter.',
+  almaciga: 'A wild Anaga beach with barrels over volcanic rock. Strong currents and sneaker sets: not for beginners.',
+  'igueste-de-san-andres': 'A long left over boulders, with walls and hollow sections on its best days. Works with north and east swells.',
+  'la-izquierda': 'The best-known wave in Tenerife: a long, fast left over volcanic rock, with hollow sections near the shore. Best in winter.',
+  'punta-blanca-tenerife': 'A west-coast reef that hosts competitions. It asks for refined technique and works at low or mid tide.',
+  'el-poris': 'A sandy east-coast beach used by surf schools. It picks up trade-wind swell and east swells.',
+  'mesa-del-mar': 'Powerful peaks over rock under the Tacoronte cliffs, next to the natural pools. Works with north-west ground swell.',
+  'playa-jardin': 'The black-sand beach of Puerto de la Cruz: the north-coast option for learning when the sea is small. With big swell it closes out and the current pulls.',
+  benijo: 'A wild beach at the end of Anaga, with peaks over rock and sand in front of the Roques. Strong currents and nobody around.',
+  'playa-de-troya': 'The sandy surf-school beach of Las Américas: gentle, clean waves when a west swell arrives in winter.',
+  'el-cabezo': 'A right over reef at the point of El Médano, the east-coast wave when an east swell arrives. Almost always windy: go early.',
+  // Lanzarote
+  famara: 'Five kilometres of sand under the Famara cliffs: the surf-school beach, with peaks for every level. Cross-shore wind spoils it.',
+  'san-juan': 'A long, barrelling left over volcanic reef next to Famara. It needs size and low tide; the inside almost dries out.',
+  'la-santa': 'A short, explosive left over lava that also breaks right. You paddle out climbing down the rocks in front of the peak: reef boots needed.',
+  'el-quemao': 'One of the heaviest waves in Europe: a left barrel with a vertical drop over shallow reef. Experts only.',
+  'caleta-de-caballo': 'A fishing village with a left and a right over reef. Fewer people than La Santa; watch the currents and the rocks.',
+  'la-canteria': 'A wild beach at the foot of the cliffs facing La Graciosa, with a fast left. Strong currents; best on the rising tide towards high.',
+  'jameos-del-agua': 'A long east-coast left that needs a big north swell; deep, exposed reef. Respect the locals.',
+  'ghost-town': 'A reef in front of the abandoned Famara development, with fast rights and lefts when the beach is already too big.',
+  'caleta-de-famara': 'Peaks over rock next to the village of Caleta de Famara, both lefts and rights. More sheltered from the wind than the beach.',
+  'morro-negro': 'A point-break right next to the La Santa islet: the friendliest option in the area when La Izquierda and El Quemao are too much.',
+  'punta-mujeres': 'An east-coast reef next to the village pools. It wakes up with a big north swell that wraps towards the island.',
+  arrieta: 'The sandy beach of Arrieta village, with gentle waves from wrapping north swell or trade-wind swell: one of the few beginner options in the east.',
+  'las-cucharas': 'A Costa Teguise beach with lefts from trade-wind swell; better known for windsurfing than surfing, but it breaks all year.',
+  // Fuerteventura
+  lobos: 'A 300 to 500 m right over volcanic reef on Lobos islet, with sections for several levels. Reached by boat from Corralejo.',
+  'shooting-gallery': 'A shallow reef west of Corralejo: a consistent left and a short, hollow right. Strong currents getting in and out.',
+  'flag-beach': 'The beach by the Corralejo dunes and a base for surf schools. Works with wrapping north swell and west winds.',
+  majanicho: 'The most accessible reef on the North Shore, with an A-frame inside the bay that is a shelter when everything else is big.',
+  'el-hierro-fuerteventura': 'Known as El Hierro, the most famous peak on the North Shore: a powerful, hollow left and a barrelling right over volcanic reef. High risk of injury.',
+  'el-cotillo': 'Open west-facing beaches south of the village, with powerful shorebreak peaks when a north-west swell arrives.',
+  'la-pared': 'A sand and rock beach on the west coast of Jandía that picks up every north-west swell. Strong currents.',
+  generoso: 'A reef west of Corralejo with a calmer peak than its neighbours. A good option when Bristol is too big.',
+  esquinzo: 'A sand and rock beach south of El Cotillo, with powerful peaks that pick up every north-west swell.',
+  garcey: 'A wild, isolated west-coast beach next to the remains of the American Star. Dangerous currents and nobody around.',
+  'playa-blanca-fuerteventura': 'A sandy beach by Puerto del Rosario with trade-wind waves for learning on the east coast, when the west is too big.',
+  // La Palma
+  nogales: 'Black sand under the eastern cliffs, with peaks at the south end. Sheltered from the north-west, few people, a walk down and strong currents.',
+  'puerto-naos': 'The largest black-sand beach in the west, sheltered from the trade winds. Gentle waves with a west swell; the most accessible on the island.',
+  'la-zamora': 'Two black-sand coves under the Fuencaliente cliffs, with a beach-break right when a west swell arrives. Steps down to the beach.',
+  // La Gomera
+  hermigua: 'A north-facing boulder beach with powerful ground swell and a stony shore. For experienced surfers.',
+  'valle-gran-rey': 'The island’s wave: it breaks over boulders in front of La Playa when a west or north-west swell arrives.',
+  vallehermoso: 'A north-facing boulder beach at the foot of the ravine. Powerful ground swell and a stony shore: experienced surfers only.',
+  // El Hierro
+  tecoron: 'A point-break right on the south coast, near La Restinga: one of the few named waves on the island. Works with south and west swells.',
+  timijiraque: 'A cove of black sand and boulders on the east coast, surfed by local surfers and bodyboarders when a north or east swell arrives.',
+};
