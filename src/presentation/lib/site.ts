@@ -6,7 +6,7 @@ export const SITE_URL =
 export const SITE_NAME = 'Wavez';
 export const SITE_TAGLINE = 'El parte de olas de Canarias';
 export const SITE_DESCRIPTION =
-  'Previsión de surf gratuita para los spots de Gran Canaria, Tenerife, Lanzarote, Fuerteventura, La Palma y La Gomera: oleaje, viento, marea, temperatura del agua y webcams en directo, hora a hora, con una nota de 0 a 10 para cada pico.';
+  'Previsión de surf gratuita para los spots de las siete islas: Gran Canaria, Tenerife, Lanzarote, Fuerteventura, La Palma, La Gomera y El Hierro. Oleaje, viento, marea, temperatura del agua y webcams en directo, hora a hora, con una nota de 0 a 10 para cada pico.';
 
 /** Author and project links shown in the footer. */
 export const AUTHOR_NAME = 'Pablo Martínez';
