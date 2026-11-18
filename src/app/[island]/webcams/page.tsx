@@ -9,6 +9,7 @@ import { StaticHeader } from '@/presentation/components/site/StaticHeader';
 import { WebcamDirectory, webcamCountLabel } from '@/presentation/components/site/WebcamDirectory';
 import { paths } from '@/presentation/lib/routes';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { breadcrumbList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 /** Unknown islands answer a real 404 (see src/proxy.ts); every valid one is prerendered. */
 export const instant = false;
@@ -41,8 +42,27 @@ export default async function IslandWebcamsPage({ params }: PageProps<'/[island]
   const info = getIsland(island);
   const cams = webcamsOfIsland(island);
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      breadcrumbList(SITE_URL, [
+        { name: 'Canarias', path: '/' },
+        { name: info.name, path: paths.island(island) },
+        { name: 'Webcams', path: paths.webcams(island) },
+      ]),
+      {
+        '@type': 'CollectionPage',
+        name: `Webcams de surf en ${info.name}`,
+        url: `${SITE_URL}${paths.webcams(island)}`,
+        inLanguage: 'es',
+        about: { '@type': 'Place', name: info.name },
+      },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <StaticHeader
         links={[
           { href: paths.webcams(), label: 'Todas las webcams' },

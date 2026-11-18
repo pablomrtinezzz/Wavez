@@ -18,7 +18,7 @@ import {
   degreesToCompassRange,
 } from '@/presentation/lib/format';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
-import { jsonLdScript } from '@/presentation/lib/jsonLd';
+import { breadcrumbList, jsonLdScript } from '@/presentation/lib/jsonLd';
 import { SpotOutlookSection } from '@/presentation/components/spot/SpotOutlook';
 
 const climatology = new StaticClimatologyRepository();
@@ -61,11 +61,26 @@ export default async function SpotPage({ params }: { params: Promise<{ slug: str
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Place',
-    name: spot.name,
-    description: spot.description,
-    geo: { '@type': 'GeoCoordinates', latitude: spot.location.lat, longitude: spot.location.lng },
-    address: { '@type': 'PostalAddress', addressLocality: spot.location.municipality, addressRegion: ISLAND_NAME[spot.island], addressCountry: 'ES' },
+    '@graph': [
+      breadcrumbList(SITE_URL, [
+        { name: 'Canarias', path: '/' },
+        { name: ISLAND_NAME[spot.island], path: `/${spot.island}` },
+        { name: shortName, path: `/spots/${spot.slug}` },
+      ]),
+      {
+        '@type': ['Place', 'TouristAttraction'],
+        name: spot.name,
+        description: spot.description,
+        url: `${SITE_URL}/spots/${spot.slug}`,
+        touristType: `Surf · ${SKILL_LABEL[spot.skillLevel]}`,
+        isAccessibleForFree: true,
+        publicAccess: true,
+        geo: { '@type': 'GeoCoordinates', latitude: spot.location.lat, longitude: spot.location.lng },
+        hasMap: `https://www.openstreetmap.org/?mlat=${spot.location.lat}&mlon=${spot.location.lng}#map=15/${spot.location.lat}/${spot.location.lng}`,
+        address: { '@type': 'PostalAddress', addressLocality: spot.location.municipality, addressRegion: ISLAND_NAME[spot.island], addressCountry: 'ES' },
+        containedInPlace: { '@type': 'Place', name: ISLAND_NAME[spot.island], url: `${SITE_URL}/${spot.island}` },
+      },
+    ],
   };
 
   return (

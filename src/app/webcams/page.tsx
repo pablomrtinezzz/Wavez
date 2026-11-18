@@ -7,6 +7,7 @@ import { StaticHeader } from '@/presentation/components/site/StaticHeader';
 import { WebcamDirectory, webcamCountLabel } from '@/presentation/components/site/WebcamDirectory';
 import { paths } from '@/presentation/lib/routes';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { breadcrumbList, itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 const title = 'Webcams de surf en Canarias en directo';
 const description = `Las ${WEBCAMS.length} webcams de playas y spots de surf de las siete islas en una página: Las Canteras, Famara, Corralejo, Las Américas, Pozo Izquierdo y más, con la previsión de olas de cada spot.`;
@@ -20,8 +21,31 @@ export const metadata: Metadata = {
 
 export default function WebcamsPage() {
   const islands = ISLANDS.filter((i) => webcamsOfIsland(i.id).length > 0);
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      breadcrumbList(SITE_URL, [
+        { name: 'Canarias', path: '/' },
+        { name: 'Webcams', path: paths.webcams() },
+      ]),
+      {
+        '@type': 'CollectionPage',
+        name: title,
+        description,
+        url: `${SITE_URL}${paths.webcams()}`,
+        inLanguage: 'es',
+        about: { '@type': 'Place', name: 'Islas Canarias' },
+      },
+      itemList(
+        SITE_URL,
+        'Webcams por isla',
+        islands.map((i) => ({ name: `Webcams de ${i.name}`, path: paths.webcams(i.id) }))
+      ),
+    ],
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
       <StaticHeader links={[{ href: '/', label: 'Previsión de Canarias' }]} />
       <main className="mx-auto max-w-4xl px-5 pb-10 pt-12 sm:px-8 sm:pt-16">
         <p className="eyebrow !text-ocean">Canarias · {WEBCAMS.length} cámaras</p>

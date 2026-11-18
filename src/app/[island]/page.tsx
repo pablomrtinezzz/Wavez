@@ -6,7 +6,7 @@ import { webcamsOfIsland } from '@/infrastructure/webcams';
 import { IslandHome } from '@/presentation/components/site/IslandHome';
 import { SpotGuide } from '@/presentation/components/site/SpotGuide';
 import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
-import { jsonLdScript } from '@/presentation/lib/jsonLd';
+import { breadcrumbList, itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 /**
  * Unknown values must answer a real 404, which needs the island checked before
@@ -48,10 +48,25 @@ export default async function IslandPage({ params }: { params: Promise<{ island:
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Place',
-    name: info.name,
-    description: info.summary,
-    address: { '@type': 'PostalAddress', addressRegion: info.name, addressCountry: 'ES' },
+    '@graph': [
+      breadcrumbList(SITE_URL, [
+        { name: 'Canarias', path: '/' },
+        { name: info.name, path: `/${island}` },
+      ]),
+      {
+        '@type': 'Place',
+        name: info.name,
+        description: info.summary,
+        url: `${SITE_URL}/${island}`,
+        address: { '@type': 'PostalAddress', addressRegion: info.name, addressCountry: 'ES' },
+        containedInPlace: { '@type': 'Place', name: 'Islas Canarias' },
+      },
+      itemList(
+        SITE_URL,
+        `Spots de surf en ${info.name}`,
+        spots.map((s) => ({ name: s.name, path: `/spots/${s.slug}` }))
+      ),
+    ],
   };
 
   return (
