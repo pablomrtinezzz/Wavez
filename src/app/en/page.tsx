@@ -8,7 +8,7 @@ import { ISLAND_SUMMARY_EN } from '@/infrastructure/content/en';
 import { StaticHeader } from '@/presentation/components/site/StaticHeader';
 import { EnglishFooter, IN_SPANISH, SKILL_LABEL_EN } from '@/presentation/components/site/EnglishChrome';
 import { languageAlternates, paths } from '@/presentation/lib/routes';
-import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { SITE_NAME, SITE_URL, pageOpenGraph } from '@/presentation/lib/site';
 import { itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 const title = 'Canary Islands surf forecast and live webcams';
@@ -18,8 +18,7 @@ export const metadata: Metadata = {
   title: { absolute: `${title} · ${SITE_NAME}` },
   description,
   alternates: { canonical: paths.home('en'), languages: languageAlternates(paths.home(), paths.home('en')) },
-  openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.home('en')}`, type: 'website', locale: 'en_GB' },
-  twitter: { card: 'summary_large_image', title: `${title} · ${SITE_NAME}`, description },
+  openGraph: pageOpenGraph({ title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.home('en')}`, type: 'website', locale: 'en_GB' }),
 };
 
 const jsonLd = {

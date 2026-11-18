@@ -17,7 +17,7 @@ import {
   capitalize,
   degreesToCompassRange,
 } from '@/presentation/lib/format';
-import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { SITE_NAME, SITE_URL, pageOpenGraph } from '@/presentation/lib/site';
 import { breadcrumbList, jsonLdScript } from '@/presentation/lib/jsonLd';
 import { languageAlternates, paths } from '@/presentation/lib/routes';
 import { SpotOutlookSection } from '@/presentation/components/spot/SpotOutlook';
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title,
     description,
     alternates: { canonical: paths.spot(spot.slug), languages: languageAlternates(paths.spot(spot.slug), paths.spot(spot.slug, 'en')) },
-    openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}/spots/${spot.slug}`, type: 'article' },
+    openGraph: pageOpenGraph({ title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}/spots/${spot.slug}`, type: 'article' }),
   };
 }
 
@@ -91,7 +91,7 @@ export default async function SpotPage({ params }: { params: Promise<{ slug: str
         links={[
           ...(webcamsOfSpot(spot.id).length ? [{ href: `/${spot.island}/webcams`, label: 'Webcams' }] : []),
           { href: `/${spot.island}#guia`, label: `Spots de ${ISLAND_NAME[spot.island]}` },
-          { href: paths.spot(spot.slug, 'en'), label: 'English', hrefLang: 'en', lang: 'en' },
+          { href: paths.spot(spot.slug, 'en'), label: 'EN', hrefLang: 'en', lang: 'en' },
         ]}
       />
 

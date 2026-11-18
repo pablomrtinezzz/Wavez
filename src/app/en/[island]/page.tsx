@@ -9,7 +9,7 @@ import { ISLAND_SUMMARY_EN, SPOT_DESCRIPTION_EN, ZONE_LABEL_EN } from '@/infrast
 import { StaticHeader } from '@/presentation/components/site/StaticHeader';
 import { BREAK_LABEL_EN, EnglishFooter, IN_SPANISH, SKILL_LABEL_EN } from '@/presentation/components/site/EnglishChrome';
 import { languageAlternates, paths } from '@/presentation/lib/routes';
-import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { SITE_NAME, SITE_URL, pageOpenGraph } from '@/presentation/lib/site';
 import { breadcrumbList, itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 /** Unknown islands answer a real 404 (see src/proxy.ts); every valid one is prerendered. */
@@ -28,12 +28,12 @@ export async function generateMetadata({ params }: PageProps<'/en/[island]'>): P
   const description = `Hour-by-hour surf forecast for ${spots.length} spots in ${info.name}: ${spots
     .slice(0, 4)
     .map((s) => s.name.split(' (')[0])
-    .join(', ')}${spots.length > 4 ? '…' : ''}. ${ISLAND_SUMMARY_EN[island]}`;
+    .join(', ')}${spots.length > 4 ? '…' : '.'} ${ISLAND_SUMMARY_EN[island]}`;
   return {
     title,
     description,
     alternates: { canonical: paths.island(island, 'en'), languages: languageAlternates(paths.island(island), paths.island(island, 'en')) },
-    openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.island(island, 'en')}`, type: 'website', locale: 'en_GB' },
+    openGraph: pageOpenGraph({ title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.island(island, 'en')}`, type: 'website', locale: 'en_GB' }),
   };
 }
 
@@ -75,7 +75,7 @@ export default async function EnglishIslandPage({ params }: PageProps<'/en/[isla
         homeLabel="Wavez, home"
         links={[
           { href: paths.home('en'), label: 'Canary Islands' },
-          { href: paths.island(island), label: 'Español', hrefLang: 'es', lang: 'es' },
+          { href: paths.island(island), label: 'ES', hrefLang: 'es', lang: 'es' },
         ]}
       />
 

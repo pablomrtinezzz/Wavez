@@ -8,7 +8,7 @@ import { SiteFooter } from '@/presentation/components/site/SiteChrome';
 import { StaticHeader } from '@/presentation/components/site/StaticHeader';
 import { WebcamDirectory, webcamCountLabel } from '@/presentation/components/site/WebcamDirectory';
 import { paths } from '@/presentation/lib/routes';
-import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { SITE_NAME, SITE_URL, pageOpenGraph } from '@/presentation/lib/site';
 import { breadcrumbList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 /** Unknown islands answer a real 404 (see src/proxy.ts); every valid one is prerendered. */
@@ -27,12 +27,12 @@ export async function generateMetadata({ params }: PageProps<'/[island]/webcams'
   const description = `${webcamCountLabel(cams.length)} en directo para ver el mar en ${info.name} antes de salir: ${cams
     .slice(0, 5)
     .map((w) => w.name)
-    .join(', ')}${cams.length > 5 ? '…' : ''}. Con la previsión de olas de cada spot.`;
+    .join(', ')}${cams.length > 5 ? '…' : '.'} Con la previsión de olas de cada spot.`;
   return {
     title,
     description,
     alternates: { canonical: paths.webcams(island) },
-    openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.webcams(island)}`, type: 'website' },
+    openGraph: pageOpenGraph({ title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.webcams(island)}`, type: 'website' }),
   };
 }
 

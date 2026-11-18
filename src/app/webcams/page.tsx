@@ -6,7 +6,7 @@ import { SiteFooter } from '@/presentation/components/site/SiteChrome';
 import { StaticHeader } from '@/presentation/components/site/StaticHeader';
 import { WebcamDirectory, webcamCountLabel } from '@/presentation/components/site/WebcamDirectory';
 import { paths } from '@/presentation/lib/routes';
-import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { SITE_NAME, SITE_URL, pageOpenGraph } from '@/presentation/lib/site';
 import { breadcrumbList, itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 const title = 'Webcams de surf en Canarias en directo';
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: paths.webcams() },
-  openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.webcams()}`, type: 'website' },
+  openGraph: pageOpenGraph({ title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.webcams()}`, type: 'website' }),
 };
 
 export default function WebcamsPage() {

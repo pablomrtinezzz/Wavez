@@ -56,11 +56,8 @@ export const metadata: Metadata = {
     locale: 'es_ES',
     type: 'website',
   },
-  twitter: {
-    card: 'summary_large_image',
-    title: `${SITE_NAME} · ${SITE_TAGLINE}`,
-    description: SITE_DESCRIPTION,
-  },
+  // Only the card type: X reads each page's og:title and og:description
+  twitter: { card: 'summary_large_image' },
 };
 
 export const viewport: Viewport = {

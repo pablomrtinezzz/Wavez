@@ -5,7 +5,7 @@ import { spotsOfIsland } from '@/infrastructure/spots';
 import { webcamsOfIsland } from '@/infrastructure/webcams';
 import { IslandHome } from '@/presentation/components/site/IslandHome';
 import { SpotGuide } from '@/presentation/components/site/SpotGuide';
-import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { SITE_NAME, SITE_URL, pageOpenGraph } from '@/presentation/lib/site';
 import { breadcrumbList, itemList, jsonLdScript } from '@/presentation/lib/jsonLd';
 import { languageAlternates, paths } from '@/presentation/lib/routes';
 
@@ -29,12 +29,12 @@ export async function generateMetadata({ params }: { params: Promise<{ island: s
   const description = `Parte de olas de ${info.name} hoy y para los próximos días, hora a hora, en ${spots.length} spots: ${spots
     .slice(0, 4)
     .map((s) => s.name.split(' (')[0])
-    .join(', ')}${spots.length > 4 ? '…' : ''}. ${info.summary}${cams ? ` ${cams} ${cams === 1 ? 'webcam' : 'webcams'} en directo.` : ''}`;
+    .join(', ')}${spots.length > 4 ? '…' : '.'} ${info.summary}${cams ? ` ${cams} ${cams === 1 ? 'webcam' : 'webcams'} en directo.` : ''}`;
   return {
     title,
     description,
     alternates: { canonical: paths.island(island), languages: languageAlternates(paths.island(island), paths.island(island, 'en')) },
-    openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}/${island}`, type: 'website' },
+    openGraph: pageOpenGraph({ title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}/${island}`, type: 'website' }),
   };
 }
 

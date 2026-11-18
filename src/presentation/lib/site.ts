@@ -8,6 +8,20 @@ export const SITE_TAGLINE = 'El parte de olas de Canarias';
 export const SITE_DESCRIPTION =
   'Previsión de surf gratuita para los spots de las siete islas: Gran Canaria, Tenerife, Lanzarote, Fuerteventura, La Palma, La Gomera y El Hierro. Oleaje, viento, marea, temperatura del agua y webcams en directo, hora a hora, con una nota de 0 a 10 para cada pico.';
 
+/**
+ * Open Graph for a page. A page that sets `openGraph` replaces the layout's
+ * whole object, so the site name, locale and share image are added here.
+ */
+export function pageOpenGraph(og: { title: string; description: string; url: string; type?: 'website' | 'article'; locale?: string }) {
+  return {
+    siteName: SITE_NAME,
+    locale: 'es_ES',
+    type: 'website' as const,
+    images: [{ url: '/opengraph-image.png', width: 1200, height: 630, alt: `${SITE_NAME} · ${SITE_TAGLINE}` }],
+    ...og,
+  };
+}
+
 /** Author and project links shown in the footer. */
 export const AUTHOR_NAME = 'Pablo Martínez';
 export const REPO_URL = 'https://github.com/pablomrtinezzz/wavez';

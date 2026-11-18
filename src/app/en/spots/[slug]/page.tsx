@@ -12,7 +12,7 @@ import { BREAK_LABEL_EN, EnglishFooter, IN_SPANISH, MONTHS_EN, SKILL_LABEL_EN, T
 import { SpotOutlookSection } from '@/presentation/components/spot/SpotOutlook';
 import { ISLAND_NAME, degreesToCompassRange } from '@/presentation/lib/format';
 import { languageAlternates, paths } from '@/presentation/lib/routes';
-import { SITE_NAME, SITE_URL } from '@/presentation/lib/site';
+import { SITE_NAME, SITE_URL, pageOpenGraph } from '@/presentation/lib/site';
 import { breadcrumbList, jsonLdScript } from '@/presentation/lib/jsonLd';
 
 const climatology = new StaticClimatologyRepository();
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: PageProps<'/en/spots/[slug]'>
     title,
     description,
     alternates: { canonical: paths.spot(slug, 'en'), languages: languageAlternates(paths.spot(slug), paths.spot(slug, 'en')) },
-    openGraph: { title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.spot(slug, 'en')}`, type: 'article', locale: 'en_GB' },
+    openGraph: pageOpenGraph({ title: `${title} · ${SITE_NAME}`, description, url: `${SITE_URL}${paths.spot(slug, 'en')}`, type: 'article', locale: 'en_GB' }),
   };
 }
 
@@ -81,7 +81,7 @@ export default async function EnglishSpotPage({ params }: PageProps<'/en/spots/[
         homeLabel="Wavez, home"
         links={[
           { href: paths.island(spot.island, 'en'), label: `${island} spots` },
-          { href: paths.spot(spot.slug), label: 'Español', hrefLang: 'es', lang: 'es' },
+          { href: paths.spot(spot.slug), label: 'ES', hrefLang: 'es', lang: 'es' },
         ]}
       />
 
