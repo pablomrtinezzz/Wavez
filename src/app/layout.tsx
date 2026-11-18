@@ -24,7 +24,7 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} · ${SITE_TAGLINE}: previsión de surf y webcams`,
+    default: `Previsión de surf en Canarias y webcams en directo · ${SITE_NAME}`,
     template: `%s · ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,

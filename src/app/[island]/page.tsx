@@ -23,11 +23,12 @@ export async function generateMetadata({ params }: { params: Promise<{ island: s
   if (!isIslandId(island)) return {};
   const info = getIsland(island);
   const spots = spotsOfIsland(island);
-  const title = `Surf en ${info.name}: previsión de olas, viento y marea`;
-  const description = `Parte de olas de ${info.name} hora a hora para ${spots.length} spots: ${spots
+  const cams = webcamsOfIsland(island).length;
+  const title = `Previsión de surf en ${info.name}: parte de olas${cams ? ' y webcams' : ''}`;
+  const description = `Parte de olas de ${info.name} hoy y para los próximos días, hora a hora, en ${spots.length} spots: ${spots
     .slice(0, 4)
     .map((s) => s.name.split(' (')[0])
-    .join(', ')}${spots.length > 4 ? '…' : ''}. ${info.summary}`;
+    .join(', ')}${spots.length > 4 ? '…' : ''}. ${info.summary}${cams ? ` ${cams} ${cams === 1 ? 'webcam' : 'webcams'} en directo.` : ''}`;
   return {
     title,
     description,

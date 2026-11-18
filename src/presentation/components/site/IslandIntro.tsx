@@ -36,8 +36,10 @@ export function IslandIntro({
       <div className="mt-4 grid items-end gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <div className="relative min-w-0">
           <IslandSilhouette island={island} className="pointer-events-none absolute -left-4 -top-6 -z-10 size-40 text-sea sm:size-52" />
-          <p className="text-xs uppercase tracking-[0.14em] text-ocean">Parte de olas</p>
+          <p className="text-xs uppercase tracking-[0.14em] text-ocean">Parte de olas y webcams</p>
+          {/* The heading reads "Surf en <isla>" for search engines and screen readers; the island name stays the big word */}
           <h1 id="island-title" className="display mt-1 text-[clamp(3.25rem,11vw,6.5rem)] leading-[0.95] text-ink">
+            <span className="block text-[0.4em] leading-tight text-ink-2">Surf en</span>
             {info.name}
           </h1>
           <p className="mt-3 max-w-md text-ink-2">{info.summary}</p>

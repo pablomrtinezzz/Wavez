@@ -37,8 +37,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const spot = ALL_SPOTS.find((s) => s.slug === slug);
   if (!spot) return {};
   const shortName = spot.name.split(' (')[0];
-  const title = `Surf en ${shortName}: previsión, olas y webcam`;
-  const description = `${spot.description} Previsión de olas hora a hora, viento, marea${webcamsOfSpot(spot.id).length ? ', webcam' : ''} y mejor época para surfear ${shortName} (${spot.location.municipality}, ${ISLAND_NAME[spot.island]}).`;
+  const hasCam = webcamsOfSpot(spot.id).length > 0;
+  const title = `Surf ${shortName} (${ISLAND_NAME[spot.island]}): previsión de olas hoy`;
+  const description = `Previsión de surf en ${shortName} (${spot.location.municipality}, ${ISLAND_NAME[spot.island]}) para hoy y los próximos días: olas, periodo, viento y marea hora a hora${hasCam ? ', webcam en directo' : ''} y mejor época. ${spot.description}`;
   return {
     title,
     description,
